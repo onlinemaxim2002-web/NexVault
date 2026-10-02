@@ -15,6 +15,7 @@ secure link sharing, and public/private **Channels** for sharing content.
 | [docs/04-compliance-and-policies.md](docs/04-compliance-and-policies.md) | Reference only (out of scope for the tester APK) |
 | [docs/05-open-questions.md](docs/05-open-questions.md) | Decisions still pending |
 | [docs/06-app-flow-analysis.md](docs/06-app-flow-analysis.md) | Screen-by-screen analysis of the reference app |
+| [docs/07-attribution-and-personalisation.md](docs/07-attribution-and-personalisation.md) | Ads vs organic installs, `ADS_SPECIAL` channels, APK builds, download page |
 
 ## Repository layout (planned)
 

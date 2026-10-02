@@ -68,7 +68,10 @@ speed, convenience, ads, and impulse-priced short plans.
 ### 4.5 Channels (MVP, proposed)
 - Create a public or private channel (name, icon, description, invite link for private).
 - Channel page is a **Telegram-style post stream**: chat bubbles with media, caption,
-  time, date separators; per-post ▶ play, ⬇ download, ↪ share, ⋮ more; Join bar.
+  time, date separators; per-post ▶ play, ↪ share, ⋮ more; Join bar. **No downloads.**
+- **Only admins post**; members join and watch. **Premium (👑) is set by the app owner.**
+- **Source-based channels:** users who installed from an ad see extra `ADS_SPECIAL`
+  channels (and their posts in Explore). See [07-attribution-and-personalisation.md](07-attribution-and-personalisation.md).
 - Posts are grouped into folders (📁 count). Every public post also appears in Explore.
 - Post files/albums/text from the drive into a channel.
 - Follow/join, a feed of followed channels, channel search/discovery.

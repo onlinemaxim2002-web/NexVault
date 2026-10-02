@@ -318,7 +318,7 @@ Observations:
 | Join a channel | 🔒 login | ✅ | ✅ |
 | Add (create) a channel | 🔒 login | ✅ | ✅ |
 | ▶ Play / Watch content (online player) | 💎 plan | 💎 plan | ✅ |
-| ⬇ Download content | 💎 plan (assumed) | 💎 plan (assumed) | ✅ (to confirm) |
+| ⬇ Download content | ❌ | ❌ | ❌ **not offered in our app** |
 | Upload to Cloud (+) | 💎 plan | 💎 plan | ✅ up to 2 TB |
 | Ads | Shown (assumed) | Shown (assumed) | None |
 

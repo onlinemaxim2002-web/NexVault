@@ -15,13 +15,17 @@
 | 11 | Guest browsing without login? | Yes (like Jollify) / login first | **Decided: Yes.** Auto guest account; Email/Google at purchase or Add Channel |
 | 12 | Can regular users create channels, or admins only? | | Logged-in users can (Add Channel needs login) |
 | 13 | Launch content: who seeds the category channels, and with what licensed content? | | |
-| 14 | Who can mark content as premium (👑)? | Admins only / verified channels / any channel owner |  |
+| 14 | Who can mark content as premium (👑)? | Admins only / verified channels / any channel owner | **Decided: app owner only** (admin panel) |
 | 15 | Do channel creators earn a revenue share from premium views? | | |
 | 16 | Plans: one-time passes or auto-renew subscriptions? | | Proposed: one-time passes (like Jollify) |
 | 17 | Profile tab: open paywall (like Jollify) or open profile with a Premium card? | | |
 | 18 | Can guests upload to Cloud, or only logged-in users? | | Jollify: **premium only** (+ opens the plans page) |
 | 19 | Free users and Cloud: copy Jollify (no uploads without a plan) or give a small free quota? | Premium-only / e.g. 5–10 GB free | **Decided: premium-only** (same as Jollify) |
-| 20 | Can premium users download channel content to their phone, or only stream? | Stream only / stream + download | Jollify shows a ⬇ button on posts |
-| 21 | Channel posting: owner/admins only (Telegram broadcast) or any member? | | Product owner said members can post publicly; Jollify page shows channel-only posts |
+| 20 | Can premium users download channel content to their phone, or only stream? | Stream only / stream + download | **Decided: stream only, no downloads** |
+| 21 | Channel posting: owner/admins only (Telegram broadcast) or any member? | | **Decided: admins post**; members only join and watch |
 | 22 | Payment provider and integration | | **Deferred** by product owner |
 | 23 | Distribution | Play Store / tester APK | **Decided: tester APK only** (sideloaded). Play Store and legal compliance are out of scope for now |
+| 24 | Backend: NestJS + Postgres, or Supabase (Postgres + RLS + Edge Functions + anonymous auth)? | | Proposed: **Supabase**. Fits the attribution design (DB-enforced rules, security definer functions) and guest accounts |
+| 25 | Ads guest logs into an existing organic account: keep organic (first touch wins)? | | Proposed: yes |
+| 26 | Where to host APKs (repo is private) | Public releases repo / public R2 bucket / make repo public | Proposed: public R2 bucket |
+| 27 | "Admins" who post: app owner/staff only, or channel owners + their admins? | | |

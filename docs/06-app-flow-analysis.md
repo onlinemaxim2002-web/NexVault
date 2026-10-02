@@ -7,6 +7,7 @@ visual design, and text.
 
 - Batch 1: first launch + the 5 main tabs (empty/new-user state)
 - Batch 2: Profile tab (Premium plans), user profile, Explore → content detail → Watch
+- Batch 3: Channel detail page, App Settings, Cloud + button gate
 
 More screens to follow.
 
@@ -26,7 +27,13 @@ Install → Launch → auto-create GUEST account → [Consent dialog] → Agree 
                            Content detail (collection)
                                    │ Watch (premium item)
                                    ▼
-                           Premium plans → Next → Login (Email / Google) → Payment
+                           Premium plans → Next → Login (Email / Google) → (payment: later)
+
+Other gates that lead to the same place:
+  Channels → channel page → Join        → Login required
+  Channel page → ▶ play                 → Premium plans
+  Cloud → +  (upload)                   → Premium plans
+  Profile → Add Channel                 → Login required
 ```
 
 **Key findings:**
@@ -39,7 +46,10 @@ Install → Launch → auto-create GUEST account → [Consent dialog] → Agree 
 3. **Content is the paywall.** Free users can browse thumbnails, but tapping
    **Watch** on premium (👑) content sends them to the plans page. This is the main
    way the app makes money, more than storage.
-4. Jollify behaves more like a **public content platform with
+4. **Almost every action is gated.** Free users (guest or logged in) can only
+   **browse thumbnails and captions**. Playing content and uploading to Cloud both
+   need a plan; joining or creating a channel needs login. See the access matrix in §5f.
+5. Jollify behaves more like a **public content platform with
 cloud storage attached** than a plain drive app. A new user lands on **Explore**
 (public content), not on their own storage. Cloud is the first tab, but it is not
 where the app opens. The content looks like Indian "WhatsApp status" material:
@@ -127,6 +137,40 @@ Inferred behaviour:
 
 ---
 
+## 3a. Channel detail page
+
+![channel detail](reference/jollify/11-channel-detail.webp)
+
+Opened by tapping a channel in the Channels list. It looks and works like a
+**Telegram channel**: a chat-style stream of posts.
+
+| Element | Detail |
+|---|---|
+| App bar | Back ←, round channel avatar, **"Friends Status"**, 👥 1207 · 📁 5, ⋮ menu |
+| Post stream | Chat-style **pink bubbles**, newest at the bottom |
+| Date chip | Centred date separator, e.g. "01 Oct 2025" |
+| Post bubble | Video thumbnail with a centred ▶ **play** button and a ⬇ **download** button (top-left, dark circle); caption with emojis and hashtags; time (17:23, 17:24, 17:25) bottom-right |
+| Side actions | Round grey buttons next to each bubble: ⋮ (more) and ↪ **share/forward** |
+| Bottom CTA | Full-width red **Join** button (user hasn't joined yet) |
+
+Behaviour (per the product owner):
+- **Join → login required** (guests are sent to Email/Google sign-in).
+- **▶ Play → premium plan required.** Premium users play the content **online in an
+  in-app player** (streaming).
+- The 📁 folder count suggests posts are grouped into folders, probably opened
+  from the ⋮ menu (not seen yet).
+
+Observations:
+- Captions are keyword/hashtag-heavy ("new WhatsApp status… #bestiestatus…"),
+  typical of clips re-uploaded from YouTube/Instagram.
+- One clip shows a character from a popular Indian TV serial. This **confirms the
+  copyright risk** noted in §7: users post clips of copyrighted TV and film
+  content, and Jollify charges to play them.
+- Posts are sent by the channel itself (no per-post author shown), which looks like
+  the Telegram "broadcast channel" model: the owner/admins post and members watch.
+
+---
+
 ## 4. Feed tab
 
 ![feed](reference/jollify/04-feed.png)
@@ -182,7 +226,7 @@ Tapping **Profile** in the bottom nav does **not** open the profile. It opens th
 | Plan list | Radio-button cards, **Trial pre-selected** (red border) |
 | Plans | Trial **₹69 / 2 days** · Silver **₹129 / 7 days** · Gold **₹259 / 1 month** · Platinum **₹599 / 6 months** · Diamond **₹999 / 1 year** |
 | CTA | Full-width red **Next** button |
-| Next → | Login (Email or Google) if still a guest → payment |
+| Next → | Login (Email or Google) if still a guest → payment (integration deferred) |
 
 Observations:
 - The search snippet said Diamond was ₹899. The app now shows **₹999**, so they
@@ -231,6 +275,60 @@ Inferred behaviour:
 - The ⋮ menus probably hold Report / Share / Download / Save to Cloud (to confirm).
 - So the paywall shows up whenever a free user hits premium content, which is the
   main money-maker.
+
+---
+
+## 5d. App Settings (⚙️ on the user profile)
+
+![settings](reference/jollify/12-app-settings.png)
+
+| Element | Detail |
+|---|---|
+| App bar | Back ←, "App Setting" |
+| List | **Privacy Policy › · Terms & Conditions › · Community Guidelines › · Refund Policy ›** |
+| Buttons | Full-width red **Logout** and **Delete Account** at the bottom |
+
+Observations:
+- Settings has only legal links + logout/delete. No notifications, language, cache,
+  theme, backup, or help/contact options.
+- **Logout** is shown even for guests. For a guest, logging out would lose the
+  account. We should hide it (or warn) for guests.
+- **Delete Account** is in-app, as Google Play requires (flow not seen yet).
+
+What we will do differently:
+- Add: Account (email, linked Google), Notifications, Language, Clear cache,
+  Help & Support / Contact, About (version), and the grievance officer contact
+  (IT Rules 2021).
+- Confirmation + 30-day grace period on delete.
+
+## 5e. Cloud "+" button
+
+Per the product owner: tapping **+** in Cloud Storage opens the **Premium plans**
+page for non-premium users. **Free users cannot upload at all.**
+
+Observations:
+- The website headline "1 TB free cloud storage" is not usable by free users. The
+  app only lets premium users upload, and premium is advertised as 2 TB.
+- ⚠️ This may count as a **misleading claim** under Google Play's policies (and
+  consumer protection rules). We should either give free users a real (smaller)
+  quota or not advertise "free" storage. _Decision pending, see open questions._
+
+## 5f. Access matrix (Jollify, as observed)
+
+| Action | Guest | Logged in, no plan | Premium |
+|---|---|---|---|
+| Browse Explore, Channels, Feed (thumbnails, captions) | ✅ | ✅ | ✅ |
+| Open a post / channel page | ✅ | ✅ | ✅ |
+| Edit display name | ✅ | ✅ | ✅ |
+| Join a channel | 🔒 login | ✅ | ✅ |
+| Add (create) a channel | 🔒 login | ✅ | ✅ |
+| ▶ Play / Watch content (online player) | 💎 plan | 💎 plan | ✅ |
+| ⬇ Download content | 💎 plan (assumed) | 💎 plan (assumed) | ✅ (to confirm) |
+| Upload to Cloud (+) | 💎 plan | 💎 plan | ✅ up to 2 TB |
+| Ads | Shown (assumed) | Shown (assumed) | None |
+
+🔒 = sent to Email/Google login · 💎 = sent to the Premium plans page (buying a plan
+also requires login first).
 
 ---
 
@@ -291,6 +389,25 @@ layout patterns only.
     a review step before content can be marked premium, fast takedowns, and a
     repeat-infringer ban policy.
 
+### Added after batch 3
+
+13. **Channel page = Telegram-style post stream** (bubbles, date chips, per-post
+    play/download/share/more, Join bar). The Flutter UI should be built as a chat-like
+    list, and the API should return posts newest-first with cursor pagination.
+14. **Streaming player for premium users.** Videos are transcoded to HLS; the player
+    requests a short-lived signed playlist URL only after the server confirms the
+    user is premium.
+15. **Feature gating in one place.** One server-side entitlement check
+    (`guest` / `free` / `premium`) used by Join, Play, Download, Upload, and Add
+    Channel, plus a client-side "gate" helper that shows the login sheet or the
+    plans page. Gate rules should be configurable (e.g. let free users upload a
+    small amount later without an app update).
+16. **Settings** needs more than legal links (see 5d), and Logout must be hidden or
+    guarded for guest accounts.
+17. **Payments are out of scope for now** (product owner's decision). The plans page,
+    login gate, and entitlement checks will be built first; payment integration
+    comes later. For testing, premium can be granted from the admin panel.
+
 ---
 
 ## 8. Still unknown (need more screenshots)
@@ -300,12 +417,16 @@ layout patterns only.
 - [x] ~~Explore → tap a tile~~: content detail with Watch
 - [x] ~~Premium / crown paywall and plan list~~
 - [ ] Login screen itself (Email + Google buttons, OTP? password?)
-- [ ] Payment screen (Google Play Billing sheet, or Razorpay/UPI?)
-- [ ] What premium users see after Watch (viewer/player, download, share)
+- [x] ~~What premium users see after Watch~~: content plays online in an in-app player
+- [ ] The player screen itself (controls, next/previous, download, share)
 - [ ] Free (non-👑) content: what Watch does
-- [ ] Channel detail page → folders → media; how members upload; who can mark content premium
+- [x] ~~Channel detail page~~: Telegram-style stream, Join → login, Play → plan
+- [ ] Channel ⋮ menu, folder view, how owners/members post; who can mark content premium
+- [ ] Channel page after joining (does Join become a message/upload bar?)
 - [ ] Add Channel form
-- [ ] Edit profile, Settings (⚙️), delete account, logout
-- [ ] Cloud: + button sheet, folder view, file viewer, share link; can guests upload?
+- [x] ~~Settings (⚙️)~~: legal links + Logout + Delete Account
+- [ ] Edit profile screen, delete-account confirmation flow
+- [x] ~~Can guests upload?~~: no, + opens the plans page for all non-premium users
+- [ ] Cloud for premium users: + sheet, folder view, file viewer, share link
 - [ ] Info (i) screen
 - [ ] Ads: where and what type (banner, interstitial, rewarded)

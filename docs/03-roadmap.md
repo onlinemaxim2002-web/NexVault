@@ -22,9 +22,12 @@ Durations assume a solo developer working with Claude; adjust once the team is k
 - [ ] Privacy, Terms, Refund, Community, Delete-account pages live on the website
 - [ ] Internal testing track on Play Console
 
-## Phase 2: Revenue (weeks 7–9)
-- [ ] Plans + Google Play Billing (subscriptions & one-time passes)
-- [ ] Razorpay for web purchases
+## Phase 2: Premium & gating (weeks 7–9)
+- [ ] Plans page (admin-editable plans, prices, perks)
+- [ ] Entitlement checks: guest / free / premium (Join, Play, Download, Upload, Add Channel)
+- [ ] Login gate sheet + paywall redirect
+- [ ] Admin: grant/revoke premium manually (until payments are added)
+- [ ] Payment integration: **deferred**, to be planned later
 - [ ] Feature gates (speed, file size, video quality, ads, batch download)
 - [ ] AdMob integration (banner, rewarded)
 - [ ] Paywall screens + A/B-testable pricing

@@ -12,7 +12,7 @@
 | CDN | Cloudflare | Thumbnails, HLS segments, public share pages |
 | Media processing | Worker service + FFmpeg + libvips/sharp | Thumbnails, HLS transcoding, metadata |
 | Auth | Own JWT (access + refresh). Guest accounts on first launch; Email (OTP/magic link) + Google Sign-In to upgrade | |
-| Payments | Google Play Billing (in-app), Razorpay (web) | Play requires its billing for digital goods |
+| Payments | **Deferred**. To be decided and integrated later | Premium can be granted from the admin panel until then |
 | Ads | Google AdMob (banner, interstitial, rewarded) | |
 | Push / crash | Firebase Cloud Messaging, Crashlytics | |
 | Admin panel | Next.js + same API (admin role) | |
@@ -103,12 +103,12 @@ Download    GET /files/:id/download, GET /files/:id/stream
 Share       POST /share-links, GET /share-links, DELETE /share-links/:id,
             GET /s/:token (public), POST /s/:token/save
 Storage     GET /storage/summary
-Billing     GET /plans, POST /billing/play/verify, POST /billing/razorpay/order,
-            POST /webhooks/play, POST /webhooks/razorpay
+Plans       GET /plans, GET /me/entitlement   (payment endpoints: deferred)
 Channels    CRUD /channels, POST /channels/:id/join, GET /feed, CRUD /channels/:id/folders,
             CRUD /channels/:id/posts
 Explore     GET /explore?tab=all|latest|popular|most_watched, GET /posts/:id,
-            POST /posts/:id/items/:itemId/watch  (402 + plans if premium and not entitled)
+            POST /posts/:id/items/:itemId/watch  → signed HLS URL, or 402 + plans if not premium
+            GET /channels/:id/posts?cursor=   (chat-style stream, newest first)
 Safety      POST /reports, POST /users/:id/block
 Admin       /admin/users, /admin/reports, /admin/takedowns, /admin/plans, /admin/stats
 ```
@@ -129,3 +129,19 @@ Admin       /admin/users, /admin/reports, /admin/takedowns, /admin/plans, /admin
 - Free-account inactivity policy (e.g. warn at 6 months, purge at 12 months, stated in the Terms).
 - Configurable free quota (start at 1 TB marketing quota, enforce a fair-use cap).
 - Watch cost per active user from day one.
+
+## 9. Access control (entitlements)
+
+Every gated action goes through one server-side check. The app uses the same rules
+to decide whether to show the login sheet or the plans page.
+
+| Level | Who | Allowed |
+|---|---|---|
+| `guest` | Auto-created account, no email/Google | Browse, open posts/channels, edit name |
+| `free` | Logged in, no active plan | + join channels, create channels |
+| `premium` | Logged in, active plan | + play/stream, download, upload to Cloud, no ads |
+
+- Gate rules live in config/DB (not hard-coded), so limits can change without an app
+  release (e.g. a small free upload quota later).
+- `402 Payment Required` responses include the plans list so the app can open the
+  paywall directly; `401` with `reason: login_required` opens the login sheet.

@@ -19,4 +19,8 @@
 | 15 | Do channel creators earn a revenue share from premium views? | | |
 | 16 | Plans: one-time passes or auto-renew subscriptions? | | Proposed: one-time passes (like Jollify) |
 | 17 | Profile tab: open paywall (like Jollify) or open profile with a Premium card? | | |
-| 18 | Can guests upload to Cloud, or only logged-in users? | | |
+| 18 | Can guests upload to Cloud, or only logged-in users? | | Jollify: **premium only** (+ opens the plans page) |
+| 19 | Free users and Cloud: copy Jollify (no uploads without a plan) or give a small free quota? | Premium-only / e.g. 5–10 GB free | Advertising "1 TB free" while blocking uploads risks Play "misleading claims" |
+| 20 | Can premium users download channel content to their phone, or only stream? | Stream only / stream + download | Jollify shows a ⬇ button on posts |
+| 21 | Channel posting: owner/admins only (Telegram broadcast) or any member? | | Product owner said members can post publicly; Jollify page shows channel-only posts |
+| 22 | Payment provider and integration | | **Deferred** by product owner |

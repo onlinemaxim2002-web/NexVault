@@ -65,8 +65,11 @@ speed, convenience, ads, and impulse-priced short plans.
 - Share to WhatsApp/Telegram/etc. through the system share sheet.
 - Manage and revoke my links.
 
-### 4.5 Channels (Phase 3)
+### 4.5 Channels (MVP, proposed)
 - Create a public or private channel (name, icon, description, invite link for private).
+- Channel page is a **Telegram-style post stream**: chat bubbles with media, caption,
+  time, date separators; per-post ▶ play, ⬇ download, ↪ share, ⋮ more; Join bar.
+- Posts are grouped into folders (📁 count). Every public post also appears in Explore.
 - Post files/albums/text from the drive into a channel.
 - Follow/join, a feed of followed channels, channel search/discovery.
 - Owner tools: delete posts, remove members, view stats.
@@ -77,7 +80,10 @@ Ideas for paid perks (final list decided in [open questions](05-open-questions.m
 
 | Perk | Free | Premium |
 |---|---|---|
-| Storage | 1 TB (configurable cap) | 2 TB |
+| Cloud upload | ❌ + opens the plans page (Jollify). See open question 19 | ✅ |
+| Storage | 1 TB advertised (not usable in Jollify) | 2 TB |
+| ▶ Play channel/Explore content | ❌ plans page | ✅ online player (HLS) |
+| Join / create channel | Needs login (no plan needed) | ✅ |
 | Premium (👑) channel content | Thumbnail only, Watch → paywall | Full access |
 | Download speed | Throttled | Full speed |
 | Max single file size | e.g. 4 GB | e.g. 20 GB |
@@ -106,7 +112,8 @@ Plan durations to mirror the market: 2 days, 7 days, 1 month, 6 months, 1 year.
 3. **Share:** long-press file → Share → link options → copy/share → recipient opens
    web page → preview/download/save.
 4. **Upgrade:** tap 👑 / Profile tab, or Watch on premium content → plans → Next →
-   login with Email/Google (if guest) → payment → premium active → back to the content.
+   login with Email/Google (if guest) → payment (to be integrated later) → premium
+   active → back to the content.
 5. **Channel post:** Channels tab → my channel → "+" → choose files from the drive →
    caption → publish.
 6. **Delete account:** Settings → Account → Delete → confirm (OTP) → 30-day grace
@@ -127,7 +134,7 @@ Detailed analysis: [06-app-flow-analysis.md](06-app-flow-analysis.md).
 | 6b | User profile (👤) | Avatar, guest name, edit, settings, My Channels, Add Channel | Analysed |
 | 7 | Login (Email / Google) | Shown at plan purchase / Add Channel | Need screenshot |
 | 8 | Content detail (from Explore) | "Posted by" channel, items with 👑 + Watch | Analysed (viewer still needed) |
-| 9 | Channel detail / folders / upload | TBD | Need screenshot |
+| 9 | Channel detail | Telegram-style stream, Join → login, ▶ → plans | Analysed (folders/posting still needed) |
 | 10 | Cloud upload sheet, folder, file viewer, share | TBD | Need screenshot |
 | 11 | Paywall / plans (crown) | Same as Profile tab screen | Analysed |
-| 12 | Settings / delete account | TBD | Need screenshot |
+| 12 | App Settings | Legal links, Logout, Delete Account | Analysed (delete flow still needed) |

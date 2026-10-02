@@ -186,7 +186,7 @@ select t.ok(not exists (select 1 from public.posts where title in
             ('hidden', 'draft', 'scheduled', 'processing', 'in draft ch')),
             'hidden, draft, scheduled, still-processing, and draft-channel posts never appear');
 select t.ok((select count(*) from public.explore('latest')) = 3, 'explore() respects the same rules');
-select t.fails($$select media_key from public.post_items$$, 'app users cannot read media keys');
+select t.fails($$select hls_key from public.post_items$$, 'app users cannot read processing keys');
 
 -- ---------------------------------------------------------------------------
 -- Approvals for organic buyers
@@ -321,6 +321,75 @@ select t.ok((select email from public.admin_list_admins() where role = 'content_
 select t.ok((select array_length(channel_ids, 1) from public.admin_list_admins() where role = 'content_admin') = 1,
             'admin list shows channel limits');
 select t.ok((public.admin_dashboard()->>'installs_ads')::int >= 2, 'dashboard counts ads installs');
+reset role;
+
+-- ---------------------------------------------------------------------------
+-- Storage, personal cloud, plan requests, status
+-- ---------------------------------------------------------------------------
+-- Media objects for the "all/all" (visible) and "all/ads" posts.
+update public.post_items set media_key = 'posts/' || post_id || '.mp4';
+insert into storage.objects (bucket_id, name)
+select 'media', media_key from public.post_items;
+-- Make the all/all item free so non-premium users can read it.
+update public.post_items set is_premium = false where post_id = '20000000-0000-0000-0000-000000000001';
+
+set role authenticated;
+select t.act_as('organic_guest');
+select t.ok((select count(*) from storage.objects where bucket_id = 'media') = 1,
+            'organic guest can read only the free, visible media file');
+select t.act_as('ads_user');  -- has a trial plan → premium
+select t.ok((select count(*) from storage.objects where bucket_id = 'media') = 3,
+            'premium ads user reads premium media of visible posts only (everyone + ads)');
+select t.fails($$insert into storage.objects (bucket_id, name) values ('media', 'x.mp4')$$,
+               'app users cannot upload media');
+
+-- Personal cloud
+select t.act_as('organic_user');  -- not premium
+select t.fails($$insert into public.cloud_files (name, is_folder) values ('Docs', true)$$,
+               'non-premium users cannot use cloud storage');
+select t.fails($$insert into storage.objects (bucket_id, name)
+                 values ('cloud', t.id('organic_user') || '/a.txt')$$,
+               'non-premium users cannot upload cloud files');
+
+select t.act_as('ads_user');
+insert into public.cloud_files (id, name, is_folder) values ('50000000-0000-0000-0000-000000000001', 'Docs', true);
+insert into public.cloud_files (parent_id, name, storage_key, mime, size)
+values ('50000000-0000-0000-0000-000000000001', 'a.pdf', t.id('ads_user') || '/1-a.pdf', 'application/pdf', 1000);
+insert into storage.objects (bucket_id, name) values ('cloud', t.id('ads_user') || '/1-a.pdf');
+select t.ok((select used_bytes from public.profiles where id = t.id('ads_user')) = 1000, 'used bytes tracked');
+select t.ok((public.my_status()->>'quota_bytes')::bigint = 2199023255552, 'premium quota is 2 TB');
+select t.ok((select count(*) from public.cloud_folder_keys('50000000-0000-0000-0000-000000000001')) = 1,
+            'folder keys include nested files');
+select t.fails($$insert into storage.objects (bucket_id, name) values ('cloud', t.id('organic_user') || '/x')$$,
+               'cannot upload into another user''s folder');
+select t.fails($$update public.cloud_files set size = 1 where name = 'a.pdf'$$,
+               'file size cannot be changed after upload');
+
+select t.act_as('organic_user');
+select t.ok((select count(*) from public.cloud_files) = 0, 'users cannot see others'' cloud files');
+select t.ok((select count(*) from storage.objects where bucket_id = 'cloud') = 0, 'users cannot read others'' cloud objects');
+
+select t.act_as('ads_user');
+delete from public.cloud_files where id = '50000000-0000-0000-0000-000000000001';
+select t.ok((select used_bytes from public.profiles where id = t.id('ads_user')) = 0,
+            'deleting a folder frees the space of its files');
+
+-- Plan requests
+select t.act_as('ads_guest');
+select t.fails($$insert into public.plan_requests (plan_id) select id from public.plans where code = 'gold'$$,
+               'guests must log in before requesting a plan');
+select t.act_as('organic_user');
+insert into public.plan_requests (plan_id) select id from public.plans where code = 'gold';
+select t.ok(public.my_status()->>'open_request' = 'Gold Plan', 'status shows the open request');
+select t.act_as('owner');
+select t.ok((select count(*) from public.admin_plan_requests()) = 1, 'owner sees open plan requests');
+select public.grant_premium(t.id('organic_user'), 'gold');
+select t.ok((select count(*) from public.admin_plan_requests()) = 0, 'granting a plan closes the request');
+
+select t.act_as('organic_user');
+select t.ok((public.my_status()->>'is_premium')::boolean, 'status shows premium after grant');
+select t.ok(public.my_status()->>'source' = 'organic', 'status shows source');
+
 reset role;
 \echo
 \echo 'All tests passed.'

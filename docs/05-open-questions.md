@@ -31,3 +31,6 @@
 | 27 | "Admins" who post: app owner/staff only, or channel owners + their admins? | | **Decided: owner + admins the owner invites** (via the online admin panel) |
 | 28 | Content audience options | | **Decided: Everyone / Organic only / Ads only**, on channels and posts |
 | 29 | Can regular app users still create channels ("Add Channel" in profile)? | Yes / remove the button | |
+| 30 | Approved organic user's plan expires: keep the approval or remove it? | Keep / remove | Proposed: keep (approval is per user) |
+| 31 | Tell a waiting organic buyer that approval is pending? | Silent / show a message | Proposed: silent |
+| 32 | Approved organic user: see Organic-only content too, or switch fully to the ads view? | See everything / ads view only | Proposed: see everything |

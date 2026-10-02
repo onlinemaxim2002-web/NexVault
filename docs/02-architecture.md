@@ -65,7 +65,9 @@ Channel ─┬─ audience: all | organic | ads
 
 ```
 profiles          id (= auth.users.id), display_name, avatar_url, is_guest,
-                  quota_bytes, used_bytes, status, created_at
+                  quota_bytes, used_bytes, status, created_at,
+                  ads_access_status (none|pending|approved|rejected),
+                  ads_access_decided_by, ads_access_decided_at
 admins            user_id PK, role (owner | content_admin), invited_by, created_at
 admin_channel_access  admin_id, channel_id      -- optional: limit a content_admin to channels
 
@@ -95,7 +97,9 @@ reports, audit_logs
 | Name | Kind | Purpose |
 |---|---|---|
 | `user_source()` | security definer | `'ads'` if the current user's first-touch source is the ad source, else `'organic'` |
-| `can_see(audience)` | SQL | `audience = 'all' or audience = user_source()`; admins see everything |
+| `has_ads_access()` | security definer | Ads user, **or** organic user approved by an admin |
+| `can_see(audience)` | SQL | `all` → yes · `organic` → `user_source() = 'organic'` · `ads` → `has_ads_access()`; admins see everything |
+| `on_plan_activated` | trigger | Organic user gets an active plan and has no decision yet → `ads_access_status = 'pending'` (highlighted in the panel) |
 | RLS on `channels`, `posts`, `post_items` | policy | `status = 'published'` + `can_see(...)` on both channel and post |
 | `explore(tab, cursor)` | RPC | Visible posts sorted by latest / popular / most watched |
 | `channel_posts(channel_id, cursor)` | RPC | Telegram-style stream, newest first |

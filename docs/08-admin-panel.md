@@ -9,7 +9,7 @@ Content published here appears in the app right away.
 | Role | Who | Can do |
 |---|---|---|
 | **Owner** | You | Everything below + invite/remove admins, edit plans, grant premium, see reports |
-| **Content admin** | People you invite for a specific job | Create/edit channels, folders, and posts; upload media. Can be limited to **selected channels** only. Cannot manage admins, plans, or users |
+| **Content admin** | People you invite for a specific job | Create/edit channels, folders, and posts; upload media. Can be limited to **selected channels** only. Cannot manage admins, plans, users, or approvals |
 
 - Login: email + password (or magic link) via Supabase Auth; optional 2-step verification.
 - Owner invites an admin by email → they set a password → they get the panel.
@@ -20,6 +20,14 @@ Content published here appears in the app right away.
 ### Dashboard
 - Today / 7 days / 30 days: installs (ads vs organic), new guests, logins, premium
   users, top posts, top channels.
+- 🔴 **"Waiting for approval" badge** with the number of organic buyers to review.
+
+### Approvals (organic buyers)
+- Highlighted list of **organic users who bought a plan** and are waiting for a decision.
+- Columns: name, email, source (organic), plan, purchase date, joined date.
+- Actions: **Approve** (they can now see "Ads only" content) · **Reject** · later **Revoke**.
+- Tabs: Waiting · Approved · Rejected. Every decision is logged (who, when).
+- The owner can also approve any user manually from the user detail page.
 
 ### Channels
 - List with search and filters (audience, status).
@@ -58,7 +66,9 @@ Rules:
 ### Users (owner)
 - Search by name, email, user ID.
 - Columns: guest/logged in, source (ads / organic), campaign, plan, joined date.
-- User detail: first & last touch attribution, joined channels, plan history.
+- User detail: first & last touch attribution, joined channels, plan history,
+  **ads-content access** (none / waiting / approved / rejected) with Approve / Revoke.
+- Organic buyers waiting for approval are **highlighted** in the list.
 - **Grant / remove premium** manually (until payments are added).
 - Suspend / delete user.
 

@@ -37,6 +37,34 @@ Who sees what:
 Premium (👑) and audience are **independent**: e.g. a premium post for organic users
 only, or a free post for ads users only.
 
+### Admin approval for organic buyers
+
+An organic user **never** sees "Ads only" content on their own, even after buying a plan.
+
+1. An organic user buys a plan (for now: premium granted in the admin panel; later:
+   a real payment).
+2. The user is automatically **highlighted** in the admin panel as
+   **"Waiting for approval"** (badge + list).
+3. The owner/admin reviews and clicks **Approve** or **Reject**.
+4. **Approved** → the user also sees all "Ads only" content (in Channels, Explore,
+   Feed), exactly like an ads user. The app refreshes automatically.
+   **Rejected / no decision** → nothing changes; they keep seeing Everyone +
+   Organic content.
+5. The admin can **revoke** an approval at any time, or approve any user manually.
+
+| User | Everyone | Organic only | Ads only |
+|---|---|---|---|
+| Ads user | ✅ | ❌ | ✅ |
+| Organic user | ✅ | ✅ | ❌ |
+| Organic + plan, **waiting / rejected** | ✅ | ✅ | ❌ |
+| Organic + plan, **approved** | ✅ | ✅ | ✅ |
+
+Notes:
+- The user is not told they are waiting for approval (nothing in the app changes
+  until approval). _Assumption, see open question 31._
+- Approval belongs to the **user**, not the plan, so it stays if the plan expires
+  (they still need an active plan to *play* premium content). _See open question 30._
+
 ## 3. Key simplification: guest-first accounts
 
 The prompt has separate "before sign-in (install-based)" and "after sign-in
@@ -107,12 +135,14 @@ payments.attr_source, payments.attr_campaign   -- snapshot trigger, when payment
   first touch once and updates last touch.
 - `is_ads_user()` / `user_source()`: security definer; `ads` if the current user's
   first-touch source is `meta`, else `organic`.
+- `has_ads_access()`: security definer; true if `user_source() = 'ads'` **or** the
+  user's `ads_access_status = 'approved'`.
 - `is_ads_install(install_id)`: server-only (not callable by clients).
 - `log_event(...)`.
 
 ### Content rules (enforced in the database, not only in the app)
-- Channel / post / Explore read rules: a row is visible when its audience is `all`
-  or matches `user_source()` (admins see everything). Hidden, draft, and premium
+- Channel / post / Explore read rules: `all` → everyone; `organic` → organic users
+  (incl. approved organic users); `ads` → `has_ads_access()`. Admins see everything. Hidden, draft, and premium
   rules stay unchanged.
 - Media access (signed stream URL): same rule.
 - **Preview endpoint** `preview-url {post_item_id}`: checks the user/install is

@@ -1,7 +1,7 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:video_thumbnail/video_thumbnail.dart';
+import 'package:fc_native_video_thumbnail/fc_native_video_thumbnail.dart';
 
 import '../config.dart';
 import '../models.dart';
@@ -83,16 +83,19 @@ class _NewPostScreenState extends State<NewPostScreen> {
   }
 
   Future<Uint8List?> _videoThumb(PlatformFile f) async {
-    if (kIsWeb || f.path == null) return null;
+    if (kIsWeb) return null;
     try {
-      return await VideoThumbnail.thumbnailData(
-        video: f.path!,
-        imageFormat: ImageFormat.JPEG,
-        maxWidth: 480,
+      final usePath = f.path != null;
+      return await FcNativeVideoThumbnail().saveThumbnailToBytes(
+        srcFile: usePath ? f.path! : f.uri.toString(),
+        srcFileUri: !usePath,
+        width: 480,
+        height: 480,
+        format: 'jpeg',
         quality: 75,
       );
     } catch (_) {
-      return null;
+      return null; // The post still works without a thumbnail.
     }
   }
 

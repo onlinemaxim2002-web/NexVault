@@ -40,11 +40,11 @@ dependencies:
   chewie: ^1.17.2
   cached_network_image: ^4.0.4
   file_picker: ^13.1.0
-  video_thumbnail: ^0.5.6
   url_launcher: ^6.3.2
   share_plus: ^13.3.1
   uuid: ^4.6.0
   intl: ^0.20.3
+  fc_native_video_thumbnail: ^3.0.1
 
 dev_dependencies:
   flutter_test:

@@ -3,7 +3,8 @@
 A mobile-first cloud storage app with generous free storage, fast upload/download,
 secure link sharing, and public/private **Channels** for sharing content.
 
-> Status: database live on Supabase; admin panel built (`admin/`). App and media upload next.
+> Status: database live on Supabase, admin panel (`admin/`) and Android app (`mobile/`) built.
+> APKs are built by GitHub Actions (Actions → "Android app" → artifact **CloudStorage-apks**).
 
 ## Documentation
 

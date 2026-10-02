@@ -163,9 +163,6 @@ Behaviour (per the product owner):
 Observations:
 - Captions are keyword/hashtag-heavy ("new WhatsApp status… #bestiestatus…"),
   typical of clips re-uploaded from YouTube/Instagram.
-- One clip shows a character from a popular Indian TV serial. This **confirms the
-  copyright risk** noted in §7: users post clips of copyrighted TV and film
-  content, and Jollify charges to play them.
 - Posts are sent by the channel itself (no per-post author shown), which looks like
   the Telegram "broadcast channel" model: the owner/admins post and members watch.
 
@@ -309,9 +306,7 @@ page for non-premium users. **Free users cannot upload at all.**
 Observations:
 - The website headline "1 TB free cloud storage" is not usable by free users. The
   app only lets premium users upload, and premium is advertised as 2 TB.
-- ⚠️ This may count as a **misleading claim** under Google Play's policies (and
-  consumer protection rules). We should either give free users a real (smaller)
-  quota or not advertise "free" storage. _Decision pending, see open questions._
+- **Decision:** we copy this behaviour. Cloud upload is premium-only.
 
 ## 5f. Access matrix (Jollify, as observed)
 
@@ -382,12 +377,7 @@ layout patterns only.
 11. **Profile tab opens the paywall.** We can copy this placement, but should make
     the profile easier to find (e.g. Profile tab → profile, with a big "Go Premium"
     card at the top). Final call is the product owner's.
-12. **⚠️ Copyright risk goes up a lot.** Charging money to watch content that *users*
-    uploaded means we profit from it directly. Pirated movies, paid courses, or
-    adult content in channels would put the app at serious legal and Play Store risk.
-    Mitigation: premium flag only on content from **verified/approved channels**,
-    a review step before content can be marked premium, fast takedowns, and a
-    repeat-infringer ban policy.
+12. _(Removed: content-rights review is out of scope for the tester build.)_
 
 ### Added after batch 3
 

@@ -12,7 +12,7 @@ secure link sharing, and public/private **Channels** for sharing content.
 | [docs/01-product-spec.md](docs/01-product-spec.md) | Features, user flows, free vs premium, competitor reference |
 | [docs/02-architecture.md](docs/02-architecture.md) | Tech stack, system design, data model, API outline |
 | [docs/03-roadmap.md](docs/03-roadmap.md) | Phased milestones and deliverables |
-| [docs/04-compliance-and-policies.md](docs/04-compliance-and-policies.md) | Legal, Play Store, moderation, policy pages |
+| [docs/04-compliance-and-policies.md](docs/04-compliance-and-policies.md) | Reference only (out of scope for the tester APK) |
 | [docs/05-open-questions.md](docs/05-open-questions.md) | Decisions still pending |
 | [docs/06-app-flow-analysis.md](docs/06-app-flow-analysis.md) | Screen-by-screen analysis of the reference app |
 

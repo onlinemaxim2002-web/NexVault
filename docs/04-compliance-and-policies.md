@@ -1,5 +1,9 @@
 # Compliance & Policies
 
+> **Out of scope for now.** The app is being distributed only as a **tester APK**, so
+> Play Store policies, content-rights review, and legal compliance are not part of the
+> current plan. This page is kept only as a reference for a possible public launch.
+
 > Not legal advice. Have a lawyer review the final policy texts before launch.
 
 ## 1. India

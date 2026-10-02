@@ -20,7 +20,7 @@ Durations assume a solo developer working with Claude; adjust once the team is k
 - [ ] Storage summary screen
 - [ ] Settings, delete account (in-app + web)
 - [ ] Privacy, Terms, Refund, Community, Delete-account pages live on the website
-- [ ] Internal testing track on Play Console
+- [ ] Signed tester APK build
 
 ## Phase 2: Premium & gating (weeks 7–9)
 - [ ] Plans page (admin-editable plans, prices, perks)
@@ -31,14 +31,13 @@ Durations assume a solo developer working with Claude; adjust once the team is k
 - [ ] Feature gates (speed, file size, video quality, ads, batch download)
 - [ ] AdMob integration (banner, rewarded)
 - [ ] Paywall screens + A/B-testable pricing
-- [ ] Closed testing → production launch on Play Store
+- [ ] Tester APK release
 
 ## Phase 3: Channels (weeks 10–14)
 - [ ] Channel create/edit, public/private, invite links
 - [ ] Posts from the drive, feed, follow, discovery/search
 - [ ] Report/block, moderation queue, NSFW + hash checks
 - [ ] Admin panel: users, reports, takedowns, plans, stats
-- [ ] Grievance officer workflow (IT Rules 2021)
 
 ## Phase 4: Growth
 - [ ] iOS release

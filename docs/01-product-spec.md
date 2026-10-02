@@ -42,7 +42,7 @@ speed, convenience, ads, and impulse-priced short plans.
   channel; guest data is kept (same account, credentials attached).
 - Profile: name, avatar, username (used for Channels).
 - Devices & sessions list, log out everywhere.
-- Delete account (in-app and via a web URL, required by Play Store).
+- Delete account (in-app).
 
 ### 4.2 Drive
 - Upload files/folders from the device, camera, and share sheet ("Share to Cloud Storage").
@@ -80,7 +80,7 @@ Ideas for paid perks (final list decided in [open questions](05-open-questions.m
 
 | Perk | Free | Premium |
 |---|---|---|
-| Cloud upload | ❌ + opens the plans page (Jollify). See open question 19 | ✅ |
+| Cloud upload | ❌ + opens the plans page (same as Jollify) | ✅ |
 | Storage | 1 TB advertised (not usable in Jollify) | 2 TB |
 | ▶ Play channel/Explore content | ❌ plans page | ✅ online player (HLS) |
 | Join / create channel | Needs login (no plan needed) | ✅ |

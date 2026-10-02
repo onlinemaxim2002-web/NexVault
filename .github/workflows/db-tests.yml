@@ -1,0 +1,15 @@
+name: Database tests
+
+on:
+  push:
+    paths: ["supabase/**", ".github/workflows/db-tests.yml"]
+  pull_request:
+    paths: ["supabase/**", ".github/workflows/db-tests.yml"]
+
+jobs:
+  rls:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run schema + RLS tests
+        run: supabase/tests/run_tests.sh

@@ -8,7 +8,7 @@ Durations assume a solo developer working with Claude; adjust once the team is k
 - [ ] Brand: logo, colors, app icon
 - [ ] Repo structure: `mobile/` (Flutter), `supabase/` (migrations, Edge Functions), `admin/` (Next.js), `worker/` (FFmpeg), `web/` (download page)
 - [ ] Supabase project + R2 bucket
-- [ ] Database schema v1 + RLS policies + tests
+- [x] Database schema v1 + RLS policies + tests (`supabase/`)
 - [ ] CI: lint/test, build organic + ads APKs
 
 ## Phase 1: Admin panel + content (core)

@@ -106,17 +106,21 @@ Plan durations to mirror the market: 2 days, 7 days, 1 month, 6 months, 1 year.
 6. **Delete account:** Settings → Account → Delete → confirm (OTP) → 30-day grace
    window → permanent purge.
 
-## 6. Screen inventory (to be filled from screenshots)
+## 6. Screen inventory
 
-| # | Screen | Jollify equivalent | Notes |
+Detailed analysis: [06-app-flow-analysis.md](06-app-flow-analysis.md).
+
+| # | Screen | Jollify equivalent | Status |
 |---|---|---|---|
-| 1 | Splash / onboarding | TBD | |
-| 2 | Login / OTP | TBD | |
-| 3 | Home (drive) | TBD | |
-| 4 | Upload sheet / progress | TBD | |
-| 5 | File viewer (image/video/doc) | TBD | |
-| 6 | Share link sheet | TBD | |
-| 7 | Channels feed / channel page | TBD | |
-| 8 | Paywall / plans | TBD | |
-| 9 | Settings / profile | TBD | |
-| 10 | Delete account | TBD | |
+| 1 | Consent dialog (first launch) | Terms & Privacy card, single "Agree" | Analysed |
+| 2 | Explore (default landing) | 3-col grid, tabs All/Latest/Popular/Most watched | Analysed |
+| 3 | Channels | Search, Discover/Joined, Trending/Latest/Top Rated, Join | Analysed |
+| 4 | Feed | Posts from joined channels; empty state | Analysed |
+| 5 | Cloud Storage | Personal drive, "+" button; empty state | Analysed |
+| 6 | Profile | TBD | Need screenshot |
+| 7 | Login / OTP | TBD | Need screenshot |
+| 8 | Media viewer (Explore/Channel) | TBD | Need screenshot |
+| 9 | Channel detail / folders / upload | TBD | Need screenshot |
+| 10 | Cloud upload sheet, folder, file viewer, share | TBD | Need screenshot |
+| 11 | Paywall / plans (crown) | TBD | Need screenshot |
+| 12 | Settings / delete account | TBD | Need screenshot |

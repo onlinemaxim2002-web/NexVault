@@ -14,6 +14,7 @@ secure link sharing, and public/private **Channels** for sharing content.
 | [docs/03-roadmap.md](docs/03-roadmap.md) | Phased milestones and deliverables |
 | [docs/04-compliance-and-policies.md](docs/04-compliance-and-policies.md) | Legal, Play Store, moderation, policy pages |
 | [docs/05-open-questions.md](docs/05-open-questions.md) | Decisions still pending |
+| [docs/06-app-flow-analysis.md](docs/06-app-flow-analysis.md) | Screen-by-screen analysis of the reference app |
 
 ## Repository layout (planned)
 

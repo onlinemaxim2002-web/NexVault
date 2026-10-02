@@ -5,22 +5,41 @@ product owner provided. Screenshots are in [`reference/jollify/`](reference/joll
 This is a reference for **flow and features only**. Our app gets its own branding,
 visual design, and text.
 
-Batch 1: first launch + the 5 main tabs (empty/new-user state). More screens to follow.
+- Batch 1: first launch + the 5 main tabs (empty/new-user state)
+- Batch 2: Profile tab (Premium plans), user profile, Explore → content detail → Watch
+
+More screens to follow.
 
 ---
 
 ## 0. Big picture
 
 ```
-Install → Launch → [Consent dialog] → Agree → Explore tab (default)
-                                                │
-          ┌──────────┬──────────┬──────────────┼──────────┐
-        Cloud       Feed      Explore       Channels    Profile
-     (my files)  (joined    (public       (discover/   (TBD)
-                  channels)  content)      join)
+Install → Launch → auto-create GUEST account → [Consent dialog] → Agree → Explore (default)
+                                                                          │
+     ┌──────────────┬───────────────┬───────────────────┬────────────────┴───┐
+   Cloud           Feed          Explore             Channels            Profile
+ (my files)     (joined        (all public          (discover/          = Premium plans
+                 channels)      channel posts)       join)                 └─ 👤 icon → User profile
+                                   │                                         (name, edit, settings,
+                                   ▼                                          My Channels, Add Channel)
+                           Content detail (collection)
+                                   │ Watch (premium item)
+                                   ▼
+                           Premium plans → Next → Login (Email / Google) → Payment
 ```
 
-**Key finding:** Jollify behaves more like a **public content platform with
+**Key findings:**
+
+1. **Everyone starts as a guest.** On first open the app silently creates a guest
+   account (random name like `User-qfMyMje…`). Real login (Email or Google) is asked
+   for only when the user picks a paid plan (and before creating a channel).
+2. **Channels feed Explore.** Anything posted to a public channel automatically
+   shows in Explore. Explore is the combined view of all channel content.
+3. **Content is the paywall.** Free users can browse thumbnails, but tapping
+   **Watch** on premium (👑) content sends them to the plans page. This is the main
+   way the app makes money, more than storage.
+4. Jollify behaves more like a **public content platform with
 cloud storage attached** than a plain drive app. A new user lands on **Explore**
 (public content), not on their own storage. Cloud is the first tab, but it is not
 where the app opens. The content looks like Indian "WhatsApp status" material:
@@ -41,12 +60,11 @@ wallpapers, devotional images, short videos, and category channels such as
 | Title | "Terms of Services and Privacy Policy" |
 | Body | Short paragraph saying that using the app means accepting how data is collected and used, with inline links to **Privacy Policy** and **Terms & Conditions** |
 | Action | Single **Agree** button. No "Decline", no checkbox |
-| Next | Goes straight to Explore. **No login/sign-up screen before content** |
+| Next | Goes straight to Explore. **No login/sign-up screen before content**: a guest account is created automatically |
 
 Observations:
-- No login is needed to browse, so the app offers **guest browsing**. Login is
-  probably asked for only when the user uploads, joins a channel, or buys premium
-  (to confirm with more screenshots).
+- No login is needed to browse: a **guest account is auto-created** (confirmed in
+  batch 2). Email/Google login is asked for when buying a plan or adding a channel.
 - The consent screen asks for no device permissions; those come later, when needed.
 
 What we will do differently:
@@ -149,6 +167,73 @@ What we will do differently:
 
 ---
 
+## 5a. Profile tab = Premium plans page
+
+![premium](reference/jollify/06-profile-tab-premium.png)
+
+Tapping **Profile** in the bottom nav does **not** open the profile. It opens the
+**Premium** plans page. The real profile is behind the 👤 icon in the top-right
+(screenshot 07).
+
+| Element | Detail |
+|---|---|
+| App bar | "Premium" + 👤 **profile icon** (top-right) |
+| Benefits card | Pink card with a "Premium" badge and 3 ticks: **Ad-Free Experience · Access 2 TB Cloud Storage · Fast Upload & Download Speed** |
+| Plan list | Radio-button cards, **Trial pre-selected** (red border) |
+| Plans | Trial **₹69 / 2 days** · Silver **₹129 / 7 days** · Gold **₹259 / 1 month** · Platinum **₹599 / 6 months** · Diamond **₹999 / 1 year** |
+| CTA | Full-width red **Next** button |
+| Next → | Login (Email or Google) if still a guest → payment |
+
+Observations:
+- The search snippet said Diamond was ₹899. The app now shows **₹999**, so they
+  change prices from time to time (or ran a discount). Prices must be
+  **configurable from the admin panel**, not hard-coded.
+- The benefits say premium gets **2 TB**, so **free users get 1 TB** (the website headline).
+- The perks listed are only 3: no ads, more storage, speed. Unlocking 👑 content is
+  **not listed**, but it is what the Watch button actually sells (see 5c).
+- No per-day price, "most popular" tag, or savings label. Easy wins for us.
+- Not visible: whether plans auto-renew. The fixed short terms (2 days, 7 days)
+  suggest **one-time prepaid passes** rather than auto-renewing subscriptions.
+
+## 5b. User profile (from the 👤 icon)
+
+![profile](reference/jollify/08-user-profile.png)
+
+| Element | Detail |
+|---|---|
+| Header | Red band, large round avatar, display name **`User-qfMyMje…`** (auto-generated guest name), ✏️ **edit**, ⚙️ **settings** |
+| Section | **My Channels** + **Add Channel** link (top-right) |
+| Empty state | App icon + "No Record Found" |
+| Navigation | Pushed screen; **no bottom nav** on this page |
+
+Behaviour (per the product owner):
+- ✏️ lets the user change their name (and probably the avatar).
+- "My Channels" lists the channels the user has **joined** (and probably those they own).
+- **Add Channel requires login**, so guests are sent to Email/Google sign-in first.
+- ⚙️ Settings: not seen yet.
+
+## 5c. Explore → Content detail → Watch
+
+![explore tap](reference/jollify/09-explore-tap.webp) ![detail](reference/jollify/10-content-detail.png)
+
+Tapping a tile in Explore opens a **content detail page**, not a full-screen viewer.
+
+| Element | Detail |
+|---|---|
+| App bar | Back ←, title **"foods"** (post/collection name), subtitle **"Posted by - Food"** (channel name), ⋮ menu |
+| Item row | Rounded thumbnail with a **👑 crown badge** (premium item), title "foods", red **Watch** button, row ⋮ menu |
+| Watch | Opens the **Premium plans** page (5a) when the user is not premium |
+
+Inferred behaviour:
+- An Explore tile is a **post/collection** from a channel, which can hold one or more
+  items. Each item can be **free or premium (👑)**.
+- **Watch** checks the user's entitlement: premium → play/view; otherwise → paywall.
+- The ⋮ menus probably hold Report / Share / Download / Save to Cloud (to confirm).
+- So the paywall shows up whenever a free user hits premium content, which is the
+  main money-maker.
+
+---
+
 ## 6. Visual design notes (reference only)
 
 | Token | Observation |
@@ -186,15 +271,41 @@ layout patterns only.
 
 ---
 
+### Added after batch 2
+
+8. **Guest-first auth.** Create an anonymous account on first launch (device-bound
+   token, random display name). Upgrade it **in place** to an Email/Google account on
+   purchase or channel creation, so joined channels, uploads, and settings are kept.
+9. **Premium content.** Each media item gets an `is_premium` flag. Watch / download
+   checks the user's entitlement on the server; free users get the paywall. Thumbnails
+   stay public so Explore still looks full.
+10. **Plans as one-time passes** (2 d / 7 d / 1 m / 6 m / 1 y), with prices and perks
+    editable in the admin panel. Free = 1 TB, Premium = 2 TB.
+11. **Profile tab opens the paywall.** We can copy this placement, but should make
+    the profile easier to find (e.g. Profile tab → profile, with a big "Go Premium"
+    card at the top). Final call is the product owner's.
+12. **⚠️ Copyright risk goes up a lot.** Charging money to watch content that *users*
+    uploaded means we profit from it directly. Pirated movies, paid courses, or
+    adult content in channels would put the app at serious legal and Play Store risk.
+    Mitigation: premium flag only on content from **verified/approved channels**,
+    a review step before content can be marked premium, fast takedowns, and a
+    repeat-infringer ban policy.
+
+---
+
 ## 8. Still unknown (need more screenshots)
 
-- [ ] Login / sign-up screen and when it appears
-- [ ] Profile tab
-- [ ] Explore → tap a tile (viewer, actions: download, share, like?)
-- [ ] Channel detail page → folders → media; how members upload
-- [ ] Create-channel flow (if users can create channels)
-- [ ] Cloud: + button sheet, folder view, file viewer, share link
+- [x] ~~Login / when it appears~~: guest auto-login; Email/Google at plan purchase or Add Channel
+- [x] ~~Profile tab~~: opens Premium; 👤 → user profile
+- [x] ~~Explore → tap a tile~~: content detail with Watch
+- [x] ~~Premium / crown paywall and plan list~~
+- [ ] Login screen itself (Email + Google buttons, OTP? password?)
+- [ ] Payment screen (Google Play Billing sheet, or Razorpay/UPI?)
+- [ ] What premium users see after Watch (viewer/player, download, share)
+- [ ] Free (non-👑) content: what Watch does
+- [ ] Channel detail page → folders → media; how members upload; who can mark content premium
+- [ ] Add Channel form
+- [ ] Edit profile, Settings (⚙️), delete account, logout
+- [ ] Cloud: + button sheet, folder view, file viewer, share link; can guests upload?
 - [ ] Info (i) screen
-- [ ] Premium / crown paywall and plan list
-- [ ] Settings, delete account
 - [ ] Ads: where and what type (banner, interstitial, rewarded)

@@ -17,7 +17,9 @@ directly; screenshots pending):
 - Features: photo/video/document backup, fast upload/download, secure share links,
   public/private Channels (user-generated content).
 - Paid plans (INR): Trial 2 days ₹69 · Silver 7 days ₹129 · Gold 1 month ₹259 ·
-  Platinum 6 months ₹599 · Diamond 1 year ₹899. Markets "20+ premium privileges".
+  Platinum 6 months ₹599 · Diamond 1 year ₹999 (in-app, Oct 2026; earlier listed as ₹899).
+  In-app perks shown: ad-free, 2 TB storage (free = 1 TB), fast upload/download.
+  Premium (👑) channel content can only be watched by paying users.
 - Policy pages: privacy, refund, terms, community guidelines, delete account.
 
 Takeaway: it looks like the TeraBox model. Storage is free, and revenue comes from
@@ -34,7 +36,10 @@ speed, convenience, ads, and impulse-priced short plans.
 ## 4. Features
 
 ### 4.1 Account
-- Sign up / log in: phone OTP, Google sign-in, (later) email.
+- **Guest-first:** an anonymous guest account is created automatically on first launch
+  (random display name). Users can browse, join channels and use Cloud as a guest.
+- Upgrade to a full account with **Email or Google** when buying a plan or creating a
+  channel; guest data is kept (same account, credentials attached).
 - Profile: name, avatar, username (used for Channels).
 - Devices & sessions list, log out everywhere.
 - Delete account (in-app and via a web URL, required by Play Store).
@@ -72,7 +77,8 @@ Ideas for paid perks (final list decided in [open questions](05-open-questions.m
 
 | Perk | Free | Premium |
 |---|---|---|
-| Storage | 1 TB (configurable cap) | 1 TB+ / more |
+| Storage | 1 TB (configurable cap) | 2 TB |
+| Premium (👑) channel content | Thumbnail only, Watch → paywall | Full access |
 | Download speed | Throttled | Full speed |
 | Max single file size | e.g. 4 GB | e.g. 20 GB |
 | Ads | Yes | No |
@@ -93,14 +99,14 @@ Plan durations to mirror the market: 2 days, 7 days, 1 month, 6 months, 1 year.
 
 ## 5. Core user flows
 
-1. **Onboarding:** splash → intro slides → login (OTP/Google) → permissions
-   (photos, notifications) → enable auto-backup? → home.
+1. **Onboarding:** splash → guest account auto-created → consent dialog → Agree →
+   Explore. Permissions are requested only when a feature needs them.
 2. **Upload:** home → "+" → pick source → choose folder → upload progress sheet →
    done notification.
 3. **Share:** long-press file → Share → link options → copy/share → recipient opens
    web page → preview/download/save.
-4. **Upgrade:** a limit is hit (speed, size, ads) → paywall → choose plan → Play
-   Billing → premium active.
+4. **Upgrade:** tap 👑 / Profile tab, or Watch on premium content → plans → Next →
+   login with Email/Google (if guest) → payment → premium active → back to the content.
 5. **Channel post:** Channels tab → my channel → "+" → choose files from the drive →
    caption → publish.
 6. **Delete account:** Settings → Account → Delete → confirm (OTP) → 30-day grace
@@ -117,10 +123,11 @@ Detailed analysis: [06-app-flow-analysis.md](06-app-flow-analysis.md).
 | 3 | Channels | Search, Discover/Joined, Trending/Latest/Top Rated, Join | Analysed |
 | 4 | Feed | Posts from joined channels; empty state | Analysed |
 | 5 | Cloud Storage | Personal drive, "+" button; empty state | Analysed |
-| 6 | Profile | TBD | Need screenshot |
-| 7 | Login / OTP | TBD | Need screenshot |
-| 8 | Media viewer (Explore/Channel) | TBD | Need screenshot |
+| 6 | Profile tab → Premium plans | Benefits card + 5 plan radio cards + Next | Analysed |
+| 6b | User profile (👤) | Avatar, guest name, edit, settings, My Channels, Add Channel | Analysed |
+| 7 | Login (Email / Google) | Shown at plan purchase / Add Channel | Need screenshot |
+| 8 | Content detail (from Explore) | "Posted by" channel, items with 👑 + Watch | Analysed (viewer still needed) |
 | 9 | Channel detail / folders / upload | TBD | Need screenshot |
 | 10 | Cloud upload sheet, folder, file viewer, share | TBD | Need screenshot |
-| 11 | Paywall / plans (crown) | TBD | Need screenshot |
+| 11 | Paywall / plans (crown) | Same as Profile tab screen | Analysed |
 | 12 | Settings / delete account | TBD | Need screenshot |

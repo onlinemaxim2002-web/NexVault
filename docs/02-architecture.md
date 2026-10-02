@@ -11,7 +11,7 @@
 | Object storage | Cloudflare R2 (S3-compatible) | No egress fees, which matters for a download-heavy app. Wasabi/B2 as alternatives |
 | CDN | Cloudflare | Thumbnails, HLS segments, public share pages |
 | Media processing | Worker service + FFmpeg + libvips/sharp | Thumbnails, HLS transcoding, metadata |
-| Auth | Own JWT (access + refresh) + Firebase Phone Auth / MSG91 for OTP, Google Sign-In | |
+| Auth | Own JWT (access + refresh). Guest accounts on first launch; Email (OTP/magic link) + Google Sign-In to upgrade | |
 | Payments | Google Play Billing (in-app), Razorpay (web) | Play requires its billing for digital goods |
 | Ads | Google AdMob (banner, interstitial, rewarded) | |
 | Push / crash | Firebase Cloud Messaging, Crashlytics | |
@@ -56,7 +56,7 @@ presigned upload/download URLs and records metadata.
 ## 5. Data model (initial)
 
 ```
-users           id, phone, email, google_id, name, username, avatar_url,
+users           id, is_guest, device_id, phone, email, google_id, name, username, avatar_url,
                 plan_id, plan_expires_at, quota_bytes, used_bytes,
                 status(active|suspended|pending_deletion), created_at, deleted_at
 sessions        id, user_id, device_name, platform, refresh_token_hash, last_seen_at
@@ -74,8 +74,11 @@ subscriptions   id, user_id, plan_id, provider(play|razorpay), provider_ref,
 channels        id, owner_id, name, handle, description, icon_url, visibility(public|private),
                 invite_token, followers_count, status
 channel_members channel_id, user_id, role(owner|admin|member), joined_at
-posts           id, channel_id, author_id, caption, status, created_at
-post_items      post_id, file_id, position
+channel_folders id, channel_id, name, cover_url, position
+posts           id, channel_id, folder_id, author_id, title, caption, status,
+                view_count, like_count, created_at        -- every public post also appears in Explore
+post_items      post_id, file_id, position, is_premium
+consents        id, user_id, policy_version, accepted_at, ip, device
 reports         id, reporter_id, target_type(post|channel|user|share_link), target_id,
                 reason, details, status, handled_by, created_at
 audit_logs      id, actor_id, action, target, meta(jsonb), created_at
@@ -89,7 +92,8 @@ Notes:
 ## 6. API outline (v1)
 
 ```
-Auth        POST /auth/otp/send, /auth/otp/verify, /auth/google, /auth/refresh, /auth/logout
+Auth        POST /auth/guest, /auth/email/send-code, /auth/email/verify, /auth/google,
+            /auth/refresh, /auth/logout   (email/google on a guest token = upgrade in place)
 Me          GET/PATCH /me, GET /me/sessions, DELETE /me/sessions/:id, POST /me/delete
 Files       GET /files?parentId=&type=&sort=, POST /folders, PATCH /files/:id (rename/move),
             POST /files/:id/copy, DELETE /files/:id (trash), POST /files/:id/restore,
@@ -101,7 +105,10 @@ Share       POST /share-links, GET /share-links, DELETE /share-links/:id,
 Storage     GET /storage/summary
 Billing     GET /plans, POST /billing/play/verify, POST /billing/razorpay/order,
             POST /webhooks/play, POST /webhooks/razorpay
-Channels    CRUD /channels, POST /channels/:id/follow, GET /feed, CRUD /channels/:id/posts
+Channels    CRUD /channels, POST /channels/:id/join, GET /feed, CRUD /channels/:id/folders,
+            CRUD /channels/:id/posts
+Explore     GET /explore?tab=all|latest|popular|most_watched, GET /posts/:id,
+            POST /posts/:id/items/:itemId/watch  (402 + plans if premium and not entitled)
 Safety      POST /reports, POST /users/:id/block
 Admin       /admin/users, /admin/reports, /admin/takedowns, /admin/plans, /admin/stats
 ```

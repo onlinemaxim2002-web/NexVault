@@ -12,6 +12,11 @@
 | 8 | Legal entity (for policies, Play account, GST) | | |
 | 9 | Storage provider | Cloudflare R2 / Wasabi / Backblaze B2 / AWS S3 | Proposed: R2 |
 | 10 | OTP provider | Firebase Phone Auth / MSG91 / Twilio | |
-| 11 | Guest browsing without login? | Yes (like Jollify) / login first | Proposed: Yes |
-| 12 | Can regular users create channels, or admins only? | | Waiting on screenshots |
+| 11 | Guest browsing without login? | Yes (like Jollify) / login first | **Decided: Yes.** Auto guest account; Email/Google at purchase or Add Channel |
+| 12 | Can regular users create channels, or admins only? | | Logged-in users can (Add Channel needs login) |
 | 13 | Launch content: who seeds the category channels, and with what licensed content? | | |
+| 14 | Who can mark content as premium (👑)? | Admins only / verified channels / any channel owner | Proposed: admins + verified channels (copyright risk) |
+| 15 | Do channel creators earn a revenue share from premium views? | | |
+| 16 | Plans: one-time passes or auto-renew subscriptions? | | Proposed: one-time passes (like Jollify) |
+| 17 | Profile tab: open paywall (like Jollify) or open profile with a Premium card? | | |
+| 18 | Can guests upload to Cloud, or only logged-in users? | | |

@@ -13,11 +13,12 @@ Durations assume a solo developer working with Claude; adjust once the team is k
 - [ ] CI: lint/test, build organic + ads APKs
 
 ## Phase 1: Admin panel + content (core)
-- [ ] Admin login, roles (owner / content admin), invite admins
-- [ ] Channels + folders CRUD with audience
-- [ ] Upload content (direct-to-R2), premium toggle, audience, publish/schedule
+- [x] Admin login, roles (owner / content admin), add admins
+- [x] Channels + folders CRUD with audience
+- [x] Posts: audience, publish/schedule/draft, premium toggle per item
+- [ ] Media upload (direct-to-R2): waiting for the Cloudflare account
 - [ ] Media worker: thumbnails, HLS, preview clips
-- [ ] Users list, grant premium manually
+- [x] Users list, grant premium manually, approvals queue, plans editor
 
 ## Phase 2: App: browse & watch
 - [ ] Guest auto-login (anonymous), consent dialog

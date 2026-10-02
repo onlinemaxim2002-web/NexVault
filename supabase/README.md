@@ -36,7 +36,7 @@ roles, applies all migrations, and runs `tests/rls_test.sql`.
 ## Supabase project
 
 - Project: **cloud-storage** · ref `lcfiohprmviolzwglkhm` · region ap-south-1 (Mumbai)
-- Applied migrations: `20261002000001_init`, `20261002000002_harden_functions`
+- Applied migrations: `20261002000001_init`, `20261002000002_harden_functions`, `20261002000003_admin_rpcs`
 
 ## Apply to the Supabase project
 

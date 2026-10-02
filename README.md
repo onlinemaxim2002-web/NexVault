@@ -3,7 +3,7 @@
 A mobile-first cloud storage app with generous free storage, fast upload/download,
 secure link sharing, and public/private **Channels** for sharing content.
 
-> Status: **Planning.** No application code yet. See the docs below.
+> Status: database live on Supabase; admin panel built (`admin/`). App and media upload next.
 
 ## Documentation
 
@@ -18,7 +18,7 @@ secure link sharing, and public/private **Channels** for sharing content.
 | [docs/07-attribution-and-personalisation.md](docs/07-attribution-and-personalisation.md) | Ads vs organic installs, content audience, APK builds, download page |
 | [docs/08-admin-panel.md](docs/08-admin-panel.md) | Online admin panel: roles, upload, premium, audience, reports |
 
-## Repository layout (planned)
+## Repository layout
 
 ```
 mobile/    Flutter app (Android first, iOS later)

@@ -297,5 +297,30 @@ select t.ok((select buyers from public.attribution_report() where source = 'dire
             'report counts buyers');
 
 reset role;
+
+-- ---------------------------------------------------------------------------
+-- Admin panel read models
+-- ---------------------------------------------------------------------------
+set role authenticated;
+select t.act_as('organic_user');
+select t.fails($$select * from public.admin_users()$$, 'app users cannot list users');
+select t.fails($$select public.admin_dashboard()$$, 'app users cannot read the dashboard');
+select t.act_as('content_admin');
+select t.fails($$select * from public.admin_list_admins()$$, 'content admins cannot list admins');
+select t.ok((public.admin_dashboard()->>'posts_published')::int = 8, 'content admins can read the dashboard');
+
+select t.act_as('owner');
+select t.ok((select count(*) from public.admin_users()) = 5, 'owner lists app users (admins excluded)');
+select t.ok((select source from public.admin_users() where id = t.id('ads_user')) = 'ads', 'user list shows source');
+select t.ok((select plan_name from public.admin_users() where id = t.id('organic_buyer')) = 'Gold Plan',
+            'user list shows the active plan');
+select t.ok((select count(*) from public.admin_users('rejected')) = 1, 'filter by approval status');
+select t.ok((select count(*) from public.admin_users('all', 'staff@')) = 0, 'search does not return admins');
+select t.ok((select email from public.admin_list_admins() where role = 'content_admin') = 'staff@example.com',
+            'owner lists admins with emails');
+select t.ok((select array_length(channel_ids, 1) from public.admin_list_admins() where role = 'content_admin') = 1,
+            'admin list shows channel limits');
+select t.ok((public.admin_dashboard()->>'installs_ads')::int >= 2, 'dashboard counts ads installs');
+reset role;
 \echo
 \echo 'All tests passed.'

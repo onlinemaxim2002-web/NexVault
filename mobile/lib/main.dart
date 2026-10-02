@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'config.dart';
@@ -9,7 +11,12 @@ import 'widgets/common.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Supabase.initialize(url: Config.supabaseUrl, publishableKey: Config.supabaseKey);
+  await Supabase.initialize(
+    url: Config.supabaseUrl,
+    publishableKey: Config.supabaseKey,
+  );
+  // Web builds are only used for automated UI tests: expose the semantics tree.
+  if (kIsWeb) SemanticsBinding.instance.ensureSemantics();
   runApp(const CloudStorageApp());
   app.start();
 }
@@ -27,7 +34,9 @@ class CloudStorageApp extends StatelessWidget {
         listenable: app,
         builder: (context, _) {
           if (app.startupError != null) {
-            return Scaffold(body: ErrorRetry(message: app.startupError!, onRetry: app.start));
+            return Scaffold(
+              body: ErrorRetry(message: app.startupError!, onRetry: app.start),
+            );
           }
           if (!app.ready) return const SplashScreen();
           return const HomeShell();
@@ -45,13 +54,23 @@ class SplashScreen extends StatelessWidget {
     return const Scaffold(
       backgroundColor: AppColors.primary,
       body: Center(
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Icon(Icons.cloud_upload, size: 88, color: Colors.white),
-          SizedBox(height: 16),
-          Text(Config.appName, style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w700)),
-          SizedBox(height: 32),
-          CircularProgressIndicator(color: Colors.white),
-        ]),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.cloud_upload, size: 88, color: Colors.white),
+            SizedBox(height: 16),
+            Text(
+              Config.appName,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 28,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            SizedBox(height: 32),
+            CircularProgressIndicator(color: Colors.white),
+          ],
+        ),
       ),
     );
   }

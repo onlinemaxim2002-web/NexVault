@@ -13,7 +13,11 @@ import '../widgets/common.dart';
 class NewPostScreen extends StatefulWidget {
   final String channelId;
   final String channelName;
-  const NewPostScreen({super.key, required this.channelId, required this.channelName});
+  const NewPostScreen({
+    super.key,
+    required this.channelId,
+    required this.channelName,
+  });
 
   @override
   State<NewPostScreen> createState() => _NewPostScreenState();
@@ -62,19 +66,31 @@ class _NewPostScreenState extends State<NewPostScreen> {
         tooBig++;
         continue;
       }
-      final picked = _Picked(f, _videoExt.contains((f.extension ?? '').toLowerCase()));
+      final picked = _Picked(
+        f,
+        _videoExt.contains((f.extension ?? '').toLowerCase()),
+      );
       // Images double as their own thumbnail (public bucket allows up to 10 MB).
-      picked.thumbnail = picked.isVideo ? await _videoThumb(f) : (size <= 9 * 1024 * 1024 ? await f.readAsBytes() : null);
+      picked.thumbnail = picked.isVideo
+          ? await _videoThumb(f)
+          : (size <= 9 * 1024 * 1024 ? await f.readAsBytes() : null);
       _files.add(picked);
     }
     setState(() {});
-    if (tooBig > 0 && mounted) showSnack(context, '$tooBig file(s) skipped: larger than 50 MB.');
+    if (tooBig > 0 && mounted) {
+      showSnack(context, '$tooBig file(s) skipped: larger than 50 MB.');
+    }
   }
 
   Future<Uint8List?> _videoThumb(PlatformFile f) async {
     if (kIsWeb || f.path == null) return null;
     try {
-      return await VideoThumbnail.thumbnailData(video: f.path!, imageFormat: ImageFormat.JPEG, maxWidth: 480, quality: 75);
+      return await VideoThumbnail.thumbnailData(
+        video: f.path!,
+        imageFormat: ImageFormat.JPEG,
+        maxWidth: 480,
+        quality: 75,
+      );
     } catch (_) {
       return null;
     }
@@ -86,16 +102,30 @@ class _NewPostScreenState extends State<NewPostScreen> {
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('New folder'),
-        content: TextField(controller: ctrl, autofocus: true, decoration: const InputDecoration(labelText: 'Folder name')),
+        content: TextField(
+          controller: ctrl,
+          autofocus: true,
+          decoration: const InputDecoration(labelText: 'Folder name'),
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-          TextButton(onPressed: () => Navigator.pop(context, ctrl.text.trim()), child: const Text('Create')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, ctrl.text.trim()),
+            child: const Text('Create'),
+          ),
         ],
       ),
     );
     if (name == null || name.isEmpty) return;
     try {
-      final folder = await Backend.createChannelFolder(widget.channelId, name, _folders.length);
+      final folder = await Backend.createChannelFolder(
+        widget.channelId,
+        name,
+        _folders.length,
+      );
       setState(() {
         _folders = [..._folders, folder];
         _folderId = folder.id;
@@ -107,8 +137,16 @@ class _NewPostScreenState extends State<NewPostScreen> {
 
   String _mime(PlatformFile f, bool isVideo) {
     final ext = (f.extension ?? '').toLowerCase();
-    if (isVideo) return ext == 'webm' ? 'video/webm' : (ext == 'mov' ? 'video/quicktime' : 'video/mp4');
-    return ext == 'png' ? 'image/png' : (ext == 'webp' ? 'image/webp' : (ext == 'gif' ? 'image/gif' : 'image/jpeg'));
+    if (isVideo) {
+      return ext == 'webm'
+          ? 'video/webm'
+          : (ext == 'mov' ? 'video/quicktime' : 'video/mp4');
+    }
+    return ext == 'png'
+        ? 'image/png'
+        : (ext == 'webp'
+              ? 'image/webp'
+              : (ext == 'gif' ? 'image/gif' : 'image/jpeg'));
   }
 
   Future<void> _post() async {
@@ -160,78 +198,128 @@ class _NewPostScreenState extends State<NewPostScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('New post')),
-      body: ListView(padding: const EdgeInsets.all(20), children: [
-        TextField(controller: _title, decoration: const InputDecoration(labelText: 'Title'), maxLength: 120),
-        const SizedBox(height: 12),
-        TextField(
-          controller: _caption,
-          decoration: const InputDecoration(labelText: 'Caption (emojis and #hashtags welcome)'),
-          maxLines: 3,
-          maxLength: 1000,
-        ),
-        const SizedBox(height: 12),
-        Row(children: [
-          Expanded(
-            child: DropdownButtonFormField<String?>(
-              initialValue: _folderId,
-              decoration: const InputDecoration(labelText: 'Folder'),
-              items: [
-                const DropdownMenuItem(value: null, child: Text('No folder')),
-                for (final f in _folders) DropdownMenuItem(value: f.id, child: Text(f.name)),
-              ],
-              onChanged: (v) => setState(() => _folderId = v),
-            ),
+      body: ListView(
+        padding: const EdgeInsets.all(20),
+        children: [
+          TextField(
+            controller: _title,
+            decoration: const InputDecoration(labelText: 'Title'),
+            maxLength: 120,
           ),
-          IconButton(tooltip: 'New folder', icon: const Icon(Icons.create_new_folder_outlined), onPressed: _newFolder),
-        ]),
-        const SizedBox(height: 16),
-        Wrap(spacing: 8, runSpacing: 8, children: [
-          for (final p in _files)
-            Stack(children: [
-              ClipRRect(
+          const SizedBox(height: 12),
+          TextField(
+            controller: _caption,
+            decoration: const InputDecoration(
+              labelText: 'Caption (emojis and #hashtags welcome)',
+            ),
+            maxLines: 3,
+            maxLength: 1000,
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: DropdownButtonFormField<String?>(
+                  initialValue: _folderId,
+                  decoration: const InputDecoration(labelText: 'Folder'),
+                  items: [
+                    const DropdownMenuItem(
+                      value: null,
+                      child: Text('No folder'),
+                    ),
+                    for (final f in _folders)
+                      DropdownMenuItem(value: f.id, child: Text(f.name)),
+                  ],
+                  onChanged: (v) => setState(() => _folderId = v),
+                ),
+              ),
+              IconButton(
+                tooltip: 'New folder',
+                icon: const Icon(Icons.create_new_folder_outlined),
+                onPressed: _newFolder,
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final p in _files)
+                Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: SizedBox(
+                        width: 96,
+                        height: 96,
+                        child: p.thumbnail != null
+                            ? Image.memory(p.thumbnail!, fit: BoxFit.cover)
+                            : Container(
+                                color: const Color(0xFFEDEDED),
+                                child: Icon(
+                                  p.isVideo ? Icons.videocam : Icons.image,
+                                  color: Colors.black38,
+                                ),
+                              ),
+                      ),
+                    ),
+                    Positioned(
+                      top: 2,
+                      right: 2,
+                      child: InkResponse(
+                        onTap: _posting
+                            ? null
+                            : () => setState(() => _files.remove(p)),
+                        child: const CircleAvatar(
+                          radius: 12,
+                          backgroundColor: Colors.black54,
+                          child: Icon(
+                            Icons.close,
+                            size: 14,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              InkWell(
+                onTap: _posting ? null : _pick,
                 borderRadius: BorderRadius.circular(10),
-                child: SizedBox(
+                child: Container(
                   width: 96,
                   height: 96,
-                  child: p.thumbnail != null
-                      ? Image.memory(p.thumbnail!, fit: BoxFit.cover)
-                      : Container(
-                          color: const Color(0xFFEDEDED),
-                          child: Icon(p.isVideo ? Icons.videocam : Icons.image, color: Colors.black38),
-                        ),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: AppColors.primary),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.add_photo_alternate_outlined,
+                        color: AppColors.primary,
+                      ),
+                      Text('Add', style: TextStyle(color: AppColors.primary)),
+                    ],
+                  ),
                 ),
               ),
-              Positioned(
-                top: 2,
-                right: 2,
-                child: InkResponse(
-                  onTap: _posting ? null : () => setState(() => _files.remove(p)),
-                  child: const CircleAvatar(radius: 12, backgroundColor: Colors.black54, child: Icon(Icons.close, size: 14, color: Colors.white)),
-                ),
-              ),
-            ]),
-          InkWell(
-            onTap: _posting ? null : _pick,
-            borderRadius: BorderRadius.circular(10),
-            child: Container(
-              width: 96,
-              height: 96,
-              decoration: BoxDecoration(border: Border.all(color: AppColors.primary), borderRadius: BorderRadius.circular(10)),
-              child: const Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                Icon(Icons.add_photo_alternate_outlined, color: AppColors.primary),
-                Text('Add', style: TextStyle(color: AppColors.primary)),
-              ]),
-            ),
+            ],
           ),
-        ]),
-        const SizedBox(height: 8),
-        const Text('Videos (MP4) and images up to 50 MB each.', style: TextStyle(color: AppColors.muted)),
-        const SizedBox(height: 24),
-        FilledButton(
-          onPressed: _posting ? null : _post,
-          child: Text(_progress ?? (_posting ? 'Posting…' : 'Post')),
-        ),
-      ]),
+          const SizedBox(height: 8),
+          const Text(
+            'Videos (MP4) and images up to 50 MB each.',
+            style: TextStyle(color: AppColors.muted),
+          ),
+          const SizedBox(height: 24),
+          FilledButton(
+            onPressed: _posting ? null : _post,
+            child: Text(_progress ?? (_posting ? 'Posting…' : 'Post')),
+          ),
+        ],
+      ),
     );
   }
 }

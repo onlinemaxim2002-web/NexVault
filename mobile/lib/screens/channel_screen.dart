@@ -27,7 +27,8 @@ class _ChannelScreenState extends State<ChannelScreen> {
   bool joined = false;
   String? error;
 
-  bool get isCreator => channel?.createdBy != null && channel!.createdBy == app.userId;
+  bool get isCreator =>
+      channel?.createdBy != null && channel!.createdBy == app.userId;
 
   @override
   void initState() {
@@ -57,7 +58,9 @@ class _ChannelScreenState extends State<ChannelScreen> {
   }
 
   Future<void> _join() async {
-    if (!await ensureLoggedIn(context, reason: 'Log in to join channels')) return;
+    if (!await ensureLoggedIn(context, reason: 'Log in to join channels')) {
+      return;
+    }
     try {
       await Backend.join(widget.channelId);
       await _load();
@@ -82,8 +85,14 @@ class _ChannelScreenState extends State<ChannelScreen> {
         title: const Text('Delete post?'),
         content: Text('"${p.title}" will be removed from the channel.'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete'),
+          ),
         ],
       ),
     );
@@ -100,33 +109,73 @@ class _ChannelScreenState extends State<ChannelScreen> {
   Widget build(BuildContext context) {
     final c = channel;
     final approved = c?.reviewStatus == 'approved';
-    final shown = posts == null ? null : (folderId == null ? posts! : posts!.where((p) => p.folderId == folderId).toList());
+    final shown = posts == null
+        ? null
+        : (folderId == null
+              ? posts!
+              : posts!.where((p) => p.folderId == folderId).toList());
 
     return Scaffold(
       appBar: AppBar(
         titleSpacing: 0,
         title: c == null
             ? const Text('Channel')
-            : Row(children: [
-                ChannelAvatar(url: c.iconUrl, name: c.name, size: 44),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text(c.name, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700), overflow: TextOverflow.ellipsis),
-                    Row(children: [
-                      const Icon(Icons.people_outline, size: 18, color: Colors.white),
-                      Text(' ${c.membersCount}   ', style: const TextStyle(fontSize: 15, color: Colors.white)),
-                      const Icon(Icons.folder_outlined, size: 18, color: Colors.white),
-                      Text(' ${c.foldersCount}', style: const TextStyle(fontSize: 15, color: Colors.white)),
-                    ]),
-                  ]),
-                ),
-              ]),
+            : Row(
+                children: [
+                  ChannelAvatar(url: c.iconUrl, name: c.name, size: 44),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          c.name,
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.people_outline,
+                              size: 18,
+                              color: Colors.white,
+                            ),
+                            Text(
+                              ' ${c.membersCount}   ',
+                              style: const TextStyle(
+                                fontSize: 15,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const Icon(
+                              Icons.folder_outlined,
+                              size: 18,
+                              color: Colors.white,
+                            ),
+                            Text(
+                              ' ${c.foldersCount}',
+                              style: const TextStyle(
+                                fontSize: 15,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
         actions: [
           if (joined && !isCreator)
             PopupMenuButton<String>(
               onSelected: (v) => v == 'leave' ? _leave() : null,
-              itemBuilder: (_) => const [PopupMenuItem(value: 'leave', child: Text('Leave channel'))],
+              itemBuilder: (_) => const [
+                PopupMenuItem(value: 'leave', child: Text('Leave channel')),
+              ],
             ),
         ],
       ),
@@ -137,7 +186,10 @@ class _ChannelScreenState extends State<ChannelScreen> {
               tooltip: 'New post',
               onPressed: () async {
                 final posted = await Navigator.of(context).push<bool>(
-                  MaterialPageRoute(builder: (_) => NewPostScreen(channelId: c!.id, channelName: c.name)),
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        NewPostScreen(channelId: c!.id, channelName: c.name),
+                  ),
                 );
                 if (posted == true) _load();
               },
@@ -145,56 +197,86 @@ class _ChannelScreenState extends State<ChannelScreen> {
             )
           : null,
       body: c == null
-          ? (error != null ? ErrorRetry(message: error!, onRetry: _load) : const Center(child: CircularProgressIndicator()))
-          : Column(children: [
-              if (isCreator && !approved) _ReviewBanner(status: c.reviewStatus),
-              if (folders.isNotEmpty)
-                SizedBox(
-                  height: 52,
-                  child: ListView(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    children: [
-                      _folderChip(null, 'All'),
-                      for (final f in folders) _folderChip(f.id, f.name),
-                    ],
+          ? (error != null
+                ? ErrorRetry(message: error!, onRetry: _load)
+                : const Center(child: CircularProgressIndicator()))
+          : Column(
+              children: [
+                if (isCreator && !approved)
+                  _ReviewBanner(status: c.reviewStatus),
+                if (folders.isNotEmpty)
+                  SizedBox(
+                    height: 52,
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      children: [
+                        _folderChip(null, 'All'),
+                        for (final f in folders) _folderChip(f.id, f.name),
+                      ],
+                    ),
                   ),
-                ),
-              Expanded(
-                child: shown == null
-                    ? const Center(child: CircularProgressIndicator())
-                    : shown.isEmpty
-                        ? EmptyState(
-                            message: isCreator && approved ? 'Post your first video or image with the + button.' : 'No posts yet.',
-                            icon: Icons.video_library_outlined,
-                          )
-                        : RefreshIndicator(
-                            onRefresh: _load,
-                            child: ListView.builder(
-                              reverse: true, // newest at the bottom, like a chat
-                              padding: const EdgeInsets.only(bottom: 8, top: 8),
-                              itemCount: shown.length,
-                              itemBuilder: (context, i) {
-                                final p = shown[i];
-                                final next = i + 1 < shown.length ? shown[i + 1] : null;
-                                final newDay = next == null || !DateUtils.isSameDay(next.publishedAt, p.publishedAt);
-                                return Column(children: [
+                Expanded(
+                  child: shown == null
+                      ? const Center(child: CircularProgressIndicator())
+                      : shown.isEmpty
+                      ? EmptyState(
+                          message: isCreator && approved
+                              ? 'Post your first video or image with the + button.'
+                              : 'No posts yet.',
+                          icon: Icons.video_library_outlined,
+                        )
+                      : RefreshIndicator(
+                          onRefresh: _load,
+                          child: ListView.builder(
+                            reverse: true, // newest at the bottom, like a chat
+                            padding: const EdgeInsets.only(bottom: 8, top: 8),
+                            itemCount: shown.length,
+                            itemBuilder: (context, i) {
+                              final p = shown[i];
+                              final next = i + 1 < shown.length
+                                  ? shown[i + 1]
+                                  : null;
+                              final newDay =
+                                  next == null ||
+                                  !DateUtils.isSameDay(
+                                    next.publishedAt,
+                                    p.publishedAt,
+                                  );
+                              return Column(
+                                children: [
                                   if (newDay) DateChip(date: p.publishedAt),
-                                  PostBubble(post: p, onDelete: isCreator ? () => _deletePost(p) : null),
-                                ]);
-                              },
-                            ),
+                                  PostBubble(
+                                    post: p,
+                                    onDelete: isCreator
+                                        ? () => _deletePost(p)
+                                        : null,
+                                  ),
+                                ],
+                              );
+                            },
                           ),
-              ),
-              if (!joined && approved)
-                SafeArea(
-                  top: false,
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
-                    child: SizedBox(width: double.infinity, child: FilledButton(onPressed: _join, child: const Text('Join'))),
-                  ),
+                        ),
                 ),
-            ]),
+                if (!joined && approved)
+                  SafeArea(
+                    top: false,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: FilledButton(
+                          onPressed: _join,
+                          child: const Text('Join'),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
     );
   }
 

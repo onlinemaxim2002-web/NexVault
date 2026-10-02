@@ -53,7 +53,8 @@ class AppState extends ChangeNotifier {
       Backend.logEvent(installId, 'app_open');
 
       _authSub ??= sb.auth.onAuthStateChange.listen((s) async {
-        if (s.event == AuthChangeEvent.signedIn || s.event == AuthChangeEvent.userUpdated) {
+        if (s.event == AuthChangeEvent.signedIn ||
+            s.event == AuthChangeEvent.userUpdated) {
           await refreshStatus();
           bumpContent();
         }
@@ -81,7 +82,10 @@ class AppState extends ChangeNotifier {
   Future<void> refreshStatus() async {
     try {
       final s = await Backend.status();
-      final changed = s?.isPremium != status?.isPremium || s?.source != status?.source || s?.isGuest != status?.isGuest;
+      final changed =
+          s?.isPremium != status?.isPremium ||
+          s?.source != status?.source ||
+          s?.isGuest != status?.isGuest;
       status = s;
       notifyListeners();
       if (changed && ready) bumpContent();
@@ -103,7 +107,9 @@ class AppState extends ChangeNotifier {
   /// Guest → full account with the same user id (keeps everything).
   /// Returns false when the email must be confirmed first.
   Future<bool> createAccount(String email, String password) async {
-    final res = await sb.auth.updateUser(UserAttributes(email: email, password: password));
+    final res = await sb.auth.updateUser(
+      UserAttributes(email: email, password: password),
+    );
     await refreshStatus();
     bumpContent();
     return res.user?.email == email;

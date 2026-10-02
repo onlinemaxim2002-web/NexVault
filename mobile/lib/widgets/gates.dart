@@ -12,14 +12,16 @@ import 'common.dart';
 /// Login gate: guests are sent to log in / create an account.
 Future<bool> ensureLoggedIn(BuildContext context, {String? reason}) async {
   if (!app.isGuest) return true;
-  final ok = await Navigator.of(context).push<bool>(
-    MaterialPageRoute(builder: (_) => LoginScreen(reason: reason)),
-  );
+  final ok = await Navigator.of(
+    context,
+  ).push<bool>(MaterialPageRoute(builder: (_) => LoginScreen(reason: reason)));
   return ok == true && !app.isGuest;
 }
 
 Future<void> openPlans(BuildContext context) {
-  return Navigator.of(context).push(MaterialPageRoute(builder: (_) => const PremiumScreen(standalone: true)));
+  return Navigator.of(context).push(
+    MaterialPageRoute(builder: (_) => const PremiumScreen(standalone: true)),
+  );
 }
 
 /// Watch a post item: login → plan (for premium items) → online player.
@@ -32,11 +34,20 @@ Future<void> watchItem(BuildContext context, Post post, PostItem item) async {
   }
   try {
     final url = await Backend.mediaUrl(item.mediaKey);
-    Backend.logEvent(app.installId, 'content_view', contentId: post.id, viewId: const Uuid().v4());
+    Backend.logEvent(
+      app.installId,
+      'content_view',
+      contentId: post.id,
+      viewId: const Uuid().v4(),
+    );
     if (!context.mounted) return;
-    await Navigator.of(context).push(MaterialPageRoute(
-      builder: (_) => item.isVideo ? PlayerScreen(url: url, title: post.title) : ImageViewerScreen(url: url, title: post.title),
-    ));
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => item.isVideo
+            ? PlayerScreen(url: url, title: post.title)
+            : ImageViewerScreen(url: url, title: post.title),
+      ),
+    );
   } catch (e) {
     if (context.mounted) showSnack(context, friendlyError(e));
   }

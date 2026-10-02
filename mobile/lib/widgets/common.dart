@@ -13,17 +13,29 @@ class CrownButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(right: 8),
-      child: InkResponse(
-        onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const PremiumScreen(standalone: true))),
-        child: Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: AppColors.primaryDark,
-            shape: BoxShape.circle,
-            border: Border.all(color: AppColors.gold, width: 2),
+      child: Semantics(
+        label: 'Premium',
+        button: true,
+        child: InkResponse(
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => const PremiumScreen(standalone: true),
+            ),
           ),
-          child: const Center(child: Text('👑', style: TextStyle(fontSize: 18))),
+          child: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: AppColors.primaryDark,
+              shape: BoxShape.circle,
+              border: Border.all(color: AppColors.gold, width: 2),
+            ),
+            child: const Icon(
+              Icons.workspace_premium,
+              color: AppColors.gold,
+              size: 24,
+            ),
+          ),
         ),
       ),
     );
@@ -34,7 +46,12 @@ class EmptyState extends StatelessWidget {
   final String message;
   final IconData icon;
   final Widget? action;
-  const EmptyState({super.key, required this.message, this.icon = Icons.cloud_upload_outlined, this.action});
+  const EmptyState({
+    super.key,
+    required this.message,
+    this.icon = Icons.cloud_upload_outlined,
+    this.action,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -47,11 +64,18 @@ class EmptyState extends StatelessWidget {
             Container(
               width: 96,
               height: 96,
-              decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(24)),
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(24),
+              ),
               child: Icon(icon, size: 52, color: Colors.white),
             ),
             const SizedBox(height: 20),
-            Text(message, textAlign: TextAlign.center, style: const TextStyle(fontSize: 17)),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 17),
+            ),
             if (action != null) ...[const SizedBox(height: 20), action!],
           ],
         ),
@@ -70,13 +94,16 @@ class ErrorRetry extends StatelessWidget {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          const Icon(Icons.wifi_off, size: 48, color: AppColors.muted),
-          const SizedBox(height: 12),
-          Text(message, textAlign: TextAlign.center),
-          const SizedBox(height: 12),
-          OutlinedButton(onPressed: onRetry, child: const Text('Try again')),
-        ]),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.wifi_off, size: 48, color: AppColors.muted),
+            const SizedBox(height: 12),
+            Text(message, textAlign: TextAlign.center),
+            const SizedBox(height: 12),
+            OutlinedButton(onPressed: onRetry, child: const Text('Try again')),
+          ],
+        ),
       ),
     );
   }
@@ -87,7 +114,12 @@ class NetThumb extends StatelessWidget {
   final String? url;
   final BoxFit fit;
   final IconData fallback;
-  const NetThumb({super.key, this.url, this.fit = BoxFit.cover, this.fallback = Icons.image_outlined});
+  const NetThumb({
+    super.key,
+    this.url,
+    this.fit = BoxFit.cover,
+    this.fallback = Icons.image_outlined,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -109,7 +141,12 @@ class ChannelAvatar extends StatelessWidget {
   final String? url;
   final String name;
   final double size;
-  const ChannelAvatar({super.key, this.url, required this.name, this.size = 56});
+  const ChannelAvatar({
+    super.key,
+    this.url,
+    required this.name,
+    this.size = 56,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -123,7 +160,11 @@ class ChannelAvatar extends StatelessWidget {
                 child: Center(
                   child: Text(
                     name.isEmpty ? '?' : name.characters.first.toUpperCase(),
-                    style: TextStyle(fontSize: size * 0.4, fontWeight: FontWeight.w700, color: AppColors.primary),
+                    style: TextStyle(
+                      fontSize: size * 0.4,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.primary,
+                    ),
                   ),
                 ),
               )
@@ -146,7 +187,11 @@ class PremiumBadge extends StatelessWidget {
         shape: BoxShape.circle,
         border: Border.all(color: AppColors.gold, width: 1.5),
       ),
-      child: const Center(child: Text('👑', style: TextStyle(fontSize: 13))),
+      child: const Icon(
+        Icons.workspace_premium,
+        color: AppColors.gold,
+        size: 17,
+      ),
     );
   }
 }
@@ -177,4 +222,5 @@ String timeAgo(DateTime t) {
   return '${t.day}/${t.month}/${t.year}';
 }
 
-Future<int> fileSize(PlatformFile f) async => f.lengthSync() ?? await f.length() ?? 0;
+Future<int> fileSize(PlatformFile f) async =>
+    f.lengthSync() ?? await f.length() ?? 0;

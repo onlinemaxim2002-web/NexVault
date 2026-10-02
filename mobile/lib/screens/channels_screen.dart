@@ -54,7 +54,9 @@ class _ChannelsScreenState extends State<ChannelsScreen> with ContentReload {
   }
 
   Future<void> _join(Channel c) async {
-    if (!await ensureLoggedIn(context, reason: 'Log in to join channels')) return;
+    if (!await ensureLoggedIn(context, reason: 'Log in to join channels')) {
+      return;
+    }
     try {
       await Backend.join(c.id);
       await reload();
@@ -74,34 +76,45 @@ class _ChannelsScreenState extends State<ChannelsScreen> with ContentReload {
           actions: const [CrownButton()],
           bottom: PreferredSize(
             preferredSize: const Size.fromHeight(112),
-            child: Column(children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                child: TextField(
-                  decoration: const InputDecoration(
-                    hintText: 'Search',
-                    suffixIcon: Icon(Icons.search),
-                    fillColor: Colors.white,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                  child: TextField(
+                    decoration: const InputDecoration(
+                      hintText: 'Search',
+                      suffixIcon: Icon(Icons.search),
+                      fillColor: Colors.white,
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                    ),
+                    onChanged: (v) {
+                      _debounce?.cancel();
+                      _debounce = Timer(const Duration(milliseconds: 400), () {
+                        search = v;
+                        reload();
+                      });
+                    },
                   ),
-                  onChanged: (v) {
-                    _debounce?.cancel();
-                    _debounce = Timer(const Duration(milliseconds: 400), () {
-                      search = v;
-                      reload();
-                    });
-                  },
                 ),
-              ),
-              const TabBar(
-                labelColor: Colors.white,
-                unselectedLabelColor: Colors.white70,
-                indicatorColor: Colors.white,
-                dividerColor: Colors.transparent,
-                labelStyle: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                tabs: [Tab(text: 'Discover'), Tab(text: 'Joined')],
-              ),
-            ]),
+                const TabBar(
+                  labelColor: Colors.white,
+                  unselectedLabelColor: Colors.white70,
+                  indicatorColor: Colors.white,
+                  dividerColor: Colors.transparent,
+                  labelStyle: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  tabs: [
+                    Tab(text: 'Discover'),
+                    Tab(text: 'Joined'),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
         floatingActionButton: FloatingActionButton.extended(
@@ -110,49 +123,77 @@ class _ChannelsScreenState extends State<ChannelsScreen> with ContentReload {
           icon: const Icon(Icons.add),
           label: const Text('Create'),
           onPressed: () async {
-            if (!await ensureLoggedIn(context, reason: 'Log in to create a channel')) return;
+            if (!await ensureLoggedIn(
+              context,
+              reason: 'Log in to create a channel',
+            )) {
+              return;
+            }
             if (!context.mounted) return;
-            await Navigator.of(context).push(MaterialPageRoute(builder: (_) => const CreateChannelScreen()));
+            await Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const CreateChannelScreen()),
+            );
           },
         ),
         body: error != null && discover == null
             ? ErrorRetry(message: error!, onRetry: reload)
-            : TabBarView(children: [
-                Column(children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
-                    child: Row(children: [
-                      for (final s in const [('trending', 'Trending'), ('latest', 'Latest'), ('top', 'Top Rated')])
-                        Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: ChoiceChip(
-                            label: Text(s.$2),
-                            selected: sort == s.$1,
-                            selectedColor: AppColors.primary,
-                            labelStyle: TextStyle(color: sort == s.$1 ? Colors.white : Colors.black87),
-                            showCheckmark: false,
-                            onSelected: (_) {
-                              setState(() => sort = s.$1);
-                              reload();
-                            },
-                          ),
+            : TabBarView(
+                children: [
+                  Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+                        child: Row(
+                          children: [
+                            for (final s in const [
+                              ('trending', 'Trending'),
+                              ('latest', 'Latest'),
+                              ('top', 'Top Rated'),
+                            ])
+                              Padding(
+                                padding: const EdgeInsets.only(right: 8),
+                                child: ChoiceChip(
+                                  label: Text(s.$2),
+                                  selected: sort == s.$1,
+                                  selectedColor: AppColors.primary,
+                                  labelStyle: TextStyle(
+                                    color: sort == s.$1
+                                        ? Colors.white
+                                        : Colors.black87,
+                                  ),
+                                  showCheckmark: false,
+                                  onSelected: (_) {
+                                    setState(() => sort = s.$1);
+                                    reload();
+                                  },
+                                ),
+                              ),
+                          ],
                         ),
-                    ]),
+                      ),
+                      Expanded(child: _list(discover, 'No channels found.')),
+                    ],
                   ),
-                  Expanded(child: _list(discover, 'No channels found.')),
-                ]),
-                _list(joined, 'You haven\'t joined any channels yet.'),
-              ]),
+                  _list(joined, 'You haven\'t joined any channels yet.'),
+                ],
+              ),
       ),
     );
   }
 
   Widget _list(List<Channel>? channels, String empty) {
-    if (channels == null) return const Center(child: CircularProgressIndicator());
+    if (channels == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
     if (channels.isEmpty) {
       return RefreshIndicator(
         onRefresh: reload,
-        child: ListView(children: [const SizedBox(height: 80), EmptyState(message: empty, icon: Icons.live_tv_outlined)]),
+        child: ListView(
+          children: [
+            const SizedBox(height: 80),
+            EmptyState(message: empty, icon: Icons.live_tv_outlined),
+          ],
+        ),
       );
     }
     return RefreshIndicator(
@@ -165,24 +206,38 @@ class _ChannelsScreenState extends State<ChannelsScreen> with ContentReload {
           final c = channels[i];
           final isJoined = joinedIds.contains(c.id);
           return ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 8,
+            ),
             leading: ChannelAvatar(url: c.iconUrl, name: c.name),
-            title: Text(c.name, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
-            subtitle: Row(children: [
-              const Icon(Icons.people_outline, size: 18),
-              Text(' ${c.membersCount}   '),
-              const Icon(Icons.folder_outlined, size: 18),
-              Text(' ${c.foldersCount}'),
-            ]),
+            title: Text(
+              c.name,
+              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+            ),
+            subtitle: Row(
+              children: [
+                const Icon(Icons.people_outline, size: 18),
+                Text(' ${c.membersCount}   '),
+                const Icon(Icons.folder_outlined, size: 18),
+                Text(' ${c.foldersCount}'),
+              ],
+            ),
             trailing: isJoined
                 ? const OutlinedButton(onPressed: null, child: Text('Joined'))
                 : FilledButton(
-                    style: FilledButton.styleFrom(minimumSize: const Size(80, 40)),
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size(80, 40),
+                    ),
                     onPressed: () => _join(c),
                     child: const Text('Join'),
                   ),
             onTap: () async {
-              await Navigator.of(context).push(MaterialPageRoute(builder: (_) => ChannelScreen(channelId: c.id)));
+              await Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => ChannelScreen(channelId: c.id),
+                ),
+              );
               reload();
             },
           );

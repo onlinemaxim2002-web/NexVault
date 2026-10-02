@@ -40,11 +40,18 @@ class _FeedScreenState extends State<FeedScreen> with ContentReload {
     return ValueListenableBuilder<int>(
       valueListenable: app.tab,
       builder: (context, tab, child) {
-        if (tab == 1 && posts != null) WidgetsBinding.instance.addPostFrameCallback((_) => _refreshIfStale());
+        if (tab == 1 && posts != null) {
+          WidgetsBinding.instance.addPostFrameCallback(
+            (_) => _refreshIfStale(),
+          );
+        }
         return child!;
       },
       child: Scaffold(
-        appBar: AppBar(title: const Text('Feed'), actions: const [CrownButton()]),
+        appBar: AppBar(
+          title: const Text('Feed'),
+          actions: const [CrownButton()],
+        ),
         body: _body(),
       ),
     );
@@ -58,18 +65,25 @@ class _FeedScreenState extends State<FeedScreen> with ContentReload {
   }
 
   Widget _body() {
-    if (error != null && posts == null) return ErrorRetry(message: error!, onRetry: reload);
+    if (error != null && posts == null) {
+      return ErrorRetry(message: error!, onRetry: reload);
+    }
     if (posts == null) return const Center(child: CircularProgressIndicator());
     if (posts!.isEmpty) {
       return RefreshIndicator(
         onRefresh: reload,
-        child: ListView(children: [
-          const SizedBox(height: 100),
-          EmptyState(
-            message: 'Join channels to get content here!',
-            action: FilledButton(onPressed: () => app.tab.value = 3, child: const Text('Discover channels')),
-          ),
-        ]),
+        child: ListView(
+          children: [
+            const SizedBox(height: 100),
+            EmptyState(
+              message: 'Join channels to get content here!',
+              action: FilledButton(
+                onPressed: () => app.tab.value = 3,
+                child: const Text('Discover channels'),
+              ),
+            ),
+          ],
+        ),
       );
     }
     return RefreshIndicator(
@@ -77,7 +91,8 @@ class _FeedScreenState extends State<FeedScreen> with ContentReload {
       child: ListView.builder(
         padding: const EdgeInsets.symmetric(vertical: 8),
         itemCount: posts!.length,
-        itemBuilder: (context, i) => PostBubble(post: posts![i], showChannel: true),
+        itemBuilder: (context, i) =>
+            PostBubble(post: posts![i], showChannel: true),
       ),
     );
   }

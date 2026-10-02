@@ -45,7 +45,9 @@ class _CreateChannelScreenState extends State<CreateChannelScreen> {
     setState(() {
       _icon = bytes;
       _iconExt = (f.extension ?? 'jpg').toLowerCase();
-      _iconMime = _iconExt == 'png' ? 'image/png' : (_iconExt == 'webp' ? 'image/webp' : 'image/jpeg');
+      _iconMime = _iconExt == 'png'
+          ? 'image/png'
+          : (_iconExt == 'webp' ? 'image/webp' : 'image/jpeg');
     });
   }
 
@@ -54,10 +56,14 @@ class _CreateChannelScreenState extends State<CreateChannelScreen> {
     setState(() => _saving = true);
     try {
       String? iconUrl;
-      if (_icon != null) iconUrl = await Backend.uploadChannelIcon(_icon!, _iconExt, _iconMime);
+      if (_icon != null) {
+        iconUrl = await Backend.uploadChannelIcon(_icon!, _iconExt, _iconMime);
+      }
       await Backend.createChannel(
         name: _name.text.trim(),
-        description: _description.text.trim().isEmpty ? null : _description.text.trim(),
+        description: _description.text.trim().isEmpty
+            ? null
+            : _description.text.trim(),
         category: _category.text.trim().isEmpty ? null : _category.text.trim(),
         iconUrl: iconUrl,
       );
@@ -70,7 +76,12 @@ class _CreateChannelScreenState extends State<CreateChannelScreen> {
             'Your channel has been sent for approval. You\'ll find it under Profile → My Channels. '
             'Once it\'s approved, you can start posting.',
           ),
-          actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('OK'))],
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('OK'),
+            ),
+          ],
         ),
       );
       if (mounted) Navigator.of(context).pop(true);
@@ -87,54 +98,79 @@ class _CreateChannelScreenState extends State<CreateChannelScreen> {
       appBar: AppBar(title: const Text('Create channel')),
       body: Form(
         key: _form,
-        child: ListView(padding: const EdgeInsets.all(20), children: [
-          Center(
-            child: GestureDetector(
-              onTap: _pickIcon,
-              child: CircleAvatar(
-                radius: 48,
-                backgroundColor: AppColors.bubble,
-                backgroundImage: _icon == null ? null : MemoryImage(_icon!),
-                child: _icon == null ? const Icon(Icons.add_a_photo_outlined, color: AppColors.primary, size: 32) : null,
+        child: ListView(
+          padding: const EdgeInsets.all(20),
+          children: [
+            Center(
+              child: GestureDetector(
+                onTap: _pickIcon,
+                child: CircleAvatar(
+                  radius: 48,
+                  backgroundColor: AppColors.bubble,
+                  backgroundImage: _icon == null ? null : MemoryImage(_icon!),
+                  child: _icon == null
+                      ? const Icon(
+                          Icons.add_a_photo_outlined,
+                          color: AppColors.primary,
+                          size: 32,
+                        )
+                      : null,
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 8),
-          const Center(child: Text('Channel picture', style: TextStyle(color: AppColors.muted))),
-          const SizedBox(height: 24),
-          TextFormField(
-            controller: _name,
-            decoration: const InputDecoration(labelText: 'Channel name'),
-            textCapitalization: TextCapitalization.words,
-            maxLength: 60,
-            validator: (v) => (v == null || v.trim().length < 3) ? 'At least 3 characters' : null,
-          ),
-          const SizedBox(height: 12),
-          TextFormField(
-            controller: _category,
-            decoration: const InputDecoration(labelText: 'Category (e.g. Entertainment)'),
-            maxLength: 40,
-          ),
-          const SizedBox(height: 12),
-          TextFormField(
-            controller: _description,
-            decoration: const InputDecoration(labelText: 'Description'),
-            maxLines: 3,
-            maxLength: 300,
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'New channels are reviewed before they appear in the app.',
-            style: TextStyle(color: AppColors.muted),
-          ),
-          const SizedBox(height: 20),
-          FilledButton(
-            onPressed: _saving ? null : _submit,
-            child: _saving
-                ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                : const Text('Send for approval'),
-          ),
-        ]),
+            const SizedBox(height: 8),
+            const Center(
+              child: Text(
+                'Channel picture',
+                style: TextStyle(color: AppColors.muted),
+              ),
+            ),
+            const SizedBox(height: 24),
+            TextFormField(
+              controller: _name,
+              decoration: const InputDecoration(labelText: 'Channel name'),
+              textCapitalization: TextCapitalization.words,
+              maxLength: 60,
+              validator: (v) => (v == null || v.trim().length < 3)
+                  ? 'At least 3 characters'
+                  : null,
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _category,
+              decoration: const InputDecoration(
+                labelText: 'Category (e.g. Entertainment)',
+              ),
+              maxLength: 40,
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _description,
+              decoration: const InputDecoration(labelText: 'Description'),
+              maxLines: 3,
+              maxLength: 300,
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'New channels are reviewed before they appear in the app.',
+              style: TextStyle(color: AppColors.muted),
+            ),
+            const SizedBox(height: 20),
+            FilledButton(
+              onPressed: _saving ? null : _submit,
+              child: _saving
+                  ? const SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : const Text('Send for approval'),
+            ),
+          ],
+        ),
       ),
     );
   }

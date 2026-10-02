@@ -26,17 +26,19 @@ class UserStatus {
   });
 
   factory UserStatus.fromJson(Map<String, dynamic> j) => UserStatus(
-        userId: j['user_id'] as String,
-        displayName: (j['display_name'] as String?) ?? 'User',
-        isGuest: (j['is_guest'] as bool?) ?? true,
-        source: (j['source'] as String?) ?? 'organic',
-        isPremium: (j['is_premium'] as bool?) ?? false,
-        planName: j['plan_name'] as String?,
-        planEndsAt: j['plan_ends_at'] == null ? null : DateTime.parse(j['plan_ends_at'] as String),
-        usedBytes: (j['used_bytes'] as num?)?.toInt() ?? 0,
-        quotaBytes: (j['quota_bytes'] as num?)?.toInt() ?? 0,
-        openRequest: j['open_request'] as String?,
-      );
+    userId: j['user_id'] as String,
+    displayName: (j['display_name'] as String?) ?? 'User',
+    isGuest: (j['is_guest'] as bool?) ?? true,
+    source: (j['source'] as String?) ?? 'organic',
+    isPremium: (j['is_premium'] as bool?) ?? false,
+    planName: j['plan_name'] as String?,
+    planEndsAt: j['plan_ends_at'] == null
+        ? null
+        : DateTime.parse(j['plan_ends_at'] as String),
+    usedBytes: (j['used_bytes'] as num?)?.toInt() ?? 0,
+    quotaBytes: (j['quota_bytes'] as num?)?.toInt() ?? 0,
+    openRequest: j['open_request'] as String?,
+  );
 }
 
 class Channel {
@@ -71,7 +73,9 @@ class Channel {
       category: j['category'] as String?,
       iconUrl: j['icon_url'] as String?,
       membersCount: (j['members_count'] as num?)?.toInt() ?? 0,
-      foldersCount: folders is List && folders.isNotEmpty ? ((folders.first['count'] as num?)?.toInt() ?? 0) : 0,
+      foldersCount: folders is List && folders.isNotEmpty
+          ? ((folders.first['count'] as num?)?.toInt() ?? 0)
+          : 0,
       reviewStatus: (j['review_status'] as String?) ?? 'approved',
       createdBy: j['created_by'] as String?,
     );
@@ -107,14 +111,14 @@ class PostItem {
   String? get thumbUrl => thumbKey == null ? null : Config.publicUrl(thumbKey!);
 
   factory PostItem.fromJson(Map<String, dynamic> j) => PostItem(
-        id: j['id'] as String,
-        kind: j['kind'] as String,
-        isPremium: (j['is_premium'] as bool?) ?? false,
-        mediaKey: j['media_key'] as String,
-        thumbKey: j['thumb_key'] as String?,
-        durationS: (j['duration_s'] as num?)?.toInt(),
-        position: (j['position'] as num?)?.toInt() ?? 0,
-      );
+    id: j['id'] as String,
+    kind: j['kind'] as String,
+    isPremium: (j['is_premium'] as bool?) ?? false,
+    mediaKey: j['media_key'] as String,
+    thumbKey: j['thumb_key'] as String?,
+    durationS: (j['duration_s'] as num?)?.toInt(),
+    position: (j['position'] as num?)?.toInt() ?? 0,
+  );
 }
 
 class Post {
@@ -150,10 +154,11 @@ class Post {
 
   factory Post.fromJson(Map<String, dynamic> j) {
     final ch = j['channels'] as Map<String, dynamic>?;
-    final items = ((j['post_items'] as List?) ?? [])
-        .map((e) => PostItem.fromJson(e as Map<String, dynamic>))
-        .toList()
-      ..sort((a, b) => a.position.compareTo(b.position));
+    final items =
+        ((j['post_items'] as List?) ?? [])
+            .map((e) => PostItem.fromJson(e as Map<String, dynamic>))
+            .toList()
+          ..sort((a, b) => a.position.compareTo(b.position));
     return Post(
       id: j['id'] as String,
       channelId: j['channel_id'] as String,
@@ -162,7 +167,9 @@ class Post {
       channelIcon: ch?['icon_url'] as String?,
       title: j['title'] as String,
       caption: j['caption'] as String?,
-      publishedAt: DateTime.parse((j['published_at'] ?? j['created_at']) as String).toLocal(),
+      publishedAt: DateTime.parse(
+        (j['published_at'] ?? j['created_at']) as String,
+      ).toLocal(),
       viewCount: (j['view_count'] as num?)?.toInt() ?? 0,
       items: items,
     );
@@ -187,20 +194,24 @@ class Plan {
   });
 
   String get durationLabel {
-    if (durationDays % 365 == 0) return durationDays == 365 ? '1 Year' : '${durationDays ~/ 365} Years';
-    if (durationDays % 30 == 0) return durationDays == 30 ? '1 Month' : '${durationDays ~/ 30} Months';
+    if (durationDays % 365 == 0) {
+      return durationDays == 365 ? '1 Year' : '${durationDays ~/ 365} Years';
+    }
+    if (durationDays % 30 == 0) {
+      return durationDays == 30 ? '1 Month' : '${durationDays ~/ 30} Months';
+    }
     if (durationDays == 7) return '7 Days';
     return '$durationDays Days';
   }
 
   factory Plan.fromJson(Map<String, dynamic> j) => Plan(
-        id: j['id'] as String,
-        code: j['code'] as String,
-        name: j['name'] as String,
-        durationDays: (j['duration_days'] as num).toInt(),
-        priceInr: (j['price_inr'] as num).toInt(),
-        perks: ((j['perks'] as List?) ?? []).map((e) => e.toString()).toList(),
-      );
+    id: j['id'] as String,
+    code: j['code'] as String,
+    name: j['name'] as String,
+    durationDays: (j['duration_days'] as num).toInt(),
+    priceInr: (j['price_inr'] as num).toInt(),
+    perks: ((j['perks'] as List?) ?? []).map((e) => e.toString()).toList(),
+  );
 }
 
 class CloudFile {
@@ -228,13 +239,13 @@ class CloudFile {
   bool get isVideo => (mime ?? '').startsWith('video/');
 
   factory CloudFile.fromJson(Map<String, dynamic> j) => CloudFile(
-        id: j['id'] as String,
-        parentId: j['parent_id'] as String?,
-        name: j['name'] as String,
-        isFolder: j['is_folder'] as bool,
-        storageKey: j['storage_key'] as String?,
-        mime: j['mime'] as String?,
-        size: (j['size'] as num?)?.toInt() ?? 0,
-        createdAt: DateTime.parse(j['created_at'] as String).toLocal(),
-      );
+    id: j['id'] as String,
+    parentId: j['parent_id'] as String?,
+    name: j['name'] as String,
+    isFolder: j['is_folder'] as bool,
+    storageKey: j['storage_key'] as String?,
+    mime: j['mime'] as String?,
+    size: (j['size'] as num?)?.toInt() ?? 0,
+    createdAt: DateTime.parse(j['created_at'] as String).toLocal(),
+  );
 }

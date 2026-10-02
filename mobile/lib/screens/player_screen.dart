@@ -23,20 +23,23 @@ class _PlayerScreenState extends State<PlayerScreen> {
   void initState() {
     super.initState();
     _video = VideoPlayerController.networkUrl(Uri.parse(widget.url));
-    _video.initialize().then((_) {
-      if (!mounted) return;
-      setState(() {
-        _chewie = ChewieController(
-          videoPlayerController: _video,
-          autoPlay: true,
-          allowFullScreen: true,
-          allowMuting: true,
-          showOptions: false,
-        );
-      });
-    }).catchError((Object e) {
-      if (mounted) setState(() => _error = "This video can't be played.");
-    });
+    _video
+        .initialize()
+        .then((_) {
+          if (!mounted) return;
+          setState(() {
+            _chewie = ChewieController(
+              videoPlayerController: _video,
+              autoPlay: true,
+              allowFullScreen: true,
+              allowMuting: true,
+              showOptions: false,
+            );
+          });
+        })
+        .catchError((Object e) {
+          if (mounted) setState(() => _error = "This video can't be played.");
+        });
   }
 
   @override
@@ -50,13 +53,19 @@ class _PlayerScreenState extends State<PlayerScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      appBar: AppBar(backgroundColor: Colors.black, title: Text(widget.title, style: const TextStyle(fontSize: 18))),
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        title: Text(widget.title, style: const TextStyle(fontSize: 18)),
+      ),
       body: Center(
         child: _error != null
             ? Text(_error!, style: const TextStyle(color: Colors.white))
             : _chewie == null
-                ? const CircularProgressIndicator(color: Colors.white)
-                : AspectRatio(aspectRatio: _video.value.aspectRatio, child: Chewie(controller: _chewie!)),
+            ? const CircularProgressIndicator(color: Colors.white)
+            : AspectRatio(
+                aspectRatio: _video.value.aspectRatio,
+                child: Chewie(controller: _chewie!),
+              ),
       ),
     );
   }
@@ -71,10 +80,15 @@ class ImageViewerScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      appBar: AppBar(backgroundColor: Colors.black, title: Text(title, style: const TextStyle(fontSize: 18))),
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        title: Text(title, style: const TextStyle(fontSize: 18)),
+      ),
       body: InteractiveViewer(
         maxScale: 5,
-        child: Center(child: NetThumb(url: url, fit: BoxFit.contain)),
+        child: Center(
+          child: NetThumb(url: url, fit: BoxFit.contain),
+        ),
       ),
     );
   }

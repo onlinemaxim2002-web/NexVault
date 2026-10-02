@@ -36,8 +36,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
           'This permanently deletes your account, your cloud files and your channel memberships. This can\'t be undone.',
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete'),
+          ),
         ],
       ),
     );
@@ -57,38 +63,52 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    void open(String key) => Navigator.of(context).push(MaterialPageRoute(builder: (_) => PolicyScreen(policyKey: key)));
+    void open(String key) => Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => PolicyScreen(policyKey: key)));
     final registered = !app.isGuest;
     return Scaffold(
       appBar: AppBar(title: const Text('App Setting')),
-      body: Column(children: [
-        for (final (key, title) in const [
-          ('privacy', 'Privacy Policy'),
-          ('terms', 'Terms & Conditions'),
-          ('community', 'Community Guidelines'),
-          ('refund', 'Refund Policy'),
-        ])
-          ListTile(
-            title: Text(title, style: const TextStyle(fontSize: 17)),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => open(key),
-          ),
-        const Spacer(),
-        if (registered)
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(children: [
-                SizedBox(width: double.infinity, child: FilledButton(onPressed: _busy ? null : _logout, child: const Text('Logout'))),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton(onPressed: _busy ? null : _delete, child: const Text('Delete Account')),
-                ),
-              ]),
+      body: Column(
+        children: [
+          for (final (key, title) in const [
+            ('privacy', 'Privacy Policy'),
+            ('terms', 'Terms & Conditions'),
+            ('community', 'Community Guidelines'),
+            ('refund', 'Refund Policy'),
+          ])
+            ListTile(
+              title: Text(title, style: const TextStyle(fontSize: 17)),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => open(key),
             ),
-          ),
-      ]),
+          const Spacer(),
+          if (registered)
+            SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton(
+                        onPressed: _busy ? null : _logout,
+                        child: const Text('Logout'),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton(
+                        onPressed: _busy ? null : _delete,
+                        child: const Text('Delete Account'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

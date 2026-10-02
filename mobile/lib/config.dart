@@ -19,5 +19,6 @@ class Config {
   static const appName = 'Cloud Storage';
   static const maxUploadBytes = 50 * 1024 * 1024; // Supabase free plan limit
 
-  static String publicUrl(String key) => '$supabaseUrl/storage/v1/object/public/public/$key';
+  static String publicUrl(String key) =>
+      '$supabaseUrl/storage/v1/object/public/public/$key';
 }

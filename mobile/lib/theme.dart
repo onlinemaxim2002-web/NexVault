@@ -9,7 +9,10 @@ class AppColors {
 }
 
 ThemeData buildTheme() {
-  final scheme = ColorScheme.fromSeed(seedColor: AppColors.primary, primary: AppColors.primary);
+  final scheme = ColorScheme.fromSeed(
+    seedColor: AppColors.primary,
+    primary: AppColors.primary,
+  );
   return ThemeData(
     colorScheme: scheme,
     useMaterial3: true,
@@ -18,7 +21,11 @@ ThemeData buildTheme() {
       backgroundColor: AppColors.primary,
       foregroundColor: Colors.white,
       elevation: 0,
-      titleTextStyle: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: Colors.white),
+      titleTextStyle: TextStyle(
+        fontSize: 22,
+        fontWeight: FontWeight.w700,
+        color: Colors.white,
+      ),
     ),
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
@@ -41,11 +48,17 @@ ThemeData buildTheme() {
         (s) => TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w600,
-          color: s.contains(WidgetState.selected) ? AppColors.primary : AppColors.muted,
+          color: s.contains(WidgetState.selected)
+              ? AppColors.primary
+              : AppColors.muted,
         ),
       ),
       iconTheme: WidgetStateProperty.resolveWith(
-        (s) => IconThemeData(color: s.contains(WidgetState.selected) ? AppColors.primary : AppColors.muted),
+        (s) => IconThemeData(
+          color: s.contains(WidgetState.selected)
+              ? AppColors.primary
+              : AppColors.muted,
+        ),
       ),
     ),
   );

@@ -60,9 +60,17 @@ class _CloudScreenState extends State<CloudScreen> with ContentReload {
       final url = await Backend.cloudUrl(f.storageKey!);
       if (!mounted) return;
       if (f.isVideo) {
-        Navigator.of(context).push(MaterialPageRoute(builder: (_) => PlayerScreen(url: url, title: f.name)));
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => PlayerScreen(url: url, title: f.name),
+          ),
+        );
       } else if (f.isImage) {
-        Navigator.of(context).push(MaterialPageRoute(builder: (_) => ImageViewerScreen(url: url, title: f.name)));
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => ImageViewerScreen(url: url, title: f.name),
+          ),
+        );
       } else {
         await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
       }
@@ -87,14 +95,21 @@ class _CloudScreenState extends State<CloudScreen> with ContentReload {
     final choice = await showModalBottomSheet<String>(
       context: context,
       builder: (_) => SafeArea(
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          ListTile(leading: const Icon(Icons.upload_file), title: const Text('Upload files'), onTap: () => Navigator.pop(context, 'upload')),
-          ListTile(
-            leading: const Icon(Icons.create_new_folder_outlined),
-            title: const Text('New folder'),
-            onTap: () => Navigator.pop(context, 'folder'),
-          ),
-        ]),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.upload_file),
+              title: const Text('Upload files'),
+              onTap: () => Navigator.pop(context, 'upload'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.create_new_folder_outlined),
+              title: const Text('New folder'),
+              onTap: () => Navigator.pop(context, 'folder'),
+            ),
+          ],
+        ),
       ),
     );
     if (choice == 'upload') await _upload();
@@ -115,26 +130,50 @@ class _CloudScreenState extends State<CloudScreen> with ContentReload {
     }
     for (var i = 0; i < picked.length; i++) {
       final f = picked[i];
-      setState(() => uploading = 'Uploading ${i + 1} of ${picked.length}: ${f.name}');
+      setState(
+        () => uploading = 'Uploading ${i + 1} of ${picked.length}: ${f.name}',
+      );
       try {
-        await Backend.uploadCloudFile(_parentId, f.name, await f.readAsBytes(), _mimeFor(f.extension));
+        await Backend.uploadCloudFile(
+          _parentId,
+          f.name,
+          await f.readAsBytes(),
+          _mimeFor(f.extension),
+        );
       } catch (e) {
         if (mounted) showSnack(context, '${f.name}: ${friendlyError(e)}');
       }
     }
     setState(() => uploading = null);
-    if (skipped > 0 && mounted) showSnack(context, '$skipped file(s) skipped: larger than 50 MB.');
+    if (skipped > 0 && mounted) {
+      showSnack(context, '$skipped file(s) skipped: larger than 50 MB.');
+    }
     await reload();
     await app.refreshStatus();
   }
 
   String? _mimeFor(String? ext) {
     const map = {
-      'jpg': 'image/jpeg', 'jpeg': 'image/jpeg', 'png': 'image/png', 'gif': 'image/gif', 'webp': 'image/webp',
-      'heic': 'image/heic', 'mp4': 'video/mp4', 'mov': 'video/quicktime', 'mkv': 'video/x-matroska', 'webm': 'video/webm',
-      'mp3': 'audio/mpeg', 'm4a': 'audio/mp4', 'pdf': 'application/pdf', 'txt': 'text/plain', 'zip': 'application/zip',
-      'doc': 'application/msword', 'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'xls': 'application/vnd.ms-excel', 'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'jpg': 'image/jpeg',
+      'jpeg': 'image/jpeg',
+      'png': 'image/png',
+      'gif': 'image/gif',
+      'webp': 'image/webp',
+      'heic': 'image/heic',
+      'mp4': 'video/mp4',
+      'mov': 'video/quicktime',
+      'mkv': 'video/x-matroska',
+      'webm': 'video/webm',
+      'mp3': 'audio/mpeg',
+      'm4a': 'audio/mp4',
+      'pdf': 'application/pdf',
+      'txt': 'text/plain',
+      'zip': 'application/zip',
+      'doc': 'application/msword',
+      'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'xls': 'application/vnd.ms-excel',
+      'xlsx':
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       'apk': 'application/vnd.android.package-archive',
     };
     return map[(ext ?? '').toLowerCase()] ?? 'application/octet-stream';
@@ -146,10 +185,20 @@ class _CloudScreenState extends State<CloudScreen> with ContentReload {
       context: context,
       builder: (_) => AlertDialog(
         title: Text(title),
-        content: TextField(controller: ctrl, autofocus: true, decoration: const InputDecoration(labelText: 'Name')),
+        content: TextField(
+          controller: ctrl,
+          autofocus: true,
+          decoration: const InputDecoration(labelText: 'Name'),
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-          TextButton(onPressed: () => Navigator.pop(context, ctrl.text.trim()), child: const Text('OK')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, ctrl.text.trim()),
+            child: const Text('OK'),
+          ),
         ],
       ),
     );
@@ -170,15 +219,30 @@ class _CloudScreenState extends State<CloudScreen> with ContentReload {
     final action = await showModalBottomSheet<String>(
       context: context,
       builder: (_) => SafeArea(
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          ListTile(title: Text(f.name, style: const TextStyle(fontWeight: FontWeight.w700))),
-          ListTile(leading: const Icon(Icons.edit), title: const Text('Rename'), onTap: () => Navigator.pop(context, 'rename')),
-          ListTile(
-            leading: const Icon(Icons.delete_outline, color: AppColors.primary),
-            title: const Text('Delete'),
-            onTap: () => Navigator.pop(context, 'delete'),
-          ),
-        ]),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              title: Text(
+                f.name,
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.edit),
+              title: const Text('Rename'),
+              onTap: () => Navigator.pop(context, 'rename'),
+            ),
+            ListTile(
+              leading: const Icon(
+                Icons.delete_outline,
+                color: AppColors.primary,
+              ),
+              title: const Text('Delete'),
+              onTap: () => Navigator.pop(context, 'delete'),
+            ),
+          ],
+        ),
       ),
     );
     try {
@@ -192,10 +256,20 @@ class _CloudScreenState extends State<CloudScreen> with ContentReload {
           context: context,
           builder: (_) => AlertDialog(
             title: Text('Delete ${f.isFolder ? 'folder' : 'file'}?'),
-            content: Text(f.isFolder ? '"${f.name}" and everything inside it will be deleted.' : '"${f.name}" will be deleted.'),
+            content: Text(
+              f.isFolder
+                  ? '"${f.name}" and everything inside it will be deleted.'
+                  : '"${f.name}" will be deleted.',
+            ),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-              TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete')),
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Delete'),
+              ),
             ],
           ),
         );
@@ -233,7 +307,12 @@ class _CloudScreenState extends State<CloudScreen> with ContentReload {
           },
           child: Scaffold(
             appBar: AppBar(
-              leading: _path.isEmpty ? null : IconButton(icon: const Icon(Icons.arrow_back), onPressed: _up),
+              leading: _path.isEmpty
+                  ? null
+                  : IconButton(
+                      icon: const Icon(Icons.arrow_back),
+                      onPressed: _up,
+                    ),
               title: Text(_path.isEmpty ? 'Cloud Storage' : _path.last.name),
               actions: [
                 IconButton(
@@ -243,10 +322,17 @@ class _CloudScreenState extends State<CloudScreen> with ContentReload {
                     context: context,
                     builder: (_) => AlertDialog(
                       title: const Text('Your storage'),
-                      content: Text(premium
-                          ? 'Used ${formatBytes(app.status!.usedBytes)} of ${formatBytes(app.status!.quotaBytes)}.'
-                          : 'Get a Premium plan to store your photos, videos and files (2 TB).'),
-                      actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('OK'))],
+                      content: Text(
+                        premium
+                            ? 'Used ${formatBytes(app.status!.usedBytes)} of ${formatBytes(app.status!.quotaBytes)}.'
+                            : 'Get a Premium plan to store your photos, videos and files (2 TB).',
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('OK'),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -256,19 +342,30 @@ class _CloudScreenState extends State<CloudScreen> with ContentReload {
             floatingActionButton: FloatingActionButton(
               backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
+              ),
               tooltip: 'Add',
               onPressed: uploading == null ? _add : null,
               child: const Icon(Icons.add_box, size: 32),
             ),
-            body: Column(children: [
-              if (premium && app.status != null) _StorageMeter(used: app.status!.usedBytes, quota: app.status!.quotaBytes),
-              if (uploading != null) ...[
-                const LinearProgressIndicator(),
-                Padding(padding: const EdgeInsets.all(8), child: Text(uploading!, overflow: TextOverflow.ellipsis)),
+            body: Column(
+              children: [
+                if (premium && app.status != null)
+                  _StorageMeter(
+                    used: app.status!.usedBytes,
+                    quota: app.status!.quotaBytes,
+                  ),
+                if (uploading != null) ...[
+                  const LinearProgressIndicator(),
+                  Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: Text(uploading!, overflow: TextOverflow.ellipsis),
+                  ),
+                ],
+                Expanded(child: _body(premium)),
               ],
-              Expanded(child: _body(premium)),
-            ]),
+            ),
           ),
         );
       },
@@ -279,12 +376,21 @@ class _CloudScreenState extends State<CloudScreen> with ContentReload {
     if (!premium) {
       return EmptyState(
         message: 'Store your photos, videos and files safely.\nGet Premium for 2 TB of cloud storage.',
-        action: FilledButton(onPressed: () => openPlans(context), child: const Text('Get Premium')),
+        action: FilledButton(
+          onPressed: () => openPlans(context),
+          child: const Text('Get Premium'),
+        ),
       );
     }
-    if (error != null && files == null) return ErrorRetry(message: error!, onRetry: reload);
+    if (error != null && files == null) {
+      return ErrorRetry(message: error!, onRetry: reload);
+    }
     if (files == null) return const Center(child: CircularProgressIndicator());
-    if (files!.isEmpty) return const EmptyState(message: 'No Record Found\nTap + to upload your first file.');
+    if (files!.isEmpty) {
+      return const EmptyState(
+        message: 'No Record Found\nTap + to upload your first file.',
+      );
+    }
     return RefreshIndicator(
       onRefresh: reload,
       child: ListView.separated(
@@ -295,12 +401,24 @@ class _CloudScreenState extends State<CloudScreen> with ContentReload {
           final f = files![i];
           return ListTile(
             leading: CircleAvatar(
-              backgroundColor: f.isFolder ? const Color(0xFFFFF3CD) : AppColors.bubble,
-              child: Icon(_icon(f), color: f.isFolder ? const Color(0xFFE0A800) : AppColors.primary),
+              backgroundColor: f.isFolder
+                  ? const Color(0xFFFFF3CD)
+                  : AppColors.bubble,
+              child: Icon(
+                _icon(f),
+                color: f.isFolder ? const Color(0xFFE0A800) : AppColors.primary,
+              ),
             ),
             title: Text(f.name, overflow: TextOverflow.ellipsis),
-            subtitle: Text(f.isFolder ? 'Folder' : '${formatBytes(f.size)} · ${timeAgo(f.createdAt)}'),
-            trailing: IconButton(icon: const Icon(Icons.more_vert), onPressed: () => _menu(f)),
+            subtitle: Text(
+              f.isFolder
+                  ? 'Folder'
+                  : '${formatBytes(f.size)} · ${timeAgo(f.createdAt)}',
+            ),
+            trailing: IconButton(
+              icon: const Icon(Icons.more_vert),
+              onPressed: () => _menu(f),
+            ),
             onTap: () => _open(f),
             onLongPress: () => _menu(f),
           );
@@ -320,19 +438,25 @@ class _StorageMeter extends StatelessWidget {
     final fraction = quota == 0 ? 0.0 : (used / quota).clamp(0.0, 1.0);
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('${formatBytes(used)} of ${formatBytes(quota)} used', style: const TextStyle(fontWeight: FontWeight.w600)),
-        const SizedBox(height: 6),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(6),
-          child: LinearProgressIndicator(
-            value: fraction < 0.01 && used > 0 ? 0.01 : fraction,
-            minHeight: 8,
-            color: AppColors.primary,
-            backgroundColor: AppColors.bubble,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '${formatBytes(used)} of ${formatBytes(quota)} used',
+            style: const TextStyle(fontWeight: FontWeight.w600),
           ),
-        ),
-      ]),
+          const SizedBox(height: 6),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: LinearProgressIndicator(
+              value: fraction < 0.01 && used > 0 ? 0.01 : fraction,
+              minHeight: 8,
+              color: AppColors.primary,
+              backgroundColor: AppColors.bubble,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

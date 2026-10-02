@@ -1,147 +1,144 @@
 # Architecture
 
+> **Decision (Oct 2026): backend = Supabase.** Postgres with Row Level Security (RLS)
+> enforces the content rules (premium, audience, hidden/draft) in the database, plus
+> Edge Functions for signed media URLs and anonymous auth for guest accounts.
+
 ## 1. Tech stack
 
 | Layer | Choice | Reason |
 |---|---|---|
-| Mobile | Flutter (Dart), Riverpod, Dio, go_router | One codebase for Android + iOS, good media performance |
-| Backend API | NestJS (TypeScript) | Structured modules, easy hiring, good ecosystem |
-| Database | PostgreSQL (Prisma ORM) | Relational metadata, transactions for quotas |
-| Cache / queues | Redis + BullMQ | Rate limits, sessions, background jobs |
-| Object storage | Cloudflare R2 (S3-compatible) | No egress fees, which matters for a download-heavy app. Wasabi/B2 as alternatives |
-| CDN | Cloudflare | Thumbnails, HLS segments, public share pages |
-| Media processing | Worker service + FFmpeg + libvips/sharp | Thumbnails, HLS transcoding, metadata |
-| Auth | Own JWT (access + refresh). Guest accounts on first launch; Email (OTP/magic link) + Google Sign-In to upgrade | |
-| Payments | **Deferred**. To be decided and integrated later | Premium can be granted from the admin panel until then |
-| Ads | Google AdMob (banner, interstitial, rewarded) | |
+| Mobile | Flutter (Dart), Riverpod, go_router, `supabase_flutter`, `video_player` (HLS) | Android first (tester APK), iOS later from the same code |
+| Backend | **Supabase**: Postgres + RLS, Auth, Edge Functions (Deno/TypeScript), Realtime | Rules live in the DB; little server code to maintain |
+| Auth | Supabase **anonymous sign-in** for guests → link **Email** (OTP) or **Google** to upgrade the same user | Guest-first flow, same `user_id` before and after login |
+| Object storage | **Cloudflare R2** (S3-compatible) for videos, images, HLS, Cloud files | No egress fees; signed URLs issued by Edge Functions |
+| Media processing | Worker (FFmpeg) on a small VPS / Fly.io, triggered by a DB job queue | Thumbnails, HLS renditions, **preview clips** |
+| Admin panel | **Next.js** web app + Supabase Auth (admin roles) | Log in, upload content, set premium + audience, reports. See [08-admin-panel.md](08-admin-panel.md) |
+| Download page | Static `download.html` on Cloudflare Pages | Serves organic / ads APK |
+| CI | GitHub Actions | Build both APKs, upload to R2, deploy admin + DB migrations |
+| Payments | **Deferred** | Premium granted from the admin panel until then |
+| Ads (AdMob) | Later | |
 | Push / crash | Firebase Cloud Messaging, Crashlytics | |
-| Admin panel | Next.js + same API (admin role) | |
-| Share pages (web) | Next.js (SSR) | Link previews, SEO-safe landing pages |
-| Infra | Docker; start on a single VPS / Render / Fly.io, move to k8s later | Keep the launch cost low |
-| Observability | Sentry, Prometheus/Grafana or a hosted alternative | |
 
 ## 2. High-level design
 
 ```
- Flutter app ──HTTPS──► API (NestJS) ──► PostgreSQL
-     │                     │   └──────► Redis (cache, rate limit, BullMQ)
-     │                     │
-     │  presigned URLs     ▼
-     └──────────────► Object storage (R2) ◄── Workers (thumbnails, HLS, virus scan, moderation)
-                            │
-                            ▼
-                        Cloudflare CDN ──► share pages / streaming
+ Flutter app ──► Supabase (Auth · Postgres+RLS · RPC · Edge Functions)
+     │                │                     │
+     │                │ job queue           │ signed URLs (premium / preview / upload)
+     │                ▼                     ▼
+     │          Media worker (FFmpeg) ──► Cloudflare R2  ◄── Admin panel uploads (presigned)
+     │                                     │
+     └──────────── HLS stream / images ◄───┘ (via Cloudflare CDN)
+
+ Admin panel (Next.js) ──► Supabase (admin role) + R2 presigned uploads
 ```
 
-Key rule: **file bytes never pass through the API servers.** The API only issues
-presigned upload/download URLs and records metadata.
+Rules:
+- **File bytes never pass through Supabase.** Uploads and playback use short-lived
+  presigned R2 URLs that Edge Functions issue after checking permissions.
+- **The database decides visibility.** The app's local flags are only for UI.
 
-## 3. Upload flow (resumable, multipart)
-
-1. App computes the file's SHA-256 (in chunks) → `POST /uploads/init {name, size, mime, sha256, parentId}`.
-2. API checks the quota and dedup:
-   - If a blob with the same hash exists → create a file record pointing to it (instant upload).
-   - Else → create an S3 multipart upload and return presigned part URLs (e.g. 8–16 MB parts).
-3. App uploads parts in parallel (limit by plan) and retries failed parts.
-4. `POST /uploads/{id}/complete {parts}` → API completes the multipart upload, creates the file record, and enqueues jobs.
-5. Workers: generate a thumbnail, extract metadata, transcode video to HLS, run hash/NSFW checks if the file is shared publicly.
-
-## 4. Download & streaming
-
-- `GET /files/{id}/download` → short-lived presigned URL (or a signed CDN URL).
-- Free-tier speed throttling: serve through a CDN worker that rate-limits per token, or
-  route free downloads via a throttled origin path. Premium gets the direct URL.
-- Video: HLS renditions (480p free, 720p/1080p premium) with signed playlist URLs.
-
-## 5. Data model (initial)
+## 3. Content model
 
 ```
-users           id, is_guest, device_id, phone, email, google_id, name, username, avatar_url,
-                plan_id, plan_expires_at, quota_bytes, used_bytes,
-                status(active|suspended|pending_deletion), created_at, deleted_at
-sessions        id, user_id, device_name, platform, refresh_token_hash, last_seen_at
-blobs           id, sha256, size, storage_key, mime, ref_count, created_at
-files           id, user_id, parent_id(null=root), name, is_folder, blob_id,
-                mime, size, thumb_key, hls_key, status(uploading|ready|trashed),
-                trashed_at, created_at, updated_at
-uploads         id, user_id, file_name, size, sha256, s3_upload_id, parts_done, status, expires_at
-share_links     id, file_id, owner_id, token, password_hash, expires_at,
-                max_downloads, download_count, revoked_at
-plans           id, code(trial|silver|gold|platinum|diamond), duration_days,
-                price_inr, quota_bytes, features(jsonb), play_product_id
-subscriptions   id, user_id, plan_id, provider(play|razorpay), provider_ref,
-                status, starts_at, ends_at
-channels        id, owner_id, name, handle, description, icon_url, visibility(public|private),
-                invite_token, followers_count, status
-channel_members channel_id, user_id, role(owner|admin|member), joined_at
-channel_folders id, channel_id, name, cover_url, position
-posts           id, channel_id, folder_id, author_id, title, caption, status,
-                view_count, like_count, created_at        -- every public post also appears in Explore
-post_items      post_id, file_id, position, is_premium
-consents        id, user_id, policy_version, accepted_at, ip, device
-reports         id, reporter_id, target_type(post|channel|user|share_link), target_id,
-                reason, details, status, handled_by, created_at
-audit_logs      id, actor_id, action, target, meta(jsonb), created_at
+Channel ─┬─ audience: all | organic | ads
+         └─ Folder ── Post ─┬─ audience: all | organic | ads
+                            └─ Item (video / image)
+                                 ├─ is_premium        (set by owner/admins)
+                                 ├─ preview clip      (auto, for ads users)
+                                 └─ HLS renditions + thumbnail
 ```
 
-Notes:
-- `blobs` lets identical files share storage (dedup); delete a blob only when `ref_count = 0`.
-- `used_bytes` is updated transactionally on upload complete / purge.
-- Files the user has deleted from Trash are purged by a scheduled job.
+- **Audience** (who can see it), set by admins on channels and posts:
+  - `all`: everyone
+  - `organic`: only users who did **not** come from an ad
+  - `ads`: only users who installed **from your ads** (Meta)
+- **Effective audience of a post** = the stricter of the channel's and the post's
+  setting. The admin panel won't let a post be wider than its channel.
+- **Premium** is per item: free to play, or 👑 needs login + plan.
+- Every published post the user is allowed to see also appears in **Explore**, and
+  in **Feed** if the user joined its channel.
+- Only **admins** post. Members join and watch. **No downloads**: streaming only.
 
-## 6. API outline (v1)
+## 4. Data model (initial)
 
 ```
-Auth        POST /auth/guest, /auth/email/send-code, /auth/email/verify, /auth/google,
-            /auth/refresh, /auth/logout   (email/google on a guest token = upgrade in place)
-Me          GET/PATCH /me, GET /me/sessions, DELETE /me/sessions/:id, POST /me/delete
-Files       GET /files?parentId=&type=&sort=, POST /folders, PATCH /files/:id (rename/move),
-            POST /files/:id/copy, DELETE /files/:id (trash), POST /files/:id/restore,
-            DELETE /trash/:id (purge), GET /files/search?q=
-Uploads     POST /uploads/init, GET /uploads/:id/parts, POST /uploads/:id/complete, DELETE /uploads/:id
-Download    GET /files/:id/download, GET /files/:id/stream
-Share       POST /share-links, GET /share-links, DELETE /share-links/:id,
-            GET /s/:token (public), POST /s/:token/save
-Storage     GET /storage/summary
-Plans       GET /plans, GET /me/entitlement   (payment endpoints: deferred)
-Channels    CRUD /channels, POST /channels/:id/join, GET /feed, CRUD /channels/:id/folders,
-            CRUD /channels/:id/posts
-Explore     GET /explore?tab=all|latest|popular|most_watched, GET /posts/:id,
-            POST /posts/:id/items/:itemId/watch  → signed HLS URL, or 402 + plans if not premium
-            GET /channels/:id/posts?cursor=   (chat-style stream, newest first)
-Safety      POST /reports, POST /users/:id/block
-Admin       /admin/users, /admin/reports, /admin/takedowns, /admin/plans, /admin/stats
+profiles          id (= auth.users.id), display_name, avatar_url, is_guest,
+                  quota_bytes, used_bytes, status, created_at
+admins            user_id PK, role (owner | content_admin), invited_by, created_at
+admin_channel_access  admin_id, channel_id      -- optional: limit a content_admin to channels
+
+channels          id, name, handle, description, icon_url, category,
+                  audience (all|organic|ads), status (draft|published|hidden),
+                  members_count, rating, created_by, created_at
+channel_folders   id, channel_id, name, cover_url, position
+channel_members   channel_id, user_id, joined_at
+posts             id, channel_id, folder_id, title, caption, audience (all|organic|ads),
+                  status (draft|scheduled|published|hidden), publish_at,
+                  view_count, like_count, created_by, created_at
+post_items        id, post_id, position, kind (video|image), is_premium,
+                  media_key, hls_key, preview_key, thumb_key, duration_s, width, height,
+                  processing_status (pending|ready|failed)
+
+files / blobs / uploads / share_links   -- personal Cloud storage (premium only)
+plans             id, code, name, duration_days, price_inr, perks jsonb, active, position
+subscriptions     id, user_id, plan_id, source (admin_grant | payment), starts_at, ends_at
+consents          id, user_id, policy_version, accepted_at
+
+installs, user_attribution, analytics_events   -- see 07-attribution-and-personalisation.md
+reports, audit_logs
 ```
 
-## 7. Security
+## 5. Key database functions / policies
 
-- TLS everywhere; presigned URLs with short TTLs (5–15 min).
-- Encryption at rest (provider-managed); optional client-side encrypted "vault" later.
-- Rate limiting on OTP, login, share link access, and uploads.
-- Malware scan (ClamAV) for publicly shared files.
-- CSAM hash matching and an NSFW classifier on publicly shared/Channel content.
-- Least-privilege storage credentials; separate buckets for originals, thumbnails, and HLS.
+| Name | Kind | Purpose |
+|---|---|---|
+| `user_source()` | security definer | `'ads'` if the current user's first-touch source is the ad source, else `'organic'` |
+| `can_see(audience)` | SQL | `audience = 'all' or audience = user_source()`; admins see everything |
+| RLS on `channels`, `posts`, `post_items` | policy | `status = 'published'` + `can_see(...)` on both channel and post |
+| `explore(tab, cursor)` | RPC | Visible posts sorted by latest / popular / most watched |
+| `channel_posts(channel_id, cursor)` | RPC | Telegram-style stream, newest first |
+| `is_premium_user()` | security definer | Active plan check |
+| `stream-url` | Edge Function | Premium + visibility check → signed HLS playlist URL |
+| `preview-url` | Edge Function | Ads user + visibility check → signed preview-clip URL |
+| `admin-upload-url` | Edge Function | Admin check → presigned R2 multipart upload |
+| `record_install`, `attribute_user`, `log_event` | RPC | Attribution (doc 07) |
 
-## 8. Cost control
+## 6. Upload & processing (admin content)
 
-- Deduplicate by SHA-256.
-- Lifecycle rules: delete abandoned multipart uploads after 24h.
-- Free-account inactivity policy (e.g. warn at 6 months, purge at 12 months, stated in the Terms).
-- Configurable free quota (start at 1 TB marketing quota, enforce a fair-use cap).
-- Watch cost per active user from day one.
+1. Admin picks files in the panel → `admin-upload-url` returns presigned multipart URLs.
+2. Browser uploads directly to R2 (resumable, parallel parts).
+3. Panel creates the `post` + `post_items` rows (`processing_status = pending`).
+4. Media worker: thumbnail, HLS (480p/720p), **preview clip** (first ~20 s),
+   duration/size → marks `ready`.
+5. The post shows in the app when `status = published` (or at `publish_at`) **and**
+   all items are `ready`.
 
-## 9. Access control (entitlements)
+Personal Cloud uploads from the app (premium users) use the same presigned flow.
 
-Every gated action goes through one server-side check. The app uses the same rules
-to decide whether to show the login sheet or the plans page.
+## 7. Access control
 
 | Level | Who | Allowed |
 |---|---|---|
-| `guest` | Auto-created account, no email/Google | Browse, open posts/channels, edit name |
-| `free` | Logged in, no active plan | + join channels, create channels |
-| `premium` | Logged in, active plan | + play/stream, download, upload to Cloud, no ads |
+| `guest` | Anonymous Supabase user | Browse content visible to their source, edit name; ads guests can watch previews |
+| `free` | Email/Google linked, no plan | + join channels |
+| `premium` | Active plan | + play full content (stream), upload to Cloud, no ads |
+| `content_admin` | Staff invited by the owner | Admin panel: upload/edit content (optionally only some channels) |
+| `owner` | You | Everything: admins, plans, premium grants, reports |
 
-- Gate rules live in config/DB (not hard-coded), so limits can change without an app
-  release (e.g. a small free upload quota later).
-- `402 Payment Required` responses include the plans list so the app can open the
-  paywall directly; `401` with `reason: login_required` opens the login sheet.
+`402` responses carry the plans list so the app opens the paywall; `401
+login_required` opens the login sheet.
+
+## 8. Security
+
+- RLS on every table. The anon key is safe in the app because policies decide access.
+- Service-role key only in Edge Functions, the worker, and CI secrets.
+- Signed URLs with short TTLs (5–15 min).
+- Admin actions written to `audit_logs`.
+
+## 9. Cost control
+
+- Dedup personal Cloud files by SHA-256.
+- R2 lifecycle: delete abandoned multipart uploads after 24 h.
+- Transcode once to a small set of renditions; previews are short.

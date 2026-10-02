@@ -15,13 +15,16 @@ secure link sharing, and public/private **Channels** for sharing content.
 | [docs/04-compliance-and-policies.md](docs/04-compliance-and-policies.md) | Reference only (out of scope for the tester APK) |
 | [docs/05-open-questions.md](docs/05-open-questions.md) | Decisions still pending |
 | [docs/06-app-flow-analysis.md](docs/06-app-flow-analysis.md) | Screen-by-screen analysis of the reference app |
-| [docs/07-attribution-and-personalisation.md](docs/07-attribution-and-personalisation.md) | Ads vs organic installs, `ADS_SPECIAL` channels, APK builds, download page |
+| [docs/07-attribution-and-personalisation.md](docs/07-attribution-and-personalisation.md) | Ads vs organic installs, content audience, APK builds, download page |
+| [docs/08-admin-panel.md](docs/08-admin-panel.md) | Online admin panel: roles, upload, premium, audience, reports |
 
 ## Repository layout (planned)
 
 ```
 mobile/    Flutter app (Android first, iOS later)
-backend/   NestJS API + background workers
-admin/     Next.js admin dashboard
+supabase/  Database migrations, RLS policies, Edge Functions
+admin/     Next.js admin panel (upload content, audience, premium, reports)
+worker/    Media worker (FFmpeg: thumbnails, HLS, preview clips)
+web/       APK download page
 docs/      Product and technical planning
 ```

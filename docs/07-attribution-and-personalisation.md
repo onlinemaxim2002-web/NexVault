@@ -1,8 +1,9 @@
 # Install Attribution & Source-Based Channels
 
-Product owner's requirement: users who install the app **from an ad (Meta)** see an
-extra set of channels (and those channels' posts in Explore) that **organic** users
-don't see. This doc adapts the owner's attribution prompt to our app's model
+Product owner's requirement: when uploading content in the admin panel, choose who
+sees it: **everyone**, **organic users only**, or **ads users only** (users who
+installed from your Meta ads). This applies to channels and posts, and the posts
+show up in Explore and Feed only for the right users. This doc adapts the owner's attribution prompt to our app's model
 (Channels → Folders → Posts, guest-first accounts, tester APK distribution).
 
 ## 1. Rule
@@ -15,24 +16,26 @@ same experience.
 
 | Prompt term | Our app |
 |---|---|
-| Content item with `SPECIAL_TAG` (`ADS_SPECIAL`) | **Channel** tagged `ADS_SPECIAL`. All its folders and posts inherit the tag |
+| Content item with `SPECIAL_TAG` (`ADS_SPECIAL`) | **`audience` field** on channels and posts: `all` / `organic` / `ads` (three-way, not just a tag) |
 | Catalog | Channels → Discover list, **Explore** grid, Feed |
 | `episodes_for_install` | Posts of a channel (`posts_for_install`) |
 | Trailer | **Preview clip** (first ~15–30 s) made by the video worker for each premium video |
 | Full content | Full video in the online player (needs login + plan) |
-| Admin toggles special tag | Admin panel: `ADS_SPECIAL` switch on each channel (optionally on single posts) |
+| Admin toggles special tag | Admin panel: "Who can see this" selector on each channel and post |
 | Payments snapshot | Built later, when payments are added (deferred) |
 
 Who sees what:
 
 | | Organic install | Ads (Meta) install |
 |---|---|---|
-| Normal channels + their posts in Explore | ✅ | ✅ |
-| `ADS_SPECIAL` channels + their posts in Explore | ❌ | ✅ |
+| Audience **Everyone** | ✅ | ✅ |
+| Audience **Organic only** | ✅ | ❌ |
+| Audience **Ads only** | ❌ | ✅ |
 | Preview clip without login | ❌ (login + plan) | ✅ |
-| Full video | Login + plan | Login + plan |
+| Full video (👑 premium) | Login + plan | Login + plan |
 
-Ads users get a **superset**: normal content plus the special channels.
+Premium (👑) and audience are **independent**: e.g. a premium post for organic users
+only, or a free post for ads users only.
 
 ## 3. Key simplification: guest-first accounts
 
@@ -88,8 +91,7 @@ user_attribution  user_id PK,
 analytics_events  id, install_id, user_id, event, content_id, created_at
                   -- events: app_open, login, content_view, preview_view,
                   --         special_content_view (deduplicated per view), purchase (later)
-channels.tags     text[]  -- allowed: ADS_SPECIAL, NEW, …
-posts.tags        text[]  -- optional per-post override
+channels.audience, posts.audience   -- 'all' | 'organic' | 'ads'
 payments.attr_source, payments.attr_campaign   -- snapshot trigger, when payments exist
 ```
 
@@ -103,14 +105,15 @@ payments.attr_source, payments.attr_campaign   -- snapshot trigger, when payment
 - `record_install(...)`: insert-or-ignore; returns the parsed source.
 - `attribute_user(install_id)`: called at guest creation and at every login; sets
   first touch once and updates last touch.
-- `is_ads_user()`: security definer; true if the current user's first-touch
-  source is `meta`.
+- `is_ads_user()` / `user_source()`: security definer; `ads` if the current user's
+  first-touch source is `meta`, else `organic`.
 - `is_ads_install(install_id)`: server-only (not callable by clients).
 - `log_event(...)`.
 
 ### Content rules (enforced in the database, not only in the app)
-- Channel / post / Explore read rules: return `ADS_SPECIAL` rows only when
-  `is_ads_user()` (or admin). Existing rules (hidden, draft, premium) stay unchanged.
+- Channel / post / Explore read rules: a row is visible when its audience is `all`
+  or matches `user_source()` (admins see everything). Hidden, draft, and premium
+  rules stay unchanged.
 - Media access (signed stream URL): same rule.
 - **Preview endpoint** `preview-url {post_item_id}`: checks the user/install is
   `meta` and the post is published and not hidden, then returns a short-lived
@@ -119,10 +122,10 @@ payments.attr_source, payments.attr_campaign   -- snapshot trigger, when payment
 
 ## 6. App behaviour
 
-- **Ads guest:** sees special channels in Discover and their posts in Explore and
-  Feed; "Watch preview" works without login; ▶ Play → login → plans page.
-- **Organic guest:** unchanged.
-- **Logged in:** special channels only if the account's first touch is `meta`.
+- **Ads guest:** sees `all` + `ads` content in Discover, Explore, and Feed;
+  "Watch preview" works without login; ▶ Play → login → plans page.
+- **Organic guest:** sees `all` + `organic` content; ▶ Play → login → plans page.
+- **Logged in:** same split, based on the account's first touch.
 - When `record_install` comes back as `meta`, refresh Channels / Explore / Feed so the
   special content appears without a restart.
 - Wait for the saved session to load before showing content (no flicker).
@@ -130,7 +133,8 @@ payments.attr_source, payments.attr_campaign   -- snapshot trigger, when payment
 
 ## 7. Admin panel
 
-- Channel editor: `ADS_SPECIAL` toggle (and `NEW`).
+- Channel and post editors: audience selector (Everyone / Organic only / Ads only).
+  Full spec in [08-admin-panel.md](08-admin-panel.md).
 - Attribution report: installs, registrations (guest → logged in), plan buyers,
   purchases, revenue, **by source and by campaign**.
 - Users list with source / campaign / first & last touch; user detail with plan
@@ -162,10 +166,10 @@ payments.attr_source, payments.attr_campaign   -- snapshot trigger, when payment
 
 ## 10. Tests to run (once built)
 
-1. Ads guest sees `ADS_SPECIAL` channels and their posts in Explore; organic guest does not.
+1. Ads guest sees `ads` content and not `organic` content; organic guest sees the opposite; both see `all`.
 2. Ads guest plays a preview without login; full video asks for login + plan.
 3. Organic install cannot get a preview URL.
-4. Logged-in ads user sees special channels; logged-in organic user does not.
+4. Logged-in ads / organic users see the same split as their guest selves.
 5. Hidden/draft items never appear; direct DB queries from the app still follow the rules.
 6. First touch stays the same after reinstall/update through the other APK.
 7. Admin report counts installs / registrations / purchases / revenue per source and campaign.

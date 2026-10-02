@@ -25,7 +25,9 @@
 | 21 | Channel posting: owner/admins only (Telegram broadcast) or any member? | | **Decided: admins post**; members only join and watch |
 | 22 | Payment provider and integration | | **Deferred** by product owner |
 | 23 | Distribution | Play Store / tester APK | **Decided: tester APK only** (sideloaded). Play Store and legal compliance are out of scope for now |
-| 24 | Backend: NestJS + Postgres, or Supabase (Postgres + RLS + Edge Functions + anonymous auth)? | | Proposed: **Supabase**. Fits the attribution design (DB-enforced rules, security definer functions) and guest accounts |
+| 24 | Backend: NestJS + Postgres, or Supabase (Postgres + RLS + Edge Functions + anonymous auth)? | | **Decided: Supabase** |
 | 25 | Ads guest logs into an existing organic account: keep organic (first touch wins)? | | Proposed: yes |
 | 26 | Where to host APKs (repo is private) | Public releases repo / public R2 bucket / make repo public | Proposed: public R2 bucket |
-| 27 | "Admins" who post: app owner/staff only, or channel owners + their admins? | | |
+| 27 | "Admins" who post: app owner/staff only, or channel owners + their admins? | | **Decided: owner + admins the owner invites** (via the online admin panel) |
+| 28 | Content audience options | | **Decided: Everyone / Organic only / Ads only**, on channels and posts |
+| 29 | Can regular app users still create channels ("Add Channel" in profile)? | Yes / remove the button | |

@@ -38,7 +38,8 @@ roles, applies all migrations, and runs `tests/rls_test.sql`.
 - Project: **cloud-storage** · ref `lcfiohprmviolzwglkhm` · region ap-south-1 (Mumbai)
 - Applied migrations: `20261002000001_init`, `20261002000002_harden_functions`, `20261002000003_admin_rpcs`,
   `20261002000004_storage_and_cloud` (applied live in four parts: storage_buckets_policies, cloud_files,
-  plan_requests, app_status_rpcs), `20261002000005_user_channels` (applied in three parts)
+  plan_requests, app_status_rpcs), `20261002000005_user_channels` (applied in three parts),
+  `20261003000006_trailers`
 - Edge Functions: `delete-account`
 
 ## Apply to the Supabase project

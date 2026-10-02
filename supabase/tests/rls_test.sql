@@ -482,5 +482,42 @@ select t.act_as('owner');
 select public.review_channel(id, false) from public.channels where name = 'Two';
 reset role;
 select t.ok((select review_status from public.channels where name = 'Two') = 'rejected', 'owner can reject');
+
+-- ---------------------------------------------------------------------------
+-- Trailers and creator access
+-- ---------------------------------------------------------------------------
+-- Vlog 1 (ads channel, premium item by organic_user the creator) gets a trailer.
+update public.post_items set trailer_key = 'posts/70000000-0000-0000-0000-000000000001/t.mp4'
+ where post_id = '70000000-0000-0000-0000-000000000001';
+insert into storage.objects (bucket_id, name) values ('media', 'posts/70000000-0000-0000-0000-000000000001/t.mp4');
+-- ads_guest is a guest (not premium); remove ads_user's plan to test a non-premium ads user too.
+delete from public.subscriptions where user_id = t.id('ads_user');
+
+set role authenticated;
+select t.act_as('ads_guest');
+select t.ok(exists (select 1 from storage.objects where name = 'posts/70000000-0000-0000-0000-000000000001/t.mp4'),
+            'ads guest can play the trailer without login or plan');
+select t.ok(not exists (select 1 from storage.objects where name = 'posts/70000000-0000-0000-0000-000000000001/v.mp4'),
+            'ads guest cannot play the full premium video');
+select t.ok((select trailer_key from public.post_items where post_id = '70000000-0000-0000-0000-000000000001') is not null,
+            'app can read the trailer key');
+
+select t.act_as('ads_user');
+select t.ok(not exists (select 1 from storage.objects where name = 'posts/70000000-0000-0000-0000-000000000001/v.mp4'),
+            'ads user without a plan cannot play the full video');
+
+select t.act_as('organic_buyer');  -- organic, approval revoked earlier
+select t.ok(not exists (select 1 from storage.objects where name = 'posts/70000000-0000-0000-0000-000000000001/t.mp4'),
+            'organic user cannot get the trailer');
+
+select t.act_as('organic_user');   -- the creator; has a plan from earlier, remove it
+reset role;
+delete from public.subscriptions where user_id = t.id('organic_user');
+set role authenticated;
+select t.act_as('organic_user');
+select t.ok(not public.is_premium_user(), 'creator has no plan');
+select t.ok(exists (select 1 from storage.objects where name = 'posts/70000000-0000-0000-0000-000000000001/v.mp4'),
+            'creator plays their own full video without a plan');
+reset role;
 \echo
 \echo 'All tests passed.'

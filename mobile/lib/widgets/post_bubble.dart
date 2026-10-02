@@ -70,7 +70,7 @@ class PostBubble extends StatelessWidget {
                                     PostScreen(postId: post.id, initial: post),
                               ),
                             )
-                          : watchItem(context, post, cover),
+                          : openItem(context, post, cover),
                       child: AspectRatio(
                         aspectRatio: 16 / 10,
                         child: Stack(

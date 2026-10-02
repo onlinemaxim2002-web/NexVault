@@ -32,6 +32,7 @@ class AppState extends ChangeNotifier {
 
   bool get isGuest => status?.isGuest ?? true;
   bool get isPremium => status?.isPremium ?? false;
+  bool get hasAdsAccess => status?.hasAdsAccess ?? false;
   bool get consentGiven => _prefs.getString('consent') == Config.policyVersion;
   String? get email => sb.auth.currentUser?.email;
   String? get userId => sb.auth.currentUser?.id;

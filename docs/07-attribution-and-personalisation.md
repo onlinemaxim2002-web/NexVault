@@ -203,3 +203,12 @@ payments.attr_source, payments.attr_campaign   -- snapshot trigger, when payment
 5. Hidden/draft items never appear; direct DB queries from the app still follow the rules.
 6. First touch stays the same after reinstall/update through the other APK.
 7. Admin report counts installs / registrations / purchases / revenue per source and campaign.
+
+## 11. Trailers (implemented)
+
+- Creators (and admins) can attach a short **trailer** to any video item.
+- **Ads users** (and organic users the owner approved) see **Trailer** + **Watch full**:
+  the trailer plays without login or plan; the full video needs login + an active plan.
+- **Organic users** get no trailer: Watch → login → plan.
+- The **creator** of a post always plays it in full without a plan; admins see everything.
+- Enforced by the media storage rule `can_read_media()` (signed URLs are refused otherwise).

@@ -6,6 +6,7 @@ class UserStatus {
   final bool isGuest;
   final String source; // ads | organic
   final bool isPremium;
+  final bool hasAdsAccess;
   final String? planName;
   final DateTime? planEndsAt;
   final int usedBytes;
@@ -18,6 +19,7 @@ class UserStatus {
     required this.isGuest,
     required this.source,
     required this.isPremium,
+    this.hasAdsAccess = false,
     this.planName,
     this.planEndsAt,
     this.usedBytes = 0,
@@ -31,6 +33,7 @@ class UserStatus {
     isGuest: (j['is_guest'] as bool?) ?? true,
     source: (j['source'] as String?) ?? 'organic',
     isPremium: (j['is_premium'] as bool?) ?? false,
+    hasAdsAccess: (j['has_ads_access'] as bool?) ?? false,
     planName: j['plan_name'] as String?,
     planEndsAt: j['plan_ends_at'] == null
         ? null
@@ -94,6 +97,7 @@ class PostItem {
   final bool isPremium;
   final String mediaKey;
   final String? thumbKey;
+  final String? trailerKey;
   final int? durationS;
   final int position;
 
@@ -103,10 +107,12 @@ class PostItem {
     required this.isPremium,
     required this.mediaKey,
     this.thumbKey,
+    this.trailerKey,
     this.durationS,
     this.position = 0,
   });
 
+  bool get hasTrailer => trailerKey != null;
   bool get isVideo => kind == 'video';
   String? get thumbUrl => thumbKey == null ? null : Config.publicUrl(thumbKey!);
 
@@ -116,6 +122,7 @@ class PostItem {
     isPremium: (j['is_premium'] as bool?) ?? false,
     mediaKey: j['media_key'] as String,
     thumbKey: j['thumb_key'] as String?,
+    trailerKey: j['trailer_key'] as String?,
     durationS: (j['duration_s'] as num?)?.toInt(),
     position: (j['position'] as num?)?.toInt() ?? 0,
   );
@@ -124,6 +131,7 @@ class PostItem {
 class Post {
   final String id;
   final String channelId;
+  final String? createdBy;
   final String? folderId;
   final String channelName;
   final String? channelIcon;
@@ -136,6 +144,7 @@ class Post {
   const Post({
     required this.id,
     required this.channelId,
+    this.createdBy,
     this.folderId,
     required this.channelName,
     this.channelIcon,
@@ -150,7 +159,7 @@ class Post {
   bool get hasPremium => items.any((i) => i.isPremium);
 
   static const select =
-      '*, channels(name, icon_url), post_items(id, kind, is_premium, media_key, thumb_key, duration_s, position)';
+      '*, channels(name, icon_url), post_items(id, kind, is_premium, media_key, thumb_key, trailer_key, duration_s, position)';
 
   factory Post.fromJson(Map<String, dynamic> j) {
     final ch = j['channels'] as Map<String, dynamic>?;
@@ -162,6 +171,7 @@ class Post {
     return Post(
       id: j['id'] as String,
       channelId: j['channel_id'] as String,
+      createdBy: j['created_by'] as String?,
       folderId: j['folder_id'] as String?,
       channelName: (ch?['name'] as String?) ?? '',
       channelIcon: ch?['icon_url'] as String?,

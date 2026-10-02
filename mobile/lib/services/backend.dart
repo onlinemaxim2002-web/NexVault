@@ -295,6 +295,9 @@ class Backend {
     required String ext,
     required String mime,
     Uint8List? thumbnail,
+    Uint8List? trailerBytes,
+    String? trailerExt,
+    String? trailerMime,
   }) async {
     final id = _uuid.v4();
     final mediaKey = 'posts/$postId/$id.$ext';
@@ -316,12 +319,24 @@ class Backend {
             fileOptions: const FileOptions(contentType: 'image/jpeg'),
           );
     }
+    String? trailerKey;
+    if (trailerBytes != null) {
+      trailerKey = 'posts/$postId/$id-trailer.${trailerExt ?? 'mp4'}';
+      await sb.storage
+          .from('media')
+          .uploadBinary(
+            trailerKey,
+            trailerBytes,
+            fileOptions: FileOptions(contentType: trailerMime ?? 'video/mp4'),
+          );
+    }
     await sb.from('post_items').insert({
       'post_id': postId,
       'position': position,
       'kind': kind,
       'media_key': mediaKey,
       'thumb_key': thumbKey,
+      'trailer_key': trailerKey,
       'processing_status': 'ready',
     });
   }
@@ -350,7 +365,9 @@ class Backend {
     q = parentId == null
         ? q.isFilter('parent_id', null)
         : q.eq('parent_id', parentId);
-    final rows = await q.order('is_folder', ascending: false).order('name', ascending: true);
+    final rows = await q
+        .order('is_folder', ascending: false)
+        .order('name', ascending: true);
     return rows.map(CloudFile.fromJson).toList();
   }
 

@@ -97,7 +97,13 @@ class ErrorRetry extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.wifi_off, size: 48, color: AppColors.muted),
+            Icon(
+              message == 'No internet connection.'
+                  ? Icons.wifi_off
+                  : Icons.error_outline,
+              size: 48,
+              color: AppColors.muted,
+            ),
             const SizedBox(height: 12),
             Text(message, textAlign: TextAlign.center),
             const SizedBox(height: 12),

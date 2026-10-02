@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { MediaUploader } from "@/components/media-uploader";
+import { TrailerUpload } from "@/components/trailer-upload";
 import { PostForm, type PostValues } from "@/components/post-form";
 import { Badge, Button, Card, Flash, PageHeader } from "@/components/ui";
 import { requireAdmin } from "@/lib/auth";
@@ -15,6 +16,7 @@ type Item = {
   duration_s: number | null;
   position: number;
   thumb_key: string | null;
+  trailer_key: string | null;
 };
 
 export default async function PostPage({
@@ -39,7 +41,7 @@ export default async function PostPage({
     loadChannelOptions(supabase),
     supabase
       .from("post_items")
-      .select("id, kind, is_premium, processing_status, duration_s, position, thumb_key")
+      .select("id, kind, is_premium, processing_status, duration_s, position, thumb_key, trailer_key")
       .eq("post_id", id)
       .order("position"),
   ]);
@@ -64,7 +66,8 @@ export default async function PostPage({
         <Card>
           <h2 className="mb-1 font-semibold">Videos &amp; images</h2>
           <p className="mb-4 text-sm text-gray-500">
-            Mark each item 👑 premium (login + plan needed to play) or free.
+            Mark each item 👑 premium (login + plan needed to play) or free. Ads users can watch a
+            video&apos;s trailer before buying.
           </p>
           <ul className="mb-4 space-y-2">
             {items.length === 0 && <li className="text-sm text-gray-500">No media yet.</li>}
@@ -84,6 +87,7 @@ export default async function PostPage({
                   </p>
                   <div className="mt-1 flex gap-1">
                     {item.is_premium ? <Badge tone="amber">👑 Premium</Badge> : <Badge>Free</Badge>}
+                    {item.trailer_key && <Badge tone="purple">Trailer</Badge>}
                     {item.processing_status !== "ready" && (
                       <Badge tone={item.processing_status === "failed" ? "red" : "blue"}>
                         {item.processing_status === "failed" ? "Processing failed" : "Processing…"}
@@ -98,6 +102,9 @@ export default async function PostPage({
                       {item.is_premium ? "Make free" : "Make premium"}
                     </button>
                   </form>
+                  {item.kind === "video" && (
+                    <TrailerUpload postId={id} itemId={item.id} hasTrailer={!!item.trailer_key} />
+                  )}
                   <form action={deleteItem.bind(null, id, item.id)}>
                     <button className="text-xs text-gray-500 hover:text-red-700 hover:underline">Remove</button>
                   </form>

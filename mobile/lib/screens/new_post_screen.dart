@@ -27,6 +27,8 @@ class _Picked {
   final PlatformFile file;
   final bool isVideo;
   Uint8List? thumbnail;
+  PlatformFile?
+  trailer; // optional short clip shown to ads users before they buy
   _Picked(this.file, this.isVideo);
 }
 
@@ -97,6 +99,16 @@ class _NewPostScreenState extends State<NewPostScreen> {
     } catch (_) {
       return null; // The post still works without a thumbnail.
     }
+  }
+
+  Future<void> _pickTrailer(_Picked p) async {
+    final f = await FilePicker.pickFile(type: FileType.video);
+    if (f == null) return;
+    if (await fileSize(f) > Config.maxUploadBytes) {
+      if (mounted) showSnack(context, 'Trailer must be under 50 MB.');
+      return;
+    }
+    setState(() => p.trailer = f);
   }
 
   Future<void> _newFolder() async {
@@ -180,6 +192,11 @@ class _NewPostScreenState extends State<NewPostScreen> {
           ext: (p.file.extension ?? (p.isVideo ? 'mp4' : 'jpg')).toLowerCase(),
           mime: _mime(p.file, p.isVideo),
           thumbnail: p.thumbnail,
+          trailerBytes: p.trailer == null
+              ? null
+              : await p.trailer!.readAsBytes(),
+          trailerExt: p.trailer?.extension?.toLowerCase(),
+          trailerMime: p.trailer == null ? null : _mime(p.trailer!, true),
         );
       }
       if (!mounted) return;
@@ -249,42 +266,63 @@ class _NewPostScreenState extends State<NewPostScreen> {
             runSpacing: 8,
             children: [
               for (final p in _files)
-                Stack(
+                Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      child: SizedBox(
-                        width: 96,
-                        height: 96,
-                        child: p.thumbnail != null
-                            ? Image.memory(p.thumbnail!, fit: BoxFit.cover)
-                            : Container(
-                                color: const Color(0xFFEDEDED),
-                                child: Icon(
-                                  p.isVideo ? Icons.videocam : Icons.image,
-                                  color: Colors.black38,
-                                ),
-                              ),
-                      ),
-                    ),
-                    Positioned(
-                      top: 2,
-                      right: 2,
-                      child: InkResponse(
-                        onTap: _posting
-                            ? null
-                            : () => setState(() => _files.remove(p)),
-                        child: const CircleAvatar(
-                          radius: 12,
-                          backgroundColor: Colors.black54,
-                          child: Icon(
-                            Icons.close,
-                            size: 14,
-                            color: Colors.white,
+                    Stack(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: SizedBox(
+                            width: 96,
+                            height: 96,
+                            child: p.thumbnail != null
+                                ? Image.memory(p.thumbnail!, fit: BoxFit.cover)
+                                : Container(
+                                    color: const Color(0xFFEDEDED),
+                                    child: Icon(
+                                      p.isVideo ? Icons.videocam : Icons.image,
+                                      color: Colors.black38,
+                                    ),
+                                  ),
                           ),
                         ),
-                      ),
+                        Positioned(
+                          top: 2,
+                          right: 2,
+                          child: InkResponse(
+                            onTap: _posting
+                                ? null
+                                : () => setState(() => _files.remove(p)),
+                            child: const CircleAvatar(
+                              radius: 12,
+                              backgroundColor: Colors.black54,
+                              child: Icon(
+                                Icons.close,
+                                size: 14,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
+                    if (p.isVideo)
+                      TextButton.icon(
+                        style: TextButton.styleFrom(
+                          padding: EdgeInsets.zero,
+                          minimumSize: const Size(96, 32),
+                        ),
+                        onPressed: _posting ? null : () => _pickTrailer(p),
+                        icon: Icon(
+                          p.trailer == null ? Icons.add : Icons.check_circle,
+                          size: 16,
+                        ),
+                        label: Text(
+                          p.trailer == null ? 'Trailer' : 'Trailer ✓',
+                          style: const TextStyle(fontSize: 13),
+                        ),
+                      ),
                   ],
                 ),
               InkWell(

@@ -8,7 +8,15 @@ import '../widgets/common.dart';
 class PlayerScreen extends StatefulWidget {
   final String url;
   final String title;
-  const PlayerScreen({super.key, required this.url, required this.title});
+
+  /// Set when playing a trailer: shows a "Watch full video" button.
+  final void Function(BuildContext)? onWatchFull;
+  const PlayerScreen({
+    super.key,
+    required this.url,
+    required this.title,
+    this.onWatchFull,
+  });
 
   @override
   State<PlayerScreen> createState() => _PlayerScreenState();
@@ -57,6 +65,23 @@ class _PlayerScreenState extends State<PlayerScreen> {
         backgroundColor: Colors.black,
         title: Text(widget.title, style: const TextStyle(fontSize: 18)),
       ),
+      bottomNavigationBar: widget.onWatchFull == null
+          ? null
+          : SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: FilledButton.icon(
+                  icon: const Icon(Icons.workspace_premium),
+                  label: const Text('Watch full video'),
+                  onPressed: () {
+                    final navigator = Navigator.of(context);
+                    final parent = navigator.context;
+                    navigator.pop();
+                    widget.onWatchFull!(parent);
+                  },
+                ),
+              ),
+            ),
       body: Center(
         child: _error != null
             ? Text(_error!, style: const TextStyle(color: Colors.white))

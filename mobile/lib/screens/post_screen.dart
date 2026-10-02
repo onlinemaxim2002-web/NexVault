@@ -171,13 +171,35 @@ class _ItemRow extends StatelessWidget {
                     style: const TextStyle(color: AppColors.muted),
                   ),
                 const SizedBox(height: 8),
-                FilledButton(
-                  style: FilledButton.styleFrom(
-                    minimumSize: const Size(110, 40),
-                    shape: const StadiumBorder(),
-                  ),
-                  onPressed: () => watchItem(context, post, item),
-                  child: Text(item.isVideo ? 'Watch' : 'View'),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    if (canWatchTrailer(post, item))
+                      OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size(0, 40),
+                          shape: const StadiumBorder(),
+                        ),
+                        icon: const Icon(Icons.play_circle_outline),
+                        label: const Text('Trailer'),
+                        onPressed: () => watchTrailer(context, post, item),
+                      ),
+                    FilledButton(
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size(110, 40),
+                        shape: const StadiumBorder(),
+                      ),
+                      onPressed: () => watchItem(context, post, item),
+                      child: Text(
+                        item.isVideo
+                            ? (canWatchTrailer(post, item)
+                                  ? 'Watch full'
+                                  : 'Watch')
+                            : 'View',
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

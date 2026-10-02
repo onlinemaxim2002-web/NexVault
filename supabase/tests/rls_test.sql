@@ -391,5 +391,96 @@ select t.ok((public.my_status()->>'is_premium')::boolean, 'status shows premium 
 select t.ok(public.my_status()->>'source' = 'organic', 'status shows source');
 
 reset role;
+
+-- ---------------------------------------------------------------------------
+-- User-created channels
+-- ---------------------------------------------------------------------------
+set role authenticated;
+select t.act_as('ads_guest');
+select t.fails($$insert into public.channels (name) values ('Guest channel')$$,
+               'guests must log in to create a channel');
+
+select t.act_as('organic_user');
+insert into public.channels (id, name, audience, status)
+values ('60000000-0000-0000-0000-000000000001', 'My Vlogs', 'ads', 'published');
+select t.ok((select review_status || '/' || status || '/' || audience from public.channels
+              where id = '60000000-0000-0000-0000-000000000001') = 'pending/draft/all',
+            'new user channel starts as a pending request (status/audience forced)');
+select t.ok((select created_by from public.channels where id = '60000000-0000-0000-0000-000000000001')
+            = t.id('organic_user'), 'creator recorded');
+update public.channels set audience = 'ads', status = 'published', review_status = 'approved', name = 'My Vlogs 2'
+ where id = '60000000-0000-0000-0000-000000000001';
+select t.ok((select name || '/' || review_status || '/' || audience from public.channels
+              where id = '60000000-0000-0000-0000-000000000001') = 'My Vlogs 2/pending/all',
+            'creator can rename but cannot approve, publish or set audience');
+select t.fails($$insert into public.posts (channel_id, title, status)
+                 values ('60000000-0000-0000-0000-000000000001', 'too early', 'published')$$,
+               'creator cannot post before approval');
+insert into public.channels (name) values ('Two'), ('Three');
+select t.fails($$insert into public.channels (name) values ('Four')$$, 'max 3 pending channel requests');
+
+select t.act_as('ads_user');
+select t.ok(not exists (select 1 from public.channels where id = '60000000-0000-0000-0000-000000000001'),
+            'pending channel is invisible to other users');
+
+select t.act_as('content_admin');
+select t.fails($$select public.review_channel('60000000-0000-0000-0000-000000000001', true, 'ads')$$,
+               'content admins cannot review channel requests');
+
+select t.act_as('owner');
+select t.ok((select count(*) from public.admin_channel_requests()) = 3, 'owner sees pending channel requests');
+select t.ok((public.admin_dashboard()->>'pending_channels')::int = 3, 'dashboard counts channel requests');
+select public.review_channel('60000000-0000-0000-0000-000000000001', true, 'ads');
+select t.ok((select review_status || '/' || status || '/' || audience from public.channels
+              where id = '60000000-0000-0000-0000-000000000001') = 'approved/published/ads',
+            'owner approves and sets the audience');
+select t.ok(exists (select 1 from public.channel_members
+                     where channel_id = '60000000-0000-0000-0000-000000000001' and user_id = t.id('organic_user')),
+            'creator follows their approved channel');
+
+select t.act_as('organic_user');
+insert into public.posts (id, channel_id, title, audience, status)
+values ('70000000-0000-0000-0000-000000000001', '60000000-0000-0000-0000-000000000001', 'Vlog 1', 'organic', 'published');
+select t.ok((select audience || '/' || status from public.posts where id = '70000000-0000-0000-0000-000000000001')
+            = 'ads/published', 'creator post follows the channel audience');
+insert into public.post_items (post_id, kind, is_premium, media_key, processing_status)
+values ('70000000-0000-0000-0000-000000000001', 'video', false,
+        'posts/70000000-0000-0000-0000-000000000001/v.mp4', 'ready');
+select t.ok((select is_premium from public.post_items where post_id = '70000000-0000-0000-0000-000000000001'),
+            'creator items are premium by default (owner decides)');
+update public.post_items set is_premium = false where post_id = '70000000-0000-0000-0000-000000000001';
+select t.ok((select is_premium from public.post_items where post_id = '70000000-0000-0000-0000-000000000001'),
+            'creator cannot make items free');
+insert into storage.objects (bucket_id, name)
+values ('media', 'posts/70000000-0000-0000-0000-000000000001/v.mp4');
+select t.ok(true, 'creator uploads media for their post');
+select t.fails($$insert into storage.objects (bucket_id, name)
+                 values ('media', 'posts/20000000-0000-0000-0000-000000000001/x.mp4')$$,
+               'creator cannot upload into other channels'' posts');
+select t.fails($$insert into public.posts (channel_id, title) values ('10000000-0000-0000-0000-000000000001', 'x')$$,
+               'creator cannot post in channels they did not create');
+
+select t.act_as('ads_user');
+select t.ok(exists (select 1 from public.posts where id = '70000000-0000-0000-0000-000000000001'),
+            'ads users see the approved ads channel''s posts');
+insert into public.channel_members (channel_id, user_id)
+values ('60000000-0000-0000-0000-000000000001', t.id('ads_user'));
+select public.log_event(null, 'content_view', '70000000-0000-0000-0000-000000000001', gen_random_uuid());
+
+select t.act_as('organic_guest_2');
+reset role;
+select t.ok((select members_count from public.channels where id = '60000000-0000-0000-0000-000000000001') = 2,
+            'member counter still updates (guards skip internal updates)');
+select t.ok((select view_count from public.posts where id = '70000000-0000-0000-0000-000000000001') = 1,
+            'view counter still updates');
+
+set role authenticated;
+select t.act_as('organic_buyer');  -- organic, approval was revoked earlier
+select t.ok(not exists (select 1 from public.posts where id = '70000000-0000-0000-0000-000000000001'),
+            'organic users do not see the ads channel''s posts');
+select t.act_as('owner');
+select public.review_channel(id, false) from public.channels where name = 'Two';
+reset role;
+select t.ok((select review_status from public.channels where name = 'Two') = 'rejected', 'owner can reject');
 \echo
 \echo 'All tests passed.'

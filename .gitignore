@@ -1,0 +1,21 @@
+# OS / editors
+.DS_Store
+.idea/
+.vscode/
+
+# Env
+.env
+.env.*
+!.env.example
+
+# Node
+node_modules/
+dist/
+.next/
+
+# Flutter / Dart
+.dart_tool/
+build/
+*.iml
+.flutter-plugins
+.flutter-plugins-dependencies

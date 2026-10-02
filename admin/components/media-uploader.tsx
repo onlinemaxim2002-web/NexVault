@@ -1,0 +1,136 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { Button } from "@/components/ui";
+import { MAX_UPLOAD_BYTES, extension, formatBytes, readMedia } from "@/lib/media";
+import { createClient } from "@/lib/supabase/browser";
+
+type Row = { name: string; size: number; state: "waiting" | "uploading" | "done" | "error"; message?: string };
+
+export function MediaUploader({ postId, nextPosition }: { postId: string; nextPosition: number }) {
+  const router = useRouter();
+  const [files, setFiles] = useState<File[]>([]);
+  const [rows, setRows] = useState<Row[]>([]);
+  const [premium, setPremium] = useState(true);
+  const [busy, setBusy] = useState(false);
+
+  function choose(list: FileList | null) {
+    const picked = Array.from(list ?? []);
+    setFiles(picked);
+    setRows(
+      picked.map((f) => ({
+        name: f.name,
+        size: f.size,
+        state: f.size > MAX_UPLOAD_BYTES ? "error" : "waiting",
+        message: f.size > MAX_UPLOAD_BYTES ? "Larger than 50 MB (free plan limit)" : undefined,
+      })),
+    );
+  }
+
+  function update(i: number, patch: Partial<Row>) {
+    setRows((prev) => prev.map((r, j) => (j === i ? { ...r, ...patch } : r)));
+  }
+
+  async function upload() {
+    setBusy(true);
+    const supabase = createClient();
+    let position = nextPosition;
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      if (file.size > MAX_UPLOAD_BYTES) continue;
+      update(i, { state: "uploading", message: "Reading file…" });
+      try {
+        const info = await readMedia(file);
+        const id = crypto.randomUUID();
+        const mediaKey = `posts/${postId}/${id}.${extension(file)}`;
+        const thumbKey = `thumbs/${postId}/${id}.jpg`;
+
+        update(i, { message: "Uploading…" });
+        const media = await supabase.storage
+          .from("media")
+          .upload(mediaKey, file, { contentType: file.type, upsert: false });
+        if (media.error) throw media.error;
+
+        const thumb = await supabase.storage
+          .from("public")
+          .upload(thumbKey, info.thumbnail, { contentType: "image/jpeg", upsert: false });
+        if (thumb.error) throw thumb.error;
+
+        const { error } = await supabase.from("post_items").insert({
+          post_id: postId,
+          position: position++,
+          kind: info.kind,
+          is_premium: premium,
+          media_key: mediaKey,
+          thumb_key: thumbKey,
+          duration_s: info.durationS,
+          width: info.width,
+          height: info.height,
+          processing_status: "ready",
+        });
+        if (error) throw error;
+        update(i, { state: "done", message: undefined });
+      } catch (e) {
+        update(i, { state: "error", message: e instanceof Error ? e.message : "Upload failed" });
+      }
+    }
+
+    setBusy(false);
+    router.refresh();
+  }
+
+  const ready = rows.some((r) => r.state === "waiting");
+
+  return (
+    <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 p-4">
+      <label className="block cursor-pointer text-center text-sm text-gray-600">
+        <span className="font-medium text-red-700">Choose videos or images</span>
+        <span className="block text-xs text-gray-500">MP4 videos and JPG/PNG images, up to 50 MB each</span>
+        <input
+          type="file"
+          multiple
+          accept="video/*,image/*"
+          className="sr-only"
+          disabled={busy}
+          onChange={(e) => choose(e.target.files)}
+          data-testid="media-input"
+        />
+      </label>
+
+      {rows.length > 0 && (
+        <>
+          <ul className="mt-3 space-y-1 text-sm">
+            {rows.map((r, i) => (
+              <li key={i} className="flex items-center justify-between gap-2">
+                <span className="truncate">
+                  {r.name} <span className="text-gray-400">· {formatBytes(r.size)}</span>
+                </span>
+                <span
+                  className={`shrink-0 text-xs ${
+                    r.state === "done" ? "text-green-700" : r.state === "error" ? "text-red-700" : "text-gray-500"
+                  }`}
+                >
+                  {r.state === "done" ? "Uploaded" : r.message ?? (r.state === "waiting" ? "Ready" : "")}
+                </span>
+              </li>
+            ))}
+          </ul>
+          <label className="mt-3 flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={premium}
+              onChange={(e) => setPremium(e.target.checked)}
+              className="h-4 w-4 accent-red-700"
+            />
+            Mark as 👑 premium
+          </label>
+          <Button type="button" onClick={upload} disabled={busy || !ready} className="mt-3 w-full">
+            {busy ? "Uploading…" : "Upload"}
+          </Button>
+        </>
+      )}
+    </div>
+  );
+}

@@ -6,15 +6,17 @@ export default async function PanelLayout({ children }: { children: React.ReactN
   const { supabase, user, role } = await requireAdmin();
   const { data: stats } = await supabase.rpc("admin_dashboard");
   const pending = Number(stats?.pending_approvals ?? 0);
+  const { data: requests } = role === "owner" ? await supabase.rpc("admin_plan_requests") : { data: [] };
+  const openRequests = (requests ?? []).length;
 
   const items = [
     { href: "/", label: "Dashboard" },
-    { href: "/channels", label: "Channels" },
+    { href: "/channels", label: "Channels", badge: role === "owner" ? Number(stats?.pending_channels ?? 0) : 0 },
     { href: "/posts", label: "Posts" },
     ...(role === "owner"
       ? [
           { href: "/approvals", label: "Approvals", badge: pending },
-          { href: "/users", label: "Users" },
+          { href: "/users", label: "Users", badge: openRequests },
           { href: "/plans", label: "Plans" },
           { href: "/admins", label: "Admins" },
         ]

@@ -15,6 +15,7 @@ import {
 } from "@/components/ui";
 import { requireAdmin } from "@/lib/auth";
 import { AUDIENCES, STATUSES, formatDate } from "@/lib/format";
+import { publicUrl } from "@/lib/supabase/browser";
 
 type Row = {
   id: string;
@@ -25,7 +26,7 @@ type Row = {
   view_count: number;
   channels: { name: string } | null;
   channel_folders: { name: string } | null;
-  post_items: { is_premium: boolean }[];
+  post_items: { is_premium: boolean; thumb_key: string | null; position: number }[];
 };
 
 export default async function PostsPage({
@@ -40,7 +41,7 @@ export default async function PostsPage({
 
   let query = supabase
     .from("posts")
-    .select("id, title, audience, status, published_at, view_count, channels(name), channel_folders(name), post_items(is_premium)")
+    .select("id, title, audience, status, published_at, view_count, channels(name), channel_folders(name), post_items(is_premium, thumb_key, position)")
     .order("created_at", { ascending: false })
     .limit(200);
   if (sp.channel) query = query.eq("channel_id", sp.channel);
@@ -101,11 +102,18 @@ export default async function PostsPage({
           <tbody className="divide-y divide-gray-100">
             {rows.map((p) => {
               const premium = p.post_items.filter((i) => i.is_premium).length;
+              const thumb = [...p.post_items].sort((a, b) => a.position - b.position)[0]?.thumb_key;
               const scheduled = p.status === "published" && p.published_at && new Date(p.published_at).getTime() > now;
               return (
                 <tr key={p.id} className="hover:bg-gray-50">
                   <Td>
-                    <Link href={`/posts/${p.id}`} className="font-medium text-gray-900 hover:text-red-700">
+                    <Link href={`/posts/${p.id}`} className="flex items-center gap-3 font-medium text-gray-900 hover:text-red-700">
+                      {thumb ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={publicUrl(thumb)!} alt="" className="h-10 w-10 shrink-0 rounded object-cover" />
+                      ) : (
+                        <span className="h-10 w-10 shrink-0 rounded bg-gray-100" />
+                      )}
                       {p.title}
                     </Link>
                   </Td>

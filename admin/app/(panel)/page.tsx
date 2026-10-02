@@ -42,6 +42,18 @@ export default async function Dashboard({
       <PageHeader title="Dashboard" subtitle="Overview of installs, users and content" />
       <Flash error={error === "owner_only" ? "That page is only available to the owner." : undefined} />
 
+      {role === "owner" && s.pending_channels > 0 && (
+        <Link
+          href="/channels"
+          className="mb-3 flex items-center justify-between rounded-xl bg-amber-500 px-5 py-4 text-white shadow-sm hover:bg-amber-600"
+        >
+          <span className="font-medium">
+            {s.pending_channels} new channel request{s.pending_channels === 1 ? "" : "s"} to review
+          </span>
+          <span className="text-sm">Review →</span>
+        </Link>
+      )}
+
       {role === "owner" && s.pending_approvals > 0 && (
         <Link
           href="/approvals"

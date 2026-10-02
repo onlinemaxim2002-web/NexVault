@@ -1,3 +1,4 @@
+import { IconUpload } from "@/components/icon-upload";
 import { Button, Field, Input, Select, Textarea } from "@/components/ui";
 import { AUDIENCES, STATUSES } from "@/lib/format";
 
@@ -31,8 +32,8 @@ export function ChannelForm({
       <Field label="Category">
         <Input name="category" defaultValue={values?.category ?? ""} placeholder="Entertainment" />
       </Field>
-      <Field label="Icon URL" hint="Image upload comes with the storage setup">
-        <Input name="icon_url" type="url" defaultValue={values?.icon_url ?? ""} />
+      <Field label="Icon">
+        <IconUpload defaultValue={values?.icon_url} />
       </Field>
       <div className="md:col-span-2">
         <Field label="Description">

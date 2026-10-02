@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdmin, requireOwner } from "@/lib/auth";
 import { withMessage } from "@/lib/format";
 
 function friendly(message: string) {
@@ -110,4 +110,17 @@ export async function deleteFolder(channelId: string, folderId: string) {
   if (count === 0) redirect(withMessage(back, "error", "You don't have permission to change this."));
   revalidatePath(back);
   redirect(withMessage(back, "ok", "Folder deleted. Its posts stay in the channel."));
+}
+
+export async function reviewChannel(id: string, approve: boolean, formData: FormData) {
+  const { supabase } = await requireOwner();
+  const audience = String(formData.get("audience") ?? "all");
+  const { error } = await supabase.rpc("review_channel", {
+    p_channel_id: id,
+    p_approve: approve,
+    p_audience: audience,
+  });
+  if (error) redirect(withMessage("/channels", "error", error.message));
+  revalidatePath("/", "layout");
+  redirect(withMessage("/channels", "ok", approve ? "Channel approved. It's now visible in the app." : "Channel request rejected."));
 }

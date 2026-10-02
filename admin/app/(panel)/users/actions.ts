@@ -27,3 +27,11 @@ export async function grantPremium(userId: string, back: string, formData: FormD
   revalidatePath("/", "layout");
   redirect(withMessage(back, "ok", "Premium granted."));
 }
+
+export async function dismissPlanRequest(requestId: string, back: string) {
+  const { supabase } = await requireOwner();
+  const { error } = await supabase.from("plan_requests").update({ status: "dismissed" }).eq("id", requestId);
+  if (error) redirect(withMessage(back, "error", error.message));
+  revalidatePath("/", "layout");
+  redirect(withMessage(back, "ok", "Request dismissed."));
+}

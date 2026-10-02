@@ -78,6 +78,13 @@ export async function setItemPremium(postId: string, itemId: string, premium: bo
 
 export async function deleteItem(postId: string, itemId: string) {
   const { supabase } = await requireAdmin();
+  const { data: item } = await supabase
+    .from("post_items")
+    .select("media_key, thumb_key")
+    .eq("id", itemId)
+    .maybeSingle();
+  if (item?.media_key) await supabase.storage.from("media").remove([item.media_key]);
+  if (item?.thumb_key) await supabase.storage.from("public").remove([item.thumb_key]);
   const { error, count } = await supabase.from("post_items").delete({ count: "exact" }).eq("id", itemId);
   if (error) redirect(withMessage(`/posts/${postId}`, "error", friendly(error.message)));
   if (count === 0) redirect(withMessage(`/posts/${postId}`, "error", NO_PERMISSION));

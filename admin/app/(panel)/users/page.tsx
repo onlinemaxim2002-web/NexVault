@@ -14,7 +14,18 @@ import {
 import { requireOwner } from "@/lib/auth";
 import { formatDate } from "@/lib/format";
 import type { AppUser } from "@/lib/users";
-import { grantPremium, setAdsAccess } from "./actions";
+import { dismissPlanRequest, grantPremium, setAdsAccess } from "./actions";
+
+type PlanRequest = {
+  id: string;
+  user_id: string;
+  email: string;
+  display_name: string;
+  source: "ads" | "organic";
+  plan_code: string;
+  plan_name: string;
+  created_at: string;
+};
 
 const filters = [
   { value: "all", label: "All users" },
@@ -43,16 +54,62 @@ export default async function UsersPage({
   const back = `/users?filter=${filter}&q=${encodeURIComponent(q)}`;
   const { supabase } = await requireOwner();
 
-  const [{ data }, { data: plans }] = await Promise.all([
+  const [{ data }, { data: plans }, { data: requestRows }] = await Promise.all([
     supabase.rpc("admin_users", { p_filter: filter, p_search: q || null, p_limit: 200 }),
     supabase.from("plans").select("code, name").eq("active", true).order("position"),
+    supabase.rpc("admin_plan_requests"),
   ]);
   const users = (data ?? []) as AppUser[];
+  const requests = (requestRows ?? []) as PlanRequest[];
 
   return (
     <>
       <PageHeader title="Users" subtitle="App users, where they came from, and their plans." />
       <Flash ok={sp.ok} error={sp.error} />
+
+      {requests.length > 0 && (
+        <section className="mb-8">
+          <h2 className="mb-2 font-semibold">Plan requests ({requests.length})</h2>
+          <p className="mb-3 text-sm text-gray-500">
+            Users who picked a plan in the app. Payments aren&apos;t connected yet, so grant the plan here.
+          </p>
+          <Table>
+            <thead>
+              <tr>
+                <Th>User</Th>
+                <Th>Source</Th>
+                <Th>Requested</Th>
+                <Th>When</Th>
+                <Th className="text-right">Action</Th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {requests.map((r) => (
+                <tr key={r.id} className="bg-amber-50/60">
+                  <Td>
+                    <p className="font-medium">{r.display_name}</p>
+                    <p className="text-xs text-gray-500">{r.email}</p>
+                  </Td>
+                  <Td><SourceBadge source={r.source} /></Td>
+                  <Td><Badge tone="amber">👑 {r.plan_name}</Badge></Td>
+                  <Td className="whitespace-nowrap">{formatDate(r.created_at)}</Td>
+                  <Td className="text-right">
+                    <div className="flex justify-end gap-2">
+                      <form action={grantPremium.bind(null, r.user_id, back)}>
+                        <input type="hidden" name="plan" value={r.plan_code} />
+                        <Button variant="success" type="submit">Grant {r.plan_name}</Button>
+                      </form>
+                      <form action={dismissPlanRequest.bind(null, r.id, back)}>
+                        <Button variant="secondary" type="submit">Dismiss</Button>
+                      </form>
+                    </div>
+                  </Td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        </section>
+      )}
 
       <form className="mb-4 grid gap-3 sm:grid-cols-[1fr_220px_auto]">
         <Input name="q" defaultValue={q} placeholder="Search name, email or user ID" aria-label="Search" />

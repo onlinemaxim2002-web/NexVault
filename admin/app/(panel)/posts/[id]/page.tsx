@@ -1,8 +1,10 @@
 import { notFound } from "next/navigation";
+import { MediaUploader } from "@/components/media-uploader";
 import { PostForm, type PostValues } from "@/components/post-form";
 import { Badge, Button, Card, Flash, PageHeader } from "@/components/ui";
 import { requireAdmin } from "@/lib/auth";
 import { loadChannelOptions } from "@/lib/channels";
+import { publicUrl } from "@/lib/supabase/browser";
 import { deleteItem, deletePost, setItemPremium, updatePost } from "../actions";
 
 type Item = {
@@ -12,6 +14,7 @@ type Item = {
   processing_status: string;
   duration_s: number | null;
   position: number;
+  thumb_key: string | null;
 };
 
 export default async function PostPage({
@@ -36,7 +39,7 @@ export default async function PostPage({
     loadChannelOptions(supabase),
     supabase
       .from("post_items")
-      .select("id, kind, is_premium, processing_status, duration_s, position")
+      .select("id, kind, is_premium, processing_status, duration_s, position, thumb_key")
       .eq("post_id", id)
       .order("position"),
   ]);
@@ -67,7 +70,14 @@ export default async function PostPage({
             {items.length === 0 && <li className="text-sm text-gray-500">No media yet.</li>}
             {items.map((item, i) => (
               <li key={item.id} className="flex items-center justify-between gap-2 rounded-lg border border-gray-200 p-3 text-sm">
-                <div>
+                <div className="flex items-center gap-3">
+                  {item.thumb_key ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={publicUrl(item.thumb_key)!} alt="" className="h-14 w-14 shrink-0 rounded-md object-cover" />
+                  ) : (
+                    <div className="h-14 w-14 shrink-0 rounded-md bg-gray-100" />
+                  )}
+                  <div>
                   <p className="font-medium">
                     {i + 1}. {item.kind === "video" ? "Video" : "Image"}
                     {item.duration_s ? ` · ${Math.round(item.duration_s)}s` : ""}
@@ -79,6 +89,7 @@ export default async function PostPage({
                         {item.processing_status === "failed" ? "Processing failed" : "Processing…"}
                       </Badge>
                     )}
+                  </div>
                   </div>
                 </div>
                 <div className="flex flex-col items-end gap-1">
@@ -94,9 +105,7 @@ export default async function PostPage({
               </li>
             ))}
           </ul>
-          <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 p-4 text-center text-sm text-gray-500">
-            Uploading videos and images will be enabled once Cloudflare R2 storage is connected.
-          </div>
+          <MediaUploader postId={id} nextPosition={items.length} />
         </Card>
       </div>
 

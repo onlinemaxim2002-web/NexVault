@@ -7,7 +7,8 @@ Durations assume a solo developer working with Claude; adjust once the team is k
 - [x] Backend decision: Supabase + Cloudflare R2
 - [ ] Brand: logo, colors, app icon
 - [ ] Repo structure: `mobile/` (Flutter), `supabase/` (migrations, Edge Functions), `admin/` (Next.js), `worker/` (FFmpeg), `web/` (download page)
-- [ ] Supabase project + R2 bucket
+- [x] Supabase project (`cloud-storage`, Mumbai) with schema applied
+- [ ] Cloudflare R2 bucket
 - [x] Database schema v1 + RLS policies + tests (`supabase/`)
 - [ ] CI: lint/test, build organic + ads APKs
 

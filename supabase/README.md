@@ -33,6 +33,11 @@ Needs PostgreSQL 15+ server binaries (`initdb`, `pg_ctl`, `psql`). The script
 starts a temporary database, loads a small stub of Supabase's `auth` schema and
 roles, applies all migrations, and runs `tests/rls_test.sql`.
 
+## Supabase project
+
+- Project: **cloud-storage** · ref `lcfiohprmviolzwglkhm` · region ap-south-1 (Mumbai)
+- Applied migrations: `20261002000001_init`, `20261002000002_harden_functions`
+
 ## Apply to the Supabase project
 
 With the Supabase CLI: `supabase link --project-ref <ref>` then `supabase db push`.

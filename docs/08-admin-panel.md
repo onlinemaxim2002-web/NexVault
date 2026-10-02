@@ -29,6 +29,15 @@ Content published here appears in the app right away.
 - Tabs: Waiting · Approved · Rejected. Every decision is logged (who, when).
 - The owner can also approve any user manually from the user detail page.
 
+### Channel requests
+- App users create channels from the app; each arrives here as a request (badge on
+  Channels and a banner on the dashboard).
+- Owner picks **who can see it** (Everyone / Organic only / Ads only) and clicks
+  **Approve**, or **Reject**. Approved channels appear in the app right away and the
+  creator can start posting videos/images to them.
+- Creator posts follow the channel's audience; their items are 👑 premium by default
+  and only admins can change that.
+
 ### Channels
 - List with search and filters (audience, status).
 - Create / edit: name, handle, icon, description, category, **Audience**, status

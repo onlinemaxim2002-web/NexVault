@@ -22,7 +22,7 @@
 | 18 | Can guests upload to Cloud, or only logged-in users? | | Jollify: **premium only** (+ opens the plans page) |
 | 19 | Free users and Cloud: copy Jollify (no uploads without a plan) or give a small free quota? | Premium-only / e.g. 5–10 GB free | **Decided: premium-only** (same as Jollify) |
 | 20 | Can premium users download channel content to their phone, or only stream? | Stream only / stream + download | **Decided: stream only, no downloads** |
-| 21 | Channel posting: owner/admins only (Telegram broadcast) or any member? | | **Decided: admins post**; members only join and watch |
+| 21 | Channel posting: owner/admins only (Telegram broadcast) or any member? | | **Updated: channel creators post** in their approved channels; admins can post anywhere; members join and watch |
 | 22 | Payment provider and integration | | **Deferred** by product owner |
 | 23 | Distribution | Play Store / tester APK | **Decided: tester APK only** (sideloaded). Play Store and legal compliance are out of scope for now |
 | 24 | Backend: NestJS + Postgres, or Supabase (Postgres + RLS + Edge Functions + anonymous auth)? | | **Decided: Supabase** |
@@ -30,7 +30,9 @@
 | 26 | Where to host APKs (repo is private) | Public releases repo / public R2 bucket / make repo public | Proposed: public R2 bucket |
 | 27 | "Admins" who post: app owner/staff only, or channel owners + their admins? | | **Decided: owner + admins the owner invites** (via the online admin panel) |
 | 28 | Content audience options | | **Decided: Everyone / Organic only / Ads only**, on channels and posts |
-| 29 | Can regular app users still create channels ("Add Channel" in profile)? | Yes / remove the button | |
+| 29 | Can regular app users still create channels ("Add Channel" in profile)? | Yes / remove the button | **Decided: yes.** Owner approves each channel and chooses its audience; creators post to approved channels |
 | 30 | Approved organic user's plan expires: keep the approval or remove it? | Keep / remove | Proposed: keep (approval is per user) |
 | 31 | Tell a waiting organic buyer that approval is pending? | Silent / show a message | Proposed: silent |
 | 32 | Approved organic user: see Organic-only content too, or switch fully to the ads view? | See everything / ads view only | Proposed: see everything |
+| 33 | Creator uploads premium by default? | Premium / free | **Default: premium** (owner can switch per item) — confirm |
+| 34 | Storage provider for now | | **Supabase Storage (free plan, 50 MB per file)**; Cloudflare R2 at the end |

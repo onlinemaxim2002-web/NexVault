@@ -1,0 +1,49 @@
+name: Android app
+
+on:
+  push:
+    paths: ["mobile/**", ".github/workflows/mobile.yml"]
+  workflow_dispatch:
+
+jobs:
+  apk:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.47.6"
+          channel: stable
+          cache: true
+
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test
+
+      # Same code, same signing key, same package name: either APK updates the other.
+      - name: Build organic APK
+        run: |
+          flutter build apk --release
+          mkdir -p ../dist
+          cp build/app/outputs/flutter-apk/app-release.apk ../dist/CloudStorage.apk
+
+      - name: Build ads APK (Meta)
+        run: |
+          flutter build apk --release \
+            --dart-define=APK_REFERRER="utm_source=meta&utm_medium=paid_social&utm_campaign=apk_download"
+          cp build/app/outputs/flutter-apk/app-release.apk ../dist/CloudStorage-ads.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CloudStorage-apks
+          path: dist/*.apk
+          retention-days: 30

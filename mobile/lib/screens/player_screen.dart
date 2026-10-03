@@ -2,6 +2,7 @@ import 'package:chewie/chewie.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
+import '../state/app_state.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 import '../widgets/player_controls.dart';
@@ -13,11 +14,15 @@ class PlayerScreen extends StatefulWidget {
 
   /// Set when playing a trailer: shows a "Watch full video" button.
   final void Function(BuildContext)? onWatchFull;
+
+  /// Set when playing a trailer: called from the pop-up shown when it ends.
+  final void Function(BuildContext)? onTrailerEnd;
   const PlayerScreen({
     super.key,
     required this.url,
     required this.title,
     this.onWatchFull,
+    this.onTrailerEnd,
   });
 
   @override
@@ -28,6 +33,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
   late VideoPlayerController _video;
   ChewieController? _chewie;
   String? _error;
+  bool _endShown = false;
 
   @override
   void initState() {
@@ -41,6 +47,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
         .initialize()
         .then((_) {
           if (!mounted) return;
+          if (widget.onTrailerEnd != null) _video.addListener(_watchEnd);
           setState(() {
             _chewie = ChewieController(
               videoPlayerController: _video,
@@ -63,6 +70,67 @@ class _PlayerScreenState extends State<PlayerScreen> {
         });
   }
 
+  /// Trailer finished → invite the viewer to subscribe (once per playback).
+  void _watchEnd() {
+    final v = _video.value;
+    final ended =
+        v.isInitialized &&
+        v.duration > Duration.zero &&
+        !v.isPlaying &&
+        v.position >= v.duration - const Duration(milliseconds: 400);
+    if (!ended) {
+      if (v.isPlaying) _endShown = false; // replayed: may show again
+      return;
+    }
+    if (_endShown || !mounted) return;
+    _endShown = true;
+    _showSubscribe();
+  }
+
+  Future<void> _showSubscribe() async {
+    if (_chewie?.isFullScreen ?? false) _chewie!.exitFullScreen();
+    final navigator = Navigator.of(context);
+    final guest = app.isGuest;
+    final go = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        icon: const Icon(
+          Icons.workspace_premium_rounded,
+          color: AppColors.gold,
+          size: 40,
+        ),
+        title: const Text('Enjoyed the trailer?'),
+        content: Text(
+          guest
+              ? 'Please subscribe to watch the full content seamlessly. '
+                    'Log in and choose a plan to continue.'
+              : 'Please subscribe to watch the full content seamlessly.',
+          textAlign: TextAlign.center,
+        ),
+        actionsAlignment: MainAxisAlignment.center,
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Not now'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(guest ? 'Log in & subscribe' : 'Subscribe now'),
+          ),
+        ],
+      ),
+    );
+    if (go != true || !mounted) return;
+    _leaveFor(navigator, widget.onTrailerEnd!);
+  }
+
+  /// Close the player and continue on the screen below it.
+  void _leaveFor(NavigatorState navigator, void Function(BuildContext) next) {
+    final parent = navigator.context;
+    navigator.pop();
+    next(parent);
+  }
+
   void _retry() {
     _chewie?.dispose();
     _video.dispose();
@@ -75,6 +143,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
   @override
   void dispose() {
+    _video.removeListener(_watchEnd);
     _chewie?.dispose();
     _video.dispose();
     super.dispose();

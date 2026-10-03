@@ -70,6 +70,21 @@ Future<void> watchItem(BuildContext context, Post post, PostItem item) async {
   await _play(context, post, item.mediaKey, item.isVideo, post.title);
 }
 
+/// After a trailer: guests log in (no extra pop-up), then the normal gates
+/// apply - plans for non-subscribers, the full video for subscribers.
+Future<void> subscribeToWatch(
+  BuildContext context,
+  Post post,
+  PostItem item,
+) async {
+  if (app.isGuest) {
+    final ok = await Navigator.of(context)
+        .push<bool>(MaterialPageRoute(builder: (_) => const LoginScreen()));
+    if (ok != true || app.isGuest || !context.mounted) return;
+  }
+  await watchItem(context, post, item);
+}
+
 /// Play the trailer; the player offers "Watch full video" (login → plan).
 Future<void> watchTrailer(
   BuildContext context,
@@ -83,6 +98,7 @@ Future<void> watchTrailer(
     true,
     'Trailer · ${post.title}',
     onWatchFull: (ctx) => watchItem(ctx, post, item),
+    onTrailerEnd: (ctx) => subscribeToWatch(ctx, post, item),
   );
 }
 
@@ -100,6 +116,7 @@ Future<void> _play(
   bool isVideo,
   String title, {
   void Function(BuildContext)? onWatchFull,
+  void Function(BuildContext)? onTrailerEnd,
 }) async {
   try {
     final url = await Backend.mediaUrl(key);
@@ -113,7 +130,12 @@ Future<void> _play(
     await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => isVideo
-            ? PlayerScreen(url: url, title: title, onWatchFull: onWatchFull)
+            ? PlayerScreen(
+                url: url,
+                title: title,
+                onWatchFull: onWatchFull,
+                onTrailerEnd: onTrailerEnd,
+              )
             : ImageViewerScreen(url: url, title: title),
       ),
     );

@@ -24,9 +24,10 @@ class NewPostScreen extends StatefulWidget {
 }
 
 class _Picked {
-  final PlatformFile file;
+  PlatformFile file;
   final bool isVideo;
   Uint8List? thumbnail;
+  bool customThumb = false;
   PlatformFile?
   trailer; // optional short clip shown to ads users before they buy
   _Picked(this.file, this.isVideo);
@@ -58,8 +59,8 @@ class _NewPostScreenState extends State<NewPostScreen> {
     super.dispose();
   }
 
-  Future<void> _pick() async {
-    final res = await FilePicker.pickFiles(type: FileType.media);
+  Future<void> _pick(FileType type) async {
+    final res = await FilePicker.pickFiles(type: type);
     if (res.isEmpty) return;
     var tooBig = 0;
     for (final f in res) {
@@ -82,6 +83,36 @@ class _NewPostScreenState extends State<NewPostScreen> {
     if (tooBig > 0 && mounted) {
       showSnack(context, '$tooBig file(s) skipped: larger than 50 MB.');
     }
+  }
+
+  /// Replace the automatic thumbnail with the creator's own image.
+  Future<void> _pickThumbnail(_Picked p) async {
+    final f = await FilePicker.pickFile(type: FileType.image);
+    if (f == null) return;
+    if (await fileSize(f) > 9 * 1024 * 1024) {
+      if (mounted) showSnack(context, 'Thumbnail must be under 9 MB.');
+      return;
+    }
+    final bytes = await f.readAsBytes();
+    setState(() {
+      p.thumbnail = bytes;
+      p.customThumb = true;
+    });
+  }
+
+  /// Replace the main video of an item.
+  Future<void> _replaceMain(_Picked p) async {
+    final f = await FilePicker.pickFile(type: FileType.video);
+    if (f == null) return;
+    if (await fileSize(f) > Config.maxUploadBytes) {
+      if (mounted) showSnack(context, 'Video must be under 50 MB.');
+      return;
+    }
+    final thumb = p.customThumb ? p.thumbnail : await _videoThumb(f);
+    setState(() {
+      p.file = f;
+      p.thumbnail = thumb;
+    });
   }
 
   Future<Uint8List?> _videoThumb(PlatformFile f) async {
@@ -173,6 +204,32 @@ class _NewPostScreenState extends State<NewPostScreen> {
       showSnack(context, 'Add at least one video or image.');
       return;
     }
+    final noTrailer = _files
+        .where((f) => f.isVideo && f.trailer == null)
+        .length;
+    if (noTrailer > 0) {
+      final go = await showDialog<bool>(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text('Add a trailer?'),
+          content: Text(
+            '$noTrailer video(s) have no trailer. Users from ads can watch '
+            'trailers for free; without one they only see the plans.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Post anyway'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Add trailer'),
+            ),
+          ],
+        ),
+      );
+      if (go != true || !mounted) return;
+    }
     setState(() => _posting = true);
     try {
       final postId = await Backend.createPost(
@@ -212,6 +269,95 @@ class _NewPostScreenState extends State<NewPostScreen> {
         });
       }
     }
+  }
+
+  Widget _itemCard(int index, _Picked p) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.fromLTRB(12, 8, 4, 12),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                p.isVideo ? Icons.movie_outlined : Icons.image_outlined,
+                size: 18,
+                color: AppColors.primary,
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  '${p.isVideo ? 'Video' : 'Image'} ${index + 1}',
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+              ),
+              IconButton(
+                tooltip: 'Remove',
+                icon: const Icon(Icons.close, size: 20, color: AppColors.muted),
+                onPressed: _posting
+                    ? null
+                    : () => setState(() => _files.remove(p)),
+              ),
+            ],
+          ),
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: _Slot(
+                    label: 'Thumbnail',
+                    done: p.thumbnail != null,
+                    hint: p.isVideo
+                        ? (p.customThumb ? 'Custom' : 'Auto · tap to change')
+                        : 'From image',
+                    preview: p.thumbnail,
+                    icon: Icons.image_outlined,
+                    onTap: _posting || !p.isVideo
+                        ? null
+                        : () => _pickThumbnail(p),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _Slot(
+                    label: p.isVideo ? 'Main video' : 'Image',
+                    done: true,
+                    hint: p.file.name,
+                    icon: p.isVideo
+                        ? Icons.movie_outlined
+                        : Icons.image_outlined,
+                    onTap: _posting || !p.isVideo
+                        ? null
+                        : () => _replaceMain(p),
+                  ),
+                ),
+                if (p.isVideo) ...[
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _Slot(
+                      label: 'Trailer',
+                      done: p.trailer != null,
+                      hint: p.trailer?.name ?? 'Tap to add',
+                      icon: Icons.play_circle_outline,
+                      highlight: p.trailer == null,
+                      onTap: _posting ? null : () => _pickTrailer(p),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -267,103 +413,125 @@ class _NewPostScreenState extends State<NewPostScreen> {
             ],
           ),
           const SizedBox(height: 16),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
+          for (var i = 0; i < _files.length; i++) _itemCard(i, _files[i]),
+          Row(
             children: [
-              for (final p in _files)
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Stack(
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(10),
-                          child: SizedBox(
-                            width: 96,
-                            height: 96,
-                            child: p.thumbnail != null
-                                ? Image.memory(p.thumbnail!, fit: BoxFit.cover)
-                                : Container(
-                                    color: AppColors.surfaceHigh,
-                                    child: Icon(
-                                      p.isVideo ? Icons.videocam : Icons.image,
-                                      color: AppColors.muted,
-                                    ),
-                                  ),
-                          ),
-                        ),
-                        Positioned(
-                          top: 2,
-                          right: 2,
-                          child: InkResponse(
-                            onTap: _posting
-                                ? null
-                                : () => setState(() => _files.remove(p)),
-                            child: const CircleAvatar(
-                              radius: 12,
-                              backgroundColor: Colors.black54,
-                              child: Icon(
-                                Icons.close,
-                                size: 14,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    if (p.isVideo)
-                      TextButton.icon(
-                        style: TextButton.styleFrom(
-                          padding: EdgeInsets.zero,
-                          minimumSize: const Size(96, 32),
-                        ),
-                        onPressed: _posting ? null : () => _pickTrailer(p),
-                        icon: Icon(
-                          p.trailer == null ? Icons.add : Icons.check_circle,
-                          size: 16,
-                        ),
-                        label: Text(
-                          p.trailer == null ? 'Trailer' : 'Trailer ✓',
-                          style: const TextStyle(fontSize: 13),
-                        ),
-                      ),
-                  ],
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _posting ? null : () => _pick(FileType.video),
+                  icon: const Icon(Icons.video_call_outlined),
+                  label: const Text('Add video'),
                 ),
-              InkWell(
-                onTap: _posting ? null : _pick,
-                borderRadius: BorderRadius.circular(10),
-                child: Container(
-                  width: 96,
-                  height: 96,
-                  decoration: BoxDecoration(
-                    border: Border.all(color: AppColors.primary),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.add_photo_alternate_outlined,
-                        color: AppColors.primary,
-                      ),
-                      Text('Add', style: TextStyle(color: AppColors.primary)),
-                    ],
-                  ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _posting ? null : () => _pick(FileType.image),
+                  icon: const Icon(Icons.add_photo_alternate_outlined),
+                  label: const Text('Add image'),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 8),
           const Text(
-            'Videos (MP4) and images up to 50 MB each.',
-            style: TextStyle(color: AppColors.muted),
+            'Each video: thumbnail (optional, auto-made if empty), main video '
+            'and a short trailer. Ads users can watch the trailer for free; '
+            'the full video needs a plan. Files up to 50 MB.',
+            style: TextStyle(
+              color: AppColors.muted,
+              fontSize: 12.5,
+              height: 1.4,
+            ),
           ),
           const SizedBox(height: 24),
           FilledButton(
             onPressed: _posting ? null : _post,
             child: Text(_progress ?? (_posting ? 'Posting…' : 'Post')),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// One upload slot (thumbnail / main video / trailer).
+class _Slot extends StatelessWidget {
+  final String label;
+  final String hint;
+  final bool done;
+  final bool highlight;
+  final IconData icon;
+  final Uint8List? preview;
+  final VoidCallback? onTap;
+  const _Slot({
+    required this.label,
+    required this.hint,
+    required this.done,
+    required this.icon,
+    this.preview,
+    this.onTap,
+    this.highlight = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AspectRatio(
+            aspectRatio: 16 / 10,
+            child: Container(
+              decoration: BoxDecoration(
+                color: AppColors.surfaceHigh,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: highlight ? AppColors.primary : AppColors.border,
+                  width: highlight ? 1.4 : 1,
+                ),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: preview != null
+                  ? Image.memory(preview!, fit: BoxFit.cover)
+                  : Icon(
+                      done
+                          ? Icons.check_circle
+                          : (onTap == null ? icon : Icons.add),
+                      color: done
+                          ? AppColors.success
+                          : (highlight ? AppColors.primary : AppColors.muted),
+                    ),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              if (done)
+                const Padding(
+                  padding: EdgeInsets.only(right: 3),
+                  child: Icon(Icons.check, size: 13, color: AppColors.success),
+                ),
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          Text(
+            hint,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 11, color: AppColors.muted),
           ),
         ],
       ),

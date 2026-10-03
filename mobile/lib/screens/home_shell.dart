@@ -80,36 +80,41 @@ class _HomeShellState extends State<HomeShell> {
             PremiumScreen(),
           ],
         ),
-        bottomNavigationBar: NavigationBar(
-          selectedIndex: index,
-          onDestinationSelected: (i) => app.tab.value = i,
-          destinations: const [
-            NavigationDestination(
-              icon: Icon(Icons.cloud_upload_outlined),
-              selectedIcon: Icon(Icons.cloud_upload),
-              label: 'Cloud',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.public_outlined),
-              selectedIcon: Icon(Icons.public),
-              label: 'Feed',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.search),
-              selectedIcon: Icon(Icons.manage_search),
-              label: 'Explore',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.live_tv_outlined),
-              selectedIcon: Icon(Icons.live_tv),
-              label: 'Channels',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.person_outline),
-              selectedIcon: Icon(Icons.person),
-              label: 'Profile',
-            ),
-          ],
+        bottomNavigationBar: DecoratedBox(
+          decoration: const BoxDecoration(
+            border: Border(top: BorderSide(color: AppColors.border)),
+          ),
+          child: NavigationBar(
+            selectedIndex: index,
+            onDestinationSelected: (i) => app.tab.value = i,
+            destinations: const [
+              NavigationDestination(
+                icon: Icon(Icons.cloud_upload_outlined),
+                selectedIcon: Icon(Icons.cloud_upload),
+                label: 'Cloud',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.public_outlined),
+                selectedIcon: Icon(Icons.public),
+                label: 'Feed',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.search),
+                selectedIcon: Icon(Icons.manage_search),
+                label: 'Explore',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.live_tv_outlined),
+                selectedIcon: Icon(Icons.live_tv),
+                label: 'Channels',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.person_outline),
+                selectedIcon: Icon(Icons.person),
+                label: 'Profile',
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -133,11 +138,15 @@ class ConsentDialog extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              color: AppColors.primary,
+              decoration: const BoxDecoration(gradient: AppColors.gradient),
               padding: const EdgeInsets.all(24),
               child: const Row(
                 children: [
-                  Icon(Icons.cloud_upload, color: Colors.white, size: 48),
+                  Icon(
+                    Icons.cloud_upload_rounded,
+                    color: Colors.white,
+                    size: 44,
+                  ),
                   SizedBox(width: 16),
                   Text(
                     Config.appName,
@@ -157,14 +166,18 @@ class ConsentDialog extends StatelessWidget {
                   const Text(
                     'Terms of Service and Privacy Policy',
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
                   ),
                   const SizedBox(height: 12),
                   const Text(
                     'Welcome! By using this app, you agree to how we collect, use and protect your data, '
                     'and to your rights and responsibilities as a user. Please review:',
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: AppColors.muted, fontSize: 15),
+                    style: TextStyle(
+                      color: AppColors.muted,
+                      fontSize: 14,
+                      height: 1.5,
+                    ),
                   ),
                   Wrap(
                     alignment: WrapAlignment.center,

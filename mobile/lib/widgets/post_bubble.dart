@@ -32,8 +32,9 @@ class PostBubble extends StatelessWidget {
           Expanded(
             child: Container(
               decoration: BoxDecoration(
-                color: AppColors.bubble,
-                borderRadius: BorderRadius.circular(18),
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(Radii.card + 2),
+                border: Border.all(color: AppColors.border),
               ),
               clipBehavior: Clip.antiAlias,
               child: Column(
@@ -53,8 +54,11 @@ class PostBubble extends StatelessWidget {
                           Expanded(
                             child: Text(
                               post.channelName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
-                                fontWeight: FontWeight.w700,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
                               ),
                             ),
                           ),
@@ -72,7 +76,7 @@ class PostBubble extends StatelessWidget {
                             )
                           : openItem(context, post, cover),
                       child: AspectRatio(
-                        aspectRatio: 16 / 10,
+                        aspectRatio: 16 / 9,
                         child: Stack(
                           fit: StackFit.expand,
                           children: [
@@ -82,22 +86,21 @@ class PostBubble extends StatelessWidget {
                                   ? Icons.videocam_outlined
                                   : Icons.image_outlined,
                             ),
+                            const DecoratedBox(
+                              decoration: BoxDecoration(
+                                gradient: AppColors.scrim,
+                              ),
+                            ),
                             if (cover.isVideo)
-                              Center(
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                      color: Colors.white,
-                                      width: 3,
-                                    ),
-                                    color: Colors.black38,
-                                  ),
-                                  child: const Icon(
-                                    Icons.play_arrow_rounded,
-                                    color: Colors.white,
-                                    size: 44,
-                                  ),
+                              const Center(child: PlayOverlay(size: 56)),
+                            if (cover.isVideo &&
+                                (cover.durationS ?? 0) > 0 &&
+                                post.items.length <= 1)
+                              Positioned(
+                                bottom: 8,
+                                right: 8,
+                                child: ThumbPill(
+                                  formatDuration(cover.durationS!),
                                 ),
                               ),
                             if (cover.isPremium)
@@ -110,22 +113,9 @@ class PostBubble extends StatelessWidget {
                               Positioned(
                                 bottom: 8,
                                 right: 8,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 3,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.black54,
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: Text(
-                                    '+${post.items.length - 1} more',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 12,
-                                    ),
-                                  ),
+                                child: ThumbPill(
+                                  '+${post.items.length - 1} more',
+                                  icon: Icons.collections_outlined,
                                 ),
                               ),
                           ],
@@ -133,15 +123,16 @@ class PostBubble extends StatelessWidget {
                       ),
                     ),
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
+                    padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           post.title,
                           style: const TextStyle(
-                            fontSize: 16,
+                            fontSize: 15.5,
                             fontWeight: FontWeight.w600,
+                            height: 1.3,
                           ),
                         ),
                         if (post.caption != null && post.caption!.isNotEmpty)
@@ -149,7 +140,11 @@ class PostBubble extends StatelessWidget {
                             padding: const EdgeInsets.only(top: 4),
                             child: Text(
                               post.caption!,
-                              style: const TextStyle(fontSize: 15),
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: AppColors.muted,
+                                height: 1.45,
+                              ),
                             ),
                           ),
                         Align(
@@ -197,7 +192,7 @@ class PostBubble extends StatelessWidget {
                           ListTile(
                             leading: const Icon(
                               Icons.delete_outline,
-                              color: AppColors.primary,
+                              color: AppColors.danger,
                             ),
                             title: const Text('Delete post'),
                             onTap: () {
@@ -240,15 +235,17 @@ class _RoundIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final i = Icon(icon, color: Colors.white);
+    final i = Icon(icon, color: AppColors.text, size: 20);
     return InkResponse(
       onTap: onTap,
+      radius: 26,
       child: Container(
         width: 44,
         height: 44,
-        decoration: const BoxDecoration(
-          color: Color(0xFFBDBDBD),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceHigh,
           shape: BoxShape.circle,
+          border: Border.all(color: AppColors.border),
         ),
         child: Center(child: flip ? Transform.flip(flipX: true, child: i) : i),
       ),
@@ -285,10 +282,18 @@ class DateChip extends StatelessWidget {
         margin: const EdgeInsets.symmetric(vertical: 8),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         decoration: BoxDecoration(
-          color: const Color(0xFFF1F1F1),
+          color: AppColors.surfaceHigh,
           borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.border),
         ),
-        child: Text(label, style: const TextStyle(color: AppColors.muted)),
+        child: Text(
+          label,
+          style: const TextStyle(
+            color: AppColors.muted,
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
       ),
     );
   }

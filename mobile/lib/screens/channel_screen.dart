@@ -293,7 +293,7 @@ class _ChannelScreenState extends State<ChannelScreen> {
         selected: selected,
         showCheckmark: false,
         selectedColor: AppColors.primary,
-        labelStyle: TextStyle(color: selected ? Colors.white : Colors.black87),
+        labelStyle: TextStyle(color: selected ? Colors.white : AppColors.text),
         onSelected: (_) => setState(() => folderId = id),
       ),
     );

@@ -61,9 +61,10 @@ class _PostScreenState extends State<PostScreen> {
                   Text(
                     p.title,
                     style: const TextStyle(
-                      fontSize: 20,
+                      fontSize: 18,
                       fontWeight: FontWeight.w700,
                     ),
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                   GestureDetector(
@@ -82,7 +83,10 @@ class _PostScreenState extends State<PostScreen> {
                           ),
                         ],
                       ),
-                      style: const TextStyle(fontSize: 14, color: Colors.white),
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: AppColors.muted,
+                      ),
                     ),
                   ),
                 ],
@@ -103,13 +107,18 @@ class _PostScreenState extends State<PostScreen> {
                 ? ErrorRetry(message: error!, onRetry: _load)
                 : const Center(child: CircularProgressIndicator()))
           : ListView(
+              padding: const EdgeInsets.only(bottom: 24),
               children: [
                 if (p.caption != null && p.caption!.isNotEmpty)
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
                     child: Text(
                       p.caption!,
-                      style: const TextStyle(fontSize: 15),
+                      style: const TextStyle(
+                        fontSize: 14.5,
+                        height: 1.5,
+                        color: AppColors.muted,
+                      ),
                     ),
                   ),
                 if (p.items.isEmpty)
@@ -131,84 +140,119 @@ class _ItemRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: Color(0xFFEEEEEE))),
-      ),
-      child: Row(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: SizedBox(
-              width: 150,
-              height: 96,
+    final premiumLocked = item.isPremium && !canWatchFull(post, item);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(Radii.card + 2),
+          border: Border.all(color: AppColors.border),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            AspectRatio(
+              aspectRatio: 16 / 9,
               child: Stack(
                 fit: StackFit.expand,
                 children: [
                   NetThumb(
                     url: item.thumbUrl,
                     fallback: item.isVideo
-                        ? Icons.videocam_outlined
+                        ? Icons.movie_outlined
                         : Icons.image_outlined,
                   ),
+                  const DecoratedBox(
+                    decoration: BoxDecoration(gradient: AppColors.scrim),
+                  ),
+                  if (item.isVideo)
+                    Center(
+                      child: premiumLocked
+                          ? Container(
+                              width: 56,
+                              height: 56,
+                              decoration: BoxDecoration(
+                                color: const Color(0x66000000),
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: const Color(0x99FFB547),
+                                  width: 1.5,
+                                ),
+                              ),
+                              child: const Icon(
+                                Icons.lock_rounded,
+                                color: AppColors.gold,
+                                size: 26,
+                              ),
+                            )
+                          : const PlayOverlay(size: 56),
+                    ),
                   if (item.isPremium)
-                    const Positioned(top: 6, right: 6, child: PremiumBadge()),
+                    const Positioned(top: 10, left: 10, child: PremiumBadge()),
+                  if (item.durationS != null)
+                    Positioned(
+                      bottom: 8,
+                      right: 8,
+                      child: ThumbPill(formatDuration(item.durationS!)),
+                    ),
                 ],
               ),
             ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  post.title,
-                  style: const TextStyle(fontSize: 16),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                if (item.durationS != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Text(
-                    '${item.durationS! ~/ 60}:${(item.durationS! % 60).toString().padLeft(2, '0')}',
-                    style: const TextStyle(color: AppColors.muted),
-                  ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    if (canWatchTrailer(post, item))
-                      OutlinedButton.icon(
-                        style: OutlinedButton.styleFrom(
-                          minimumSize: const Size(0, 40),
-                          shape: const StadiumBorder(),
-                        ),
-                        icon: const Icon(Icons.play_circle_outline),
-                        label: const Text('Trailer'),
-                        onPressed: () => watchTrailer(context, post, item),
-                      ),
-                    FilledButton(
-                      style: FilledButton.styleFrom(
-                        minimumSize: const Size(110, 40),
-                        shape: const StadiumBorder(),
-                      ),
-                      onPressed: () => watchItem(context, post, item),
-                      child: Text(
-                        item.isVideo
-                            ? (canWatchTrailer(post, item)
-                                  ? 'Watch full'
-                                  : 'Watch')
-                            : 'View',
-                      ),
+                    post.title,
+                    style: const TextStyle(
+                      fontSize: 15.5,
+                      fontWeight: FontWeight.w600,
                     ),
-                  ],
-                ),
-              ],
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: [
+                      if (canWatchTrailer(post, item))
+                        OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(
+                            minimumSize: const Size(0, 44),
+                          ),
+                          icon: const Icon(Icons.play_circle_outline_rounded),
+                          label: const Text('Trailer'),
+                          onPressed: () => watchTrailer(context, post, item),
+                        ),
+                      FilledButton.icon(
+                        style: FilledButton.styleFrom(
+                          minimumSize: const Size(120, 44),
+                        ),
+                        icon: Icon(
+                          item.isVideo
+                              ? Icons.play_arrow_rounded
+                              : Icons.image_outlined,
+                        ),
+                        onPressed: () => watchItem(context, post, item),
+                        label: Text(
+                          item.isVideo
+                              ? (canWatchTrailer(post, item)
+                                    ? 'Watch full'
+                                    : 'Watch')
+                              : 'View',
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

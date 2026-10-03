@@ -87,8 +87,8 @@ class _ChannelsScreenState extends State<ChannelsScreen> with ContentReload {
                   child: TextField(
                     decoration: const InputDecoration(
                       hintText: 'Search',
-                      suffixIcon: Icon(Icons.search),
-                      fillColor: Colors.white,
+                      prefixIcon: Icon(Icons.search_rounded),
+                      fillColor: AppColors.surfaceHigh,
                       contentPadding: EdgeInsets.symmetric(
                         horizontal: 16,
                         vertical: 12,
@@ -104,14 +104,8 @@ class _ChannelsScreenState extends State<ChannelsScreen> with ContentReload {
                   ),
                 ),
                 const TabBar(
-                  labelColor: Colors.white,
-                  unselectedLabelColor: Colors.white70,
-                  indicatorColor: Colors.white,
-                  dividerColor: Colors.transparent,
-                  labelStyle: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  indicatorSize: TabBarIndicatorSize.label,
+                  indicatorWeight: 3,
                   tabs: [
                     Tab(text: 'Discover'),
                     Tab(text: 'Joined'),
@@ -163,7 +157,7 @@ class _ChannelsScreenState extends State<ChannelsScreen> with ContentReload {
                                   labelStyle: TextStyle(
                                     color: sort == s.$1
                                         ? Colors.white
-                                        : Colors.black87,
+                                        : AppColors.text,
                                   ),
                                   showCheckmark: false,
                                   onSelected: (_) {

@@ -105,7 +105,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     const SizedBox(height: 12),
                     SizedBox(
                       width: double.infinity,
-                      child: FilledButton(
+                      child: OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.danger,
+                          side: const BorderSide(color: Color(0x66FF5A67)),
+                          minimumSize: const Size(0, 52),
+                        ),
                         onPressed: _busy ? null : _delete,
                         child: const Text('Delete Account'),
                       ),

@@ -285,10 +285,10 @@ class _NewPostScreenState extends State<NewPostScreen> {
                             child: p.thumbnail != null
                                 ? Image.memory(p.thumbnail!, fit: BoxFit.cover)
                                 : Container(
-                                    color: const Color(0xFFEDEDED),
+                                    color: AppColors.surfaceHigh,
                                     child: Icon(
                                       p.isVideo ? Icons.videocam : Icons.image,
-                                      color: Colors.black38,
+                                      color: AppColors.muted,
                                     ),
                                   ),
                           ),

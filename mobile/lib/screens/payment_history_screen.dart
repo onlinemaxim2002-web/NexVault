@@ -48,7 +48,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
   static Color statusColor(String s) => switch (s) {
     'approved' => AppColors.success,
     'failed' => AppColors.danger,
-    'cancelled' || 'revoked' => Colors.grey,
+    'cancelled' || 'revoked' => AppColors.muted,
     _ => AppColors.warning,
   };
 

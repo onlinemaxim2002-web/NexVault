@@ -7,7 +7,7 @@ import '../widgets/reload.dart';
 import '../theme.dart';
 import 'post_screen.dart';
 
-/// Explore: every visible post from all channels, as a 3-column grid.
+/// Explore: every visible post from all channels, as a grid of media cards.
 class ExploreScreen extends StatefulWidget {
   const ExploreScreen({super.key});
 
@@ -56,18 +56,35 @@ class _ExploreScreenState extends State<ExploreScreen> {
             ),
             const CrownButton(),
           ],
-          bottom: TabBar(
-            isScrollable: true,
-            tabAlignment: TabAlignment.start,
-            labelColor: Colors.white,
-            unselectedLabelColor: Colors.white70,
-            indicatorColor: Colors.white,
-            dividerColor: Colors.transparent,
-            labelStyle: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(52),
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: TabBar(
+                isScrollable: true,
+                tabAlignment: TabAlignment.start,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                labelPadding: const EdgeInsets.symmetric(horizontal: 4),
+                labelColor: Colors.white,
+                unselectedLabelColor: AppColors.muted,
+                indicatorSize: TabBarIndicatorSize.tab,
+                splashBorderRadius: BorderRadius.circular(20),
+                indicator: BoxDecoration(
+                  gradient: AppColors.gradient,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                tabs: [
+                  for (final t in tabs)
+                    Tab(
+                      height: 36,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        child: Text(t.$2),
+                      ),
+                    ),
+                ],
+              ),
             ),
-            tabs: [for (final t in tabs) Tab(text: t.$2)],
           ),
         ),
         body: TabBarView(
@@ -155,16 +172,23 @@ class _ExploreGridState extends State<_ExploreGrid>
           if (n.metrics.pixels > n.metrics.maxScrollExtent - 400) _more();
           return false;
         },
-        child: GridView.builder(
-          padding: const EdgeInsets.all(2),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-            mainAxisSpacing: 2,
-            crossAxisSpacing: 2,
-            childAspectRatio: 0.75,
-          ),
-          itemCount: posts!.length,
-          itemBuilder: (context, i) => _Tile(post: posts![i]),
+        child: LayoutBuilder(
+          builder: (context, box) {
+            // 2 columns on phones, more on tablets; 16:9 thumbs + title.
+            final cols = (box.maxWidth / 230).floor().clamp(2, 5);
+            final cardW = (box.maxWidth - 12 * (cols + 1)) / cols;
+            return GridView.builder(
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: cols,
+                mainAxisSpacing: 16,
+                crossAxisSpacing: 12,
+                mainAxisExtent: cardW * 9 / 16 + 66,
+              ),
+              itemCount: posts!.length,
+              itemBuilder: (context, i) => _Tile(post: posts![i]),
+            );
+          },
         ),
       ),
     );
@@ -178,57 +202,108 @@ class _Tile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cover = post.cover;
+    final duration = cover?.durationS;
     return Semantics(
       label: post.title,
       button: true,
-      child: InkWell(
-        onTap: () => Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => PostScreen(postId: post.id, initial: post),
-          ),
-        ),
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            NetThumb(
-              url: cover?.thumbUrl,
-              fallback: cover?.isVideo == true
-                  ? Icons.videocam_outlined
-                  : Icons.image_outlined,
+      child: PressScale(
+        child: InkWell(
+          borderRadius: BorderRadius.circular(Radii.card),
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => PostScreen(postId: post.id, initial: post),
             ),
-            if (cover?.isVideo == true)
-              const Positioned(
-                top: 6,
-                right: 6,
-                child: Icon(
-                  Icons.play_arrow_rounded,
-                  color: Colors.white,
-                  size: 30,
-                  shadows: [Shadow(blurRadius: 6)],
-                ),
-              ),
-            if (post.hasPremium)
-              const Positioned(top: 6, left: 6, child: PremiumBadge()),
-            if (post.items.length > 1)
-              Positioned(
-                bottom: 6,
-                right: 6,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 2,
-                  ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              AspectRatio(
+                aspectRatio: 16 / 9,
+                child: DecoratedBox(
                   decoration: BoxDecoration(
-                    color: Colors.black54,
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(Radii.card),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x80000000),
+                        blurRadius: 14,
+                        offset: Offset(0, 6),
+                      ),
+                    ],
                   ),
-                  child: Text(
-                    '${post.items.length}',
-                    style: const TextStyle(color: Colors.white, fontSize: 12),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(Radii.card),
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        NetThumb(
+                          url: cover?.thumbUrl,
+                          fallback: cover?.isVideo == true
+                              ? Icons.movie_outlined
+                              : Icons.image_outlined,
+                        ),
+                        const DecoratedBox(
+                          decoration: BoxDecoration(gradient: AppColors.scrim),
+                        ),
+                        if (cover?.isVideo == true)
+                          const Center(child: PlayOverlay(size: 38)),
+                        if (post.hasPremium)
+                          const Positioned(
+                            top: 8,
+                            left: 8,
+                            child: PremiumBadge(),
+                          ),
+                        Positioned(
+                          bottom: 6,
+                          right: 6,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (post.items.length > 1)
+                                ThumbPill(
+                                  '${post.items.length}',
+                                  icon: Icons.collections_outlined,
+                                ),
+                              if (post.items.length > 1 &&
+                                  duration != null &&
+                                  duration > 0)
+                                const SizedBox(width: 4),
+                              if (duration != null && duration > 0)
+                                ThumbPill(formatDuration(duration)),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-          ],
+              Padding(
+                padding: const EdgeInsets.fromLTRB(2, 8, 2, 0),
+                child: Text(
+                  post.title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w600,
+                    height: 1.3,
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(2, 2, 2, 0),
+                child: Text(
+                  '${post.channelName} · ${timeAgo(post.publishedAt)}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 11.5,
+                    color: AppColors.muted,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

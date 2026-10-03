@@ -310,7 +310,7 @@ class _PlanCard extends StatelessWidget {
           duration: const Duration(milliseconds: 180),
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
           decoration: BoxDecoration(
-            color: selected ? AppColors.bubble : Colors.white,
+            color: selected ? const Color(0xFF1F1A3A) : AppColors.surface,
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
               color: selected ? AppColors.primary : AppColors.border,

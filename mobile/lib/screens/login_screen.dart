@@ -89,7 +89,7 @@ class _LoginScreenState extends State<LoginScreen> {
       decoration: TextDecoration.underline,
     );
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.background,
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -106,9 +106,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Color(0xFF5B3BF5),
-                    Color(0xFF9B7BFF),
-                    Color(0xFFDDF3FC),
+                    Color(0xFF4B2FD6),
+                    Color(0xFF2B1D78),
+                    Color(0xFF141026),
                     AppColors.background,
                   ],
                   stops: [0, 0.45, 0.8, 1],
@@ -170,7 +170,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       TextSpan(
                         style: const TextStyle(
                           fontSize: 15,
-                          color: Colors.black87,
+                          color: AppColors.muted,
                         ),
                         children: [
                           const TextSpan(
@@ -223,9 +223,10 @@ class _AuthButton extends StatelessWidget {
     return OutlinedButton(
       onPressed: onPressed,
       style: OutlinedButton.styleFrom(
-        foregroundColor: Colors.black,
+        foregroundColor: AppColors.text,
+        backgroundColor: AppColors.surface,
         minimumSize: const Size.fromHeight(56),
-        side: const BorderSide(color: Colors.black87, width: 1.4),
+        side: const BorderSide(color: AppColors.border, width: 1.2),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         padding: const EdgeInsets.symmetric(horizontal: 20),
       ),
@@ -244,7 +245,10 @@ class _AuthButton extends StatelessWidget {
                 : Text(
                     label,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 18),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
           ),
           const SizedBox(width: 28),
@@ -349,7 +353,7 @@ class _EmailLoginScreenState extends State<EmailLoginScreen> {
 
   InputDecoration _field(String hint, {Widget? suffix}) => InputDecoration(
     hintText: hint,
-    hintStyle: const TextStyle(color: Colors.black38, fontSize: 18),
+    hintStyle: const TextStyle(color: AppColors.muted, fontSize: 16),
     suffixIcon: suffix,
     contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
     border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
@@ -358,10 +362,10 @@ class _EmailLoginScreenState extends State<EmailLoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor: AppColors.background,
+        foregroundColor: AppColors.text,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new),
           tooltip: 'Back',
@@ -375,14 +379,14 @@ class _EmailLoginScreenState extends State<EmailLoginScreen> {
           children: [
             Text(
               _create ? 'Create account' : 'Login with email',
-              style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w700),
+              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 64),
             TextFormField(
               controller: _email,
               keyboardType: TextInputType.emailAddress,
               autofillHints: const [AutofillHints.email],
-              style: const TextStyle(fontSize: 18),
+              style: const TextStyle(fontSize: 16),
               decoration: _field('abc@gmail.com'),
               validator: (v) => (v == null || !_emailRe.hasMatch(v.trim()))
                   ? 'Enter a valid email'
@@ -395,7 +399,7 @@ class _EmailLoginScreenState extends State<EmailLoginScreen> {
               autofillHints: [
                 _create ? AutofillHints.newPassword : AutofillHints.password,
               ],
-              style: const TextStyle(fontSize: 18),
+              style: const TextStyle(fontSize: 16),
               decoration: _field(
                 'Password',
                 suffix: IconButton(
@@ -417,7 +421,7 @@ class _EmailLoginScreenState extends State<EmailLoginScreen> {
                   : TextButton(
                       onPressed: _forgot,
                       style: TextButton.styleFrom(
-                        foregroundColor: Colors.black54,
+                        foregroundColor: AppColors.muted,
                       ),
                       child: const Text(
                         'Forgot password?',
@@ -442,7 +446,7 @@ class _EmailLoginScreenState extends State<EmailLoginScreen> {
                     )
                   : Text(
                       _create ? 'Create Account' : 'Login',
-                      style: const TextStyle(fontSize: 20),
+                      style: const TextStyle(fontSize: 17),
                     ),
             ),
             const SizedBox(height: 8),
@@ -453,7 +457,10 @@ class _EmailLoginScreenState extends State<EmailLoginScreen> {
                   _create
                       ? 'Already have an account?'
                       : "Don't have an account?",
-                  style: const TextStyle(fontSize: 16, color: Colors.black54),
+                  style: const TextStyle(
+                    fontSize: 14.5,
+                    color: AppColors.muted,
+                  ),
                 ),
                 TextButton(
                   onPressed: () => setState(() => _create = !_create),

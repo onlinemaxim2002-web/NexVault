@@ -23,17 +23,17 @@ class CrownButton extends StatelessWidget {
             ),
           ),
           child: Container(
-            width: 40,
-            height: 40,
+            width: 38,
+            height: 38,
             decoration: BoxDecoration(
-              color: AppColors.primaryDark,
+              color: const Color(0x26FFB547),
               shape: BoxShape.circle,
-              border: Border.all(color: AppColors.gold, width: 2),
+              border: Border.all(color: const Color(0x80FFB547)),
             ),
             child: const Icon(
-              Icons.workspace_premium,
+              Icons.workspace_premium_rounded,
               color: AppColors.gold,
-              size: 24,
+              size: 21,
             ),
           ),
         ),
@@ -62,19 +62,24 @@ class EmptyState extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 96,
-              height: 96,
+              width: 88,
+              height: 88,
               decoration: BoxDecoration(
-                color: AppColors.primary,
-                borderRadius: BorderRadius.circular(24),
+                gradient: AppColors.softGradient,
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.border),
               ),
-              child: Icon(icon, size: 52, color: Colors.white),
+              child: Icon(icon, size: 40, color: AppColors.primary),
             ),
             const SizedBox(height: 20),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 17),
+              style: const TextStyle(
+                fontSize: 15,
+                height: 1.5,
+                color: AppColors.muted,
+              ),
             ),
             if (action != null) ...[const SizedBox(height: 20), action!],
           ],
@@ -97,17 +102,33 @@ class ErrorRetry extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              message == 'No internet connection.'
-                  ? Icons.wifi_off
-                  : Icons.error_outline,
-              size: 48,
-              color: AppColors.muted,
+            Container(
+              width: 80,
+              height: 80,
+              decoration: const BoxDecoration(
+                color: AppColors.dangerBg,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                message == 'No internet connection.'
+                    ? Icons.wifi_off_rounded
+                    : Icons.error_outline_rounded,
+                size: 38,
+                color: AppColors.danger,
+              ),
             ),
-            const SizedBox(height: 12),
-            Text(message, textAlign: TextAlign.center),
-            const SizedBox(height: 12),
-            OutlinedButton(onPressed: onRetry, child: const Text('Try again')),
+            const SizedBox(height: 18),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 15, color: AppColors.muted),
+            ),
+            const SizedBox(height: 18),
+            FilledButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh_rounded),
+              label: const Text('Try again'),
+            ),
           ],
         ),
       ),
@@ -130,13 +151,14 @@ class NetThumb extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final placeholder = Container(
-      color: const Color(0xFFEDEDED),
-      child: Center(child: Icon(fallback, color: Colors.black26, size: 32)),
+      decoration: const BoxDecoration(gradient: AppColors.softGradient),
+      child: Center(child: Icon(fallback, color: AppColors.muted, size: 30)),
     );
     if (url == null) return placeholder;
     return CachedNetworkImage(
       imageUrl: url!,
       fit: fit,
+      fadeInDuration: const Duration(milliseconds: 220),
       placeholder: (_, _) => placeholder,
       errorWidget: (_, _, _) => placeholder,
     );
@@ -162,14 +184,14 @@ class ChannelAvatar extends StatelessWidget {
         height: size,
         child: url == null
             ? Container(
-                color: AppColors.bubble,
+                decoration: const BoxDecoration(gradient: AppColors.gradient),
                 child: Center(
                   child: Text(
                     name.isEmpty ? '?' : name.characters.first.toUpperCase(),
                     style: TextStyle(
                       fontSize: size * 0.4,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.primary,
+                      color: Colors.white,
                     ),
                   ),
                 ),
@@ -180,26 +202,173 @@ class ChannelAvatar extends StatelessWidget {
   }
 }
 
+/// Small "Premium" pill shown on premium thumbnails.
 class PremiumBadge extends StatelessWidget {
-  const PremiumBadge({super.key});
+  final bool compact;
+  const PremiumBadge({super.key, this.compact = false});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 28,
-      height: 28,
-      decoration: BoxDecoration(
-        color: AppColors.primaryDark,
-        shape: BoxShape.circle,
-        border: Border.all(color: AppColors.gold, width: 1.5),
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 6 : 8,
+        vertical: compact ? 3 : 4,
       ),
-      child: const Icon(
-        Icons.workspace_premium,
-        color: AppColors.gold,
-        size: 17,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFFFFC870), Color(0xFFFFA62B)],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: const [BoxShadow(color: Color(0x66000000), blurRadius: 8)],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.lock_rounded,
+            size: compact ? 11 : 12,
+            color: AppColors.ink,
+          ),
+          if (!compact) ...[
+            const SizedBox(width: 3),
+            const Text(
+              'Premium',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: AppColors.ink,
+                height: 1.1,
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
+}
+
+/// Duration / count pill on thumbnails.
+class ThumbPill extends StatelessWidget {
+  final String text;
+  final IconData? icon;
+  const ThumbPill(this.text, {super.key, this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: const Color(0xCC000000),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 12, color: Colors.white),
+            const SizedBox(width: 3),
+          ],
+          Text(
+            text,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Round play button overlay for video thumbnails.
+class PlayOverlay extends StatelessWidget {
+  final double size;
+  const PlayOverlay({super.key, this.size = 44});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: const Color(0x66000000),
+        shape: BoxShape.circle,
+        border: Border.all(color: const Color(0xCCFFFFFF), width: 1.5),
+      ),
+      child: Icon(
+        Icons.play_arrow_rounded,
+        color: Colors.white,
+        size: size * 0.62,
+      ),
+    );
+  }
+}
+
+/// Slight shrink while pressed, for cards and tiles. Does not change taps.
+class PressScale extends StatefulWidget {
+  final Widget child;
+  const PressScale({super.key, required this.child});
+
+  @override
+  State<PressScale> createState() => _PressScaleState();
+}
+
+class _PressScaleState extends State<PressScale> {
+  bool _down = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Listener(
+      onPointerDown: (_) => setState(() => _down = true),
+      onPointerUp: (_) => setState(() => _down = false),
+      onPointerCancel: (_) => setState(() => _down = false),
+      child: AnimatedScale(
+        scale: _down ? 0.97 : 1,
+        duration: const Duration(milliseconds: 120),
+        curve: Curves.easeOut,
+        child: widget.child,
+      ),
+    );
+  }
+}
+
+/// Section heading used on content screens.
+class SectionTitle extends StatelessWidget {
+  final String text;
+  final Widget? trailing;
+  const SectionTitle(this.text, {super.key, this.trailing});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 20, 8, 10),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.2,
+              ),
+            ),
+          ),
+          ?trailing,
+        ],
+      ),
+    );
+  }
+}
+
+/// 1:05 / 1:02:03
+String formatDuration(int seconds) {
+  final h = seconds ~/ 3600;
+  final m = (seconds % 3600) ~/ 60;
+  final s = (seconds % 60).toString().padLeft(2, '0');
+  return h > 0 ? '$h:${m.toString().padLeft(2, '0')}:$s' : '$m:$s';
 }
 
 void showSnack(BuildContext context, String message) {

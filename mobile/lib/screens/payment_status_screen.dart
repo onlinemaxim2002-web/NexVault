@@ -137,12 +137,12 @@ class _PaymentStatusScreenState extends State<PaymentStatusScreen>
       ),
       'cancelled' => (
         Icons.remove_circle_outline,
-        Colors.grey.shade700,
+        AppColors.muted,
         'Payment cancelled. You can try again.',
       ),
       'revoked' => (
         Icons.block,
-        Colors.grey.shade700,
+        AppColors.muted,
         'This payment was reversed after review. Contact support if you think this is wrong.',
       ),
       _ => (
@@ -234,7 +234,7 @@ class _Row extends StatelessWidget {
           children: [
             Text(
               label,
-              style: const TextStyle(color: Colors.black54, fontSize: 15),
+              style: const TextStyle(color: AppColors.muted, fontSize: 15),
             ),
             const Spacer(),
             SelectableText(

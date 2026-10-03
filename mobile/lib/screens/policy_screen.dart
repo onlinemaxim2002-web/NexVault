@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../config.dart';
+import '../theme.dart';
 
 // Placeholder policy texts. Replace with the final, reviewed versions before
 // a public release.
@@ -43,7 +44,13 @@ class PolicyScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final (title, body) = policies[policyKey]!;
     return Scaffold(
-      appBar: AppBar(title: Text(title)),
+      appBar: AppBar(
+        flexibleSpace: const DecoratedBox(
+          decoration: BoxDecoration(gradient: AppColors.barGradient),
+          child: SizedBox.expand(),
+        ),
+        title: Text(title),
+      ),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [

@@ -117,6 +117,10 @@ class _ChannelScreenState extends State<ChannelScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        flexibleSpace: const DecoratedBox(
+          decoration: BoxDecoration(gradient: AppColors.barGradient),
+          child: SizedBox.expand(),
+        ),
         titleSpacing: 0,
         title: c == null
             ? const Text('Channel')
@@ -305,7 +309,7 @@ class _ReviewBanner extends StatelessWidget {
     final pending = status == 'pending';
     return Container(
       width: double.infinity,
-      color: pending ? const Color(0xFFFFF3CD) : const Color(0xFFF8D7DA),
+      color: pending ? AppColors.warningBg : AppColors.dangerBg,
       padding: const EdgeInsets.all(14),
       child: Text(
         pending

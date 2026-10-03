@@ -4,6 +4,7 @@ import '../models.dart';
 import '../services/backend.dart';
 import '../widgets/common.dart';
 import '../widgets/reload.dart';
+import '../theme.dart';
 import 'post_screen.dart';
 
 /// Explore: every visible post from all channels, as a 3-column grid.
@@ -28,6 +29,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
       length: tabs.length,
       child: Scaffold(
         appBar: AppBar(
+          flexibleSpace: const DecoratedBox(
+            decoration: BoxDecoration(gradient: AppColors.barGradient),
+            child: SizedBox.expand(),
+          ),
           title: const Text('Explore'),
           actions: [
             IconButton(

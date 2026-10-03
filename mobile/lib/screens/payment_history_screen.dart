@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../models.dart';
 import '../services/backend.dart';
+import '../theme.dart';
 import '../widgets/common.dart';
 
 /// The user's own payments (the database only returns their orders).
@@ -45,17 +46,23 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
   };
 
   static Color statusColor(String s) => switch (s) {
-    'approved' => const Color(0xFF2E7D32),
-    'failed' => const Color(0xFFC62828),
+    'approved' => AppColors.success,
+    'failed' => AppColors.danger,
     'cancelled' || 'revoked' => Colors.grey,
-    _ => const Color(0xFFF9A825),
+    _ => AppColors.warning,
   };
 
   @override
   Widget build(BuildContext context) {
     final fmt = DateFormat('d MMM yyyy, h:mm a');
     return Scaffold(
-      appBar: AppBar(title: const Text('Payment history')),
+      appBar: AppBar(
+        flexibleSpace: const DecoratedBox(
+          decoration: BoxDecoration(gradient: AppColors.barGradient),
+          child: SizedBox.expand(),
+        ),
+        title: const Text('Payment history'),
+      ),
       body: error != null && orders == null
           ? ErrorRetry(message: error!, onRetry: _load)
           : orders == null

@@ -6,6 +6,7 @@ import '../state/app_state.dart';
 import '../widgets/common.dart';
 import '../widgets/post_bubble.dart';
 import '../widgets/reload.dart';
+import '../theme.dart';
 
 /// Feed: newest posts from the channels the user joined.
 class FeedScreen extends StatefulWidget {
@@ -49,6 +50,10 @@ class _FeedScreenState extends State<FeedScreen> with ContentReload {
       },
       child: Scaffold(
         appBar: AppBar(
+          flexibleSpace: const DecoratedBox(
+            decoration: BoxDecoration(gradient: AppColors.barGradient),
+            child: SizedBox.expand(),
+          ),
           title: const Text('Feed'),
           actions: const [CrownButton()],
         ),

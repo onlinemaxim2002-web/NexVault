@@ -127,7 +127,7 @@ class _PaymentStatusScreenState extends State<PaymentStatusScreen>
     final (IconData icon, Color color, String message) = switch (status) {
       'approved' => (
         Icons.check_circle,
-        const Color(0xFF2E7D32),
+        AppColors.success,
         'Payment successful! Your plan is now active.',
       ),
       'failed' => (
@@ -147,14 +147,20 @@ class _PaymentStatusScreenState extends State<PaymentStatusScreen>
       ),
       _ => (
         Icons.hourglass_top,
-        const Color(0xFFF9A825),
+        AppColors.warning,
         "Payment verification is pending. We're checking your payment.",
       ),
     };
     final open = o == null || o.isOpen;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Payment')),
+      appBar: AppBar(
+        flexibleSpace: const DecoratedBox(
+          decoration: BoxDecoration(gradient: AppColors.barGradient),
+          child: SizedBox.expand(),
+        ),
+        title: const Text('Payment'),
+      ),
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [

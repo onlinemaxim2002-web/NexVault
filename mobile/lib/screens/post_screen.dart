@@ -48,6 +48,10 @@ class _PostScreenState extends State<PostScreen> {
     final p = post;
     return Scaffold(
       appBar: AppBar(
+        flexibleSpace: const DecoratedBox(
+          decoration: BoxDecoration(gradient: AppColors.barGradient),
+          child: SizedBox.expand(),
+        ),
         titleSpacing: 0,
         title: p == null
             ? const Text('Post')

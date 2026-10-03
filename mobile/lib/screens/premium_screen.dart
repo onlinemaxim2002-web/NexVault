@@ -114,6 +114,10 @@ class _PremiumScreenState extends State<PremiumScreen> with ContentReload {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        flexibleSpace: const DecoratedBox(
+          decoration: BoxDecoration(gradient: AppColors.barGradient),
+          child: SizedBox.expand(),
+        ),
         automaticallyImplyLeading: widget.standalone,
         title: const Text('Premium'),
         actions: [
@@ -147,7 +151,7 @@ class _PremiumScreenState extends State<PremiumScreen> with ContentReload {
             children: [
               if (s?.isPremium == true)
                 _Banner(
-                  color: const Color(0xFFE8F5E9),
+                  color: AppColors.successBg,
                   icon: Icons.verified,
                   text:
                       'You have ${s!.planName}${s.planEndsAt != null ? ' until ${s.planEndsAt!.toLocal().toString().substring(0, 10)}' : ''}.',
@@ -156,7 +160,7 @@ class _PremiumScreenState extends State<PremiumScreen> with ContentReload {
                 InkWell(
                   onTap: () => _openStatus(openOrder!),
                   child: _Banner(
-                    color: const Color(0xFFFFF8E1),
+                    color: AppColors.warningBg,
                     icon: Icons.hourglass_top,
                     text:
                         'Payment for ${openOrder!.planName} (order ${openOrder!.reference}) is being checked. Tap to see the status.',
@@ -164,56 +168,83 @@ class _PremiumScreenState extends State<PremiumScreen> with ContentReload {
                 )
               else if (s?.openRequest != null)
                 _Banner(
-                  color: const Color(0xFFFFF8E1),
+                  color: AppColors.warningBg,
                   icon: Icons.hourglass_top,
                   text: 'Your ${s!.openRequest} request is being processed.',
                 ),
               Container(
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFBE0DE),
-                  borderRadius: BorderRadius.circular(16),
-                  border: const Border(
-                    top: BorderSide(color: AppColors.primary, width: 6),
-                  ),
+                  gradient: AppColors.gradient,
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x406D4AFF),
+                      blurRadius: 24,
+                      offset: Offset(0, 10),
+                    ),
+                  ],
                 ),
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
+                        horizontal: 12,
+                        vertical: 5,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.primary,
-                        borderRadius: BorderRadius.circular(8),
+                        color: AppColors.gold,
+                        borderRadius: BorderRadius.circular(20),
                       ),
-                      child: const Text(
-                        'Premium',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 16,
-                        ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.workspace_premium,
+                            size: 18,
+                            color: AppColors.ink,
+                          ),
+                          SizedBox(width: 6),
+                          Text(
+                            'Premium',
+                            style: TextStyle(
+                              color: AppColors.ink,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 15,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 14),
                     for (final perk in perks)
                       Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        padding: const EdgeInsets.symmetric(vertical: 5),
                         child: Row(
                           children: [
-                            const Icon(
-                              Icons.check,
-                              color: AppColors.primary,
-                              size: 26,
+                            Container(
+                              width: 26,
+                              height: 26,
+                              decoration: const BoxDecoration(
+                                color: Color(0x33FFFFFF),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.check,
+                                color: Colors.white,
+                                size: 18,
+                              ),
                             ),
-                            const SizedBox(width: 10),
+                            const SizedBox(width: 12),
                             Expanded(
                               child: Text(
                                 perk,
-                                style: const TextStyle(fontSize: 16),
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                             ),
                           ],
@@ -274,15 +305,26 @@ class _PlanCard extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 12),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+        borderRadius: BorderRadius.circular(18),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
+            color: selected ? AppColors.bubble : Colors.white,
+            borderRadius: BorderRadius.circular(18),
             border: Border.all(
-              color: selected ? AppColors.primary : const Color(0xFFBDBDBD),
-              width: 2,
+              color: selected ? AppColors.primary : AppColors.border,
+              width: selected ? 2 : 1.2,
             ),
+            boxShadow: selected
+                ? const [
+                    BoxShadow(
+                      color: Color(0x266D4AFF),
+                      blurRadius: 16,
+                      offset: Offset(0, 6),
+                    ),
+                  ]
+                : null,
           ),
           child: Row(
             children: [
@@ -300,7 +342,10 @@ class _PlanCard extends StatelessWidget {
                     ),
                     Text(
                       plan.durationLabel,
-                      style: const TextStyle(fontSize: 15),
+                      style: const TextStyle(
+                        fontSize: 15,
+                        color: AppColors.muted,
+                      ),
                     ),
                   ],
                 ),
@@ -310,8 +355,9 @@ class _PlanCard extends StatelessWidget {
                 child: Text(
                   '₹ ${plan.priceInr}',
                   style: const TextStyle(
-                    fontSize: 19,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.primary,
                   ),
                 ),
               ),

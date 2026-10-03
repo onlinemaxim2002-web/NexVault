@@ -85,7 +85,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     const linkStyle = TextStyle(
-      color: Color(0xFF1A0DAB),
+      color: AppColors.primary,
       decoration: TextDecoration.underline,
     );
     return Scaffold(
@@ -105,8 +105,13 @@ class _LoginScreenState extends State<LoginScreen> {
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [Color(0xFFB71C1C), Color(0xFFDFA3A3), Colors.white],
-                  stops: [0, 0.6, 1],
+                  colors: [
+                    Color(0xFF5B3BF5),
+                    Color(0xFF9B7BFF),
+                    Color(0xFFDDF3FC),
+                    AppColors.background,
+                  ],
+                  stops: [0, 0.45, 0.8, 1],
                 ),
               ),
               child: SafeArea(

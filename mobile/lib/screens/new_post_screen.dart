@@ -217,7 +217,13 @@ class _NewPostScreenState extends State<NewPostScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('New post')),
+      appBar: AppBar(
+        flexibleSpace: const DecoratedBox(
+          decoration: BoxDecoration(gradient: AppColors.barGradient),
+          child: SizedBox.expand(),
+        ),
+        title: const Text('New post'),
+      ),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [

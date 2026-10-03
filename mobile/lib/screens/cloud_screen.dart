@@ -307,6 +307,10 @@ class _CloudScreenState extends State<CloudScreen> with ContentReload {
           },
           child: Scaffold(
             appBar: AppBar(
+              flexibleSpace: const DecoratedBox(
+                decoration: BoxDecoration(gradient: AppColors.barGradient),
+                child: SizedBox.expand(),
+              ),
               leading: _path.isEmpty
                   ? null
                   : IconButton(
@@ -402,11 +406,11 @@ class _CloudScreenState extends State<CloudScreen> with ContentReload {
           return ListTile(
             leading: CircleAvatar(
               backgroundColor: f.isFolder
-                  ? const Color(0xFFFFF3CD)
+                  ? AppColors.warningBg
                   : AppColors.bubble,
               child: Icon(
                 _icon(f),
-                color: f.isFolder ? const Color(0xFFE0A800) : AppColors.primary,
+                color: f.isFolder ? AppColors.warning : AppColors.primary,
               ),
             ),
             title: Text(f.name, overflow: TextOverflow.ellipsis),

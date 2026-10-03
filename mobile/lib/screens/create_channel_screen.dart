@@ -95,7 +95,13 @@ class _CreateChannelScreenState extends State<CreateChannelScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Create channel')),
+      appBar: AppBar(
+        flexibleSpace: const DecoratedBox(
+          decoration: BoxDecoration(gradient: AppColors.barGradient),
+          child: SizedBox.expand(),
+        ),
+        title: const Text('Create channel'),
+      ),
       body: Form(
         key: _form,
         child: ListView(

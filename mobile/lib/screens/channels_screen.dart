@@ -72,6 +72,10 @@ class _ChannelsScreenState extends State<ChannelsScreen> with ContentReload {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
+          flexibleSpace: const DecoratedBox(
+            decoration: BoxDecoration(gradient: AppColors.barGradient),
+            child: SizedBox.expand(),
+          ),
           title: const Text('Channels'),
           actions: const [CrownButton()],
           bottom: PreferredSize(

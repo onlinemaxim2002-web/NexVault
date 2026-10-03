@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../services/backend.dart';
 import '../state/app_state.dart';
 import '../widgets/common.dart';
+import '../theme.dart';
 import 'policy_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -67,7 +68,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
         .push(MaterialPageRoute(builder: (_) => PolicyScreen(policyKey: key)));
     final registered = !app.isGuest;
     return Scaffold(
-      appBar: AppBar(title: const Text('App Setting')),
+      appBar: AppBar(
+        flexibleSpace: const DecoratedBox(
+          decoration: BoxDecoration(gradient: AppColors.barGradient),
+          child: SizedBox.expand(),
+        ),
+        title: const Text('App Setting'),
+      ),
       body: Column(
         children: [
           for (final (key, title) in const [

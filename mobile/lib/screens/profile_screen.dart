@@ -104,62 +104,67 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 SliverAppBar(
                   pinned: true,
                   expandedHeight: 150,
-                  flexibleSpace: FlexibleSpaceBar(
-                    background: SafeArea(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 56, 8, 12),
-                        child: Row(
-                          children: [
-                            CircleAvatar(
-                              radius: 38,
-                              backgroundColor: Colors.white,
-                              child: CircleAvatar(
-                                radius: 34,
-                                backgroundColor: const Color(0xFFD84343),
-                                child: Text(
-                                  (s?.displayName ?? 'U').characters.first
-                                      .toUpperCase(),
-                                  style: const TextStyle(
-                                    fontSize: 30,
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w700,
+                  flexibleSpace: DecoratedBox(
+                    decoration: const BoxDecoration(
+                      gradient: AppColors.gradient,
+                    ),
+                    child: FlexibleSpaceBar(
+                      background: SafeArea(
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(20, 56, 8, 12),
+                          child: Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 38,
+                                backgroundColor: Colors.white,
+                                child: CircleAvatar(
+                                  radius: 34,
+                                  backgroundColor: AppColors.primary,
+                                  child: Text(
+                                    (s?.displayName ?? 'U').characters.first
+                                        .toUpperCase(),
+                                    style: const TextStyle(
+                                      fontSize: 30,
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w700,
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Text(
-                                s?.displayName ?? '',
-                                style: const TextStyle(
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Text(
+                                  s?.displayName ?? '',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.edit_square,
                                   color: Colors.white,
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w700,
                                 ),
-                                overflow: TextOverflow.ellipsis,
+                                tooltip: 'Edit name',
+                                onPressed: _editName,
                               ),
-                            ),
-                            IconButton(
-                              icon: const Icon(
-                                Icons.edit_square,
-                                color: Colors.white,
-                              ),
-                              tooltip: 'Edit name',
-                              onPressed: _editName,
-                            ),
-                            IconButton(
-                              icon: const Icon(
-                                Icons.settings,
-                                color: Colors.white,
-                              ),
-                              tooltip: 'Settings',
-                              onPressed: () => Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => const SettingsScreen(),
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.settings,
+                                  color: Colors.white,
+                                ),
+                                tooltip: 'Settings',
+                                onPressed: () => Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => const SettingsScreen(),
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -297,15 +302,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
       badge = switch (c.reviewStatus) {
         'pending' => const Chip(
           label: Text('Waiting for approval'),
-          backgroundColor: Color(0xFFFFF3CD),
+          backgroundColor: AppColors.warningBg,
         ),
         'rejected' => const Chip(
           label: Text('Not approved'),
-          backgroundColor: Color(0xFFF8D7DA),
+          backgroundColor: AppColors.dangerBg,
         ),
         _ => const Chip(
           label: Text('Your channel'),
-          backgroundColor: Color(0xFFE8F5E9),
+          backgroundColor: AppColors.successBg,
         ),
       };
     }

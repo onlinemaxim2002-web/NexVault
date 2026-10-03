@@ -43,7 +43,7 @@ roles, applies all migrations, and runs `tests/rls_test.sql`.
   `20261002000004_storage_and_cloud` (applied live in four parts: storage_buckets_policies, cloud_files,
   plan_requests, app_status_rpcs), `20261002000005_user_channels` (applied in three parts),
   `20261003000006_trailers`, `20261003000007_upi_payments` (applied in four parts: tables, core,
-  report_admin, cron)
+  report_admin, cron), `20261003000008_app_channel_requests`
 - Edge Functions: `delete-account`
 
 ## Apply to the Supabase project

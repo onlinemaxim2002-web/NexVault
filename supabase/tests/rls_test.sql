@@ -699,5 +699,25 @@ reset role;
 update public.payment_orders set created_at = now() - interval '25 hours' where id = t.get('o6')::uuid;
 select public.cancel_stale_payment_orders();
 select t.ok(t.order_status('o6') = 'cancelled', 'orders open for more than 24 hours are cancelled');
+
+-- ---------------------------------------------------------------------------
+-- Admin creating a channel from the app → approval request
+-- ---------------------------------------------------------------------------
+set role authenticated;
+select t.act_as('owner');
+insert into public.channels (name) values ('Owner app channel');
+select t.ok((select review_status = 'pending' and status = 'draft' and created_by = t.id('owner')
+               from public.channels where name = 'Owner app channel'),
+            'admin creating a channel from the app makes a pending request with them as creator');
+select t.ok(exists (select 1 from public.admin_channel_requests() where name = 'Owner app channel'),
+            '… and it shows in the owner''s channel requests');
+select public.review_channel((select id from public.channels where name = 'Owner app channel'), true, 'all');
+select t.ok((select review_status = 'approved' and status = 'published'
+               from public.channels where name = 'Owner app channel'), '… and the owner can approve it');
+insert into public.channels (name, created_by, status, audience) values ('Panel channel', t.id('owner'), 'published', 'ads');
+select t.ok((select review_status = 'approved' and status = 'published' and audience = 'ads'
+               from public.channels where name = 'Panel channel'),
+            'admin panel channels (with created_by) are unchanged');
+reset role;
 \echo
 \echo 'All tests passed.'

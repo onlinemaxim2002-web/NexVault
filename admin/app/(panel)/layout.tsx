@@ -8,6 +8,7 @@ export default async function PanelLayout({ children }: { children: React.ReactN
   const pending = Number(stats?.pending_approvals ?? 0);
   const { data: requests } = role === "owner" ? await supabase.rpc("admin_plan_requests") : { data: [] };
   const openRequests = (requests ?? []).length;
+  const { data: pendingPayments } = role === "owner" ? await supabase.rpc("admin_pending_payments") : { data: 0 };
 
   const items = [
     { href: "/", label: "Dashboard" },
@@ -16,6 +17,7 @@ export default async function PanelLayout({ children }: { children: React.ReactN
     ...(role === "owner"
       ? [
           { href: "/approvals", label: "Approvals", badge: pending },
+          { href: "/payments", label: "Payments", badge: Number(pendingPayments ?? 0) },
           { href: "/users", label: "Users", badge: openRequests },
           { href: "/plans", label: "Plans" },
           { href: "/admins", label: "Admins" },

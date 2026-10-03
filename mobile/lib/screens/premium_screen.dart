@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 
 import '../models.dart';
 import '../services/backend.dart';
+import '../services/payments.dart';
 import '../state/app_state.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 import '../widgets/gates.dart';
 import '../widgets/reload.dart';
+import 'payment_status_screen.dart';
 import 'profile_screen.dart';
 
 /// Premium plans. Also the Profile tab; the person icon opens the profile.
@@ -23,12 +25,14 @@ class _PremiumScreenState extends State<PremiumScreen> with ContentReload {
   String? selected;
   String? error;
   bool sending = false;
+  OpenOrder? openOrder;
 
   @override
   Future<void> reload() async {
     try {
       final list = await Backend.plans();
       await app.refreshStatus();
+      await _loadOpenOrder();
       if (!mounted) return;
       setState(() {
         plans = list;
@@ -40,6 +44,8 @@ class _PremiumScreenState extends State<PremiumScreen> with ContentReload {
     }
   }
 
+  /// Server creates the order (amount from the plans table), then the UPI app
+  /// opens. The result screen shows only what the server decided.
   Future<void> _next() async {
     final plan = plans?.firstWhere((p) => p.id == selected);
     if (plan == null) return;
@@ -48,30 +54,55 @@ class _PremiumScreenState extends State<PremiumScreen> with ContentReload {
     }
     setState(() => sending = true);
     try {
-      // Payments aren't connected yet: send a request that the owner grants.
-      await Backend.requestPlan(plan.id);
-      await app.refreshStatus();
+      final order = await payments.createOrder(plan);
+      final payee = await payments.savedPayee();
+      try {
+        await payments.launch(order, upiId: payee!.$1, payee: payee.$2);
+      } on NoUpiAppException catch (e) {
+        if (mounted) _alert('No UPI app found', e.toString());
+        return;
+      } on UnsupportedError catch (e) {
+        // Web test builds: the order exists, but no UPI app can be opened.
+        if (mounted) {
+          showSnack(context, e.message ?? 'UPI is not available here.');
+        }
+      }
       if (!mounted) return;
-      await showDialog<void>(
-        context: context,
-        builder: (_) => AlertDialog(
-          title: const Text('Request sent'),
-          content: Text(
-            'Thanks! Your ${plan.name} request has been sent. Your plan will be activated shortly.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('OK'),
-            ),
-          ],
-        ),
-      );
+      await _openStatus(order);
     } catch (e) {
       if (mounted) showSnack(context, friendlyError(e));
     } finally {
       if (mounted) setState(() => sending = false);
     }
+  }
+
+  Future<void> _openStatus(OpenOrder order) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => PaymentStatusScreen(order: order)),
+    );
+    await _loadOpenOrder();
+    await app.refreshStatus();
+  }
+
+  Future<void> _loadOpenOrder() async {
+    final o = await payments.openOrder();
+    if (mounted) setState(() => openOrder = o);
+  }
+
+  void _alert(String title, String text) {
+    showDialog<void>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text(title),
+        content: Text(text),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -115,6 +146,16 @@ class _PremiumScreenState extends State<PremiumScreen> with ContentReload {
                   icon: Icons.verified,
                   text:
                       'You have ${s!.planName}${s.planEndsAt != null ? ' until ${s.planEndsAt!.toLocal().toString().substring(0, 10)}' : ''}.',
+                )
+              else if (openOrder != null)
+                InkWell(
+                  onTap: () => _openStatus(openOrder!),
+                  child: _Banner(
+                    color: const Color(0xFFFFF8E1),
+                    icon: Icons.hourglass_top,
+                    text:
+                        'Payment for ${openOrder!.planName} (order ${openOrder!.reference}) is being checked. Tap to see the status.',
+                  ),
                 )
               else if (s?.openRequest != null)
                 _Banner(
@@ -193,10 +234,8 @@ class _PremiumScreenState extends State<PremiumScreen> with ContentReload {
               ),
               const SizedBox(height: 8),
               FilledButton(
-                onPressed: sending || selected == null || s?.openRequest != null
-                    ? null
-                    : _next,
-                child: Text(sending ? 'Sending…' : 'Next'),
+                onPressed: sending || selected == null ? null : _next,
+                child: Text(sending ? 'Opening UPI…' : 'Next'),
               ),
             ],
           );

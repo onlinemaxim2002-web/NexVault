@@ -71,7 +71,7 @@ export default async function UsersPage({
         <section className="mb-8">
           <h2 className="mb-2 font-semibold">Plan requests ({requests.length})</h2>
           <p className="mb-3 text-sm text-gray-500">
-            Users who picked a plan in the app. Payments aren&apos;t connected yet, so grant the plan here.
+            Requests sent before UPI payments were added. Grant the plan here or dismiss them; new purchases appear under Payments.
           </p>
           <Table>
             <thead>

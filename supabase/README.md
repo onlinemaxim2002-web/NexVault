@@ -5,7 +5,7 @@ Database schema, Row Level Security rules, and (later) Edge Functions.
 ```
 migrations/   SQL migrations, applied in filename order
 tests/        Behaviour tests run on a throwaway local Postgres
-functions/    Edge Functions (delete-account)
+functions/    Edge Functions (delete-account; upi-webhook, not deployed)
 ```
 
 ## What the schema enforces
@@ -21,7 +21,10 @@ functions/    Edge Functions (delete-account)
   limited to selected channels.
 - **Media keys** (`media_key`, `hls_key`, `preview_key`) are never readable by app
   users; Edge Functions sign playback URLs with the service role.
-- **Premium:** granted by the owner with `grant_premium` until payments are added.
+- **Premium:** granted by UPI payments (`activate_payment`, server only) or by the owner
+  with `grant_premium`. See [docs/09-upi-payments.md](../docs/09-upi-payments.md).
+- **Payments:** users read only their own orders; only database functions change them;
+  each UTR / transaction id can approve one order.
 
 ## Run the tests
 
@@ -39,7 +42,8 @@ roles, applies all migrations, and runs `tests/rls_test.sql`.
 - Applied migrations: `20261002000001_init`, `20261002000002_harden_functions`, `20261002000003_admin_rpcs`,
   `20261002000004_storage_and_cloud` (applied live in four parts: storage_buckets_policies, cloud_files,
   plan_requests, app_status_rpcs), `20261002000005_user_channels` (applied in three parts),
-  `20261003000006_trailers`
+  `20261003000006_trailers`, `20261003000007_upi_payments` (applied in four parts: tables, core,
+  report_admin, cron)
 - Edge Functions: `delete-account`
 
 ## Apply to the Supabase project

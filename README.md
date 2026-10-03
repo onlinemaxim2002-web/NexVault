@@ -18,6 +18,7 @@ secure link sharing, and public/private **Channels** for sharing content.
 | [docs/06-app-flow-analysis.md](docs/06-app-flow-analysis.md) | Screen-by-screen analysis of the reference app |
 | [docs/07-attribution-and-personalisation.md](docs/07-attribution-and-personalisation.md) | Ads vs organic installs, content audience, APK builds, download page |
 | [docs/08-admin-panel.md](docs/08-admin-panel.md) | Online admin panel: roles, upload, premium, audience, reports |
+| [docs/09-upi-payments.md](docs/09-upi-payments.md) | UPI Intent payments: flow, server checks, admin review, bank hook, ₹1 test |
 
 ## Repository layout
 

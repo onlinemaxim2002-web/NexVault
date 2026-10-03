@@ -359,6 +359,46 @@ class Backend {
     await sb.from('plan_requests').insert({'plan_id': planId});
   }
 
+  // ---------------------------------------------------------------- payments
+  /// Server creates (or reuses) the order; the amount comes from the plans table.
+  static Future<Map<String, dynamic>> createPaymentOrder(String planId) async {
+    final res = await sb.rpc(
+      'create_payment_order',
+      params: {'p_plan_id': planId},
+    );
+    return Map<String, dynamic>.from(res as Map);
+  }
+
+  /// Sends the UPI app's raw answer; the server decides what it means.
+  static Future<Map<String, dynamic>> reportPaymentResult(
+    String orderId,
+    String raw,
+  ) async {
+    final res = await sb.rpc(
+      'report_payment_result',
+      params: {'p_order_id': orderId, 'p_raw': raw},
+    );
+    return Map<String, dynamic>.from(res as Map);
+  }
+
+  static Future<PaymentOrder?> paymentOrder(String orderId) async {
+    final row = await sb
+        .from('payment_orders')
+        .select(PaymentOrder.select)
+        .eq('id', orderId)
+        .maybeSingle();
+    return row == null ? null : PaymentOrder.fromJson(row);
+  }
+
+  static Future<List<PaymentOrder>> paymentHistory() async {
+    final rows = await sb
+        .from('payment_orders')
+        .select(PaymentOrder.select)
+        .order('created_at', ascending: false)
+        .limit(100);
+    return rows.map(PaymentOrder.fromJson).toList();
+  }
+
   // ---------------------------------------------------------------- cloud
   static Future<List<CloudFile>> cloudFiles(String? parentId) async {
     var q = sb.from('cloud_files').select();
@@ -470,6 +510,10 @@ String friendlyError(Object e) {
       text.contains('Unauthorized') ||
       text.contains('403')) {
     return "You don't have access to this.";
+  }
+  if (text.contains('login required')) return 'Please log in first.';
+  if (text.contains('payments are not available')) {
+    return 'Payments are not available right now.';
   }
   if (text.contains('Invalid login credentials')) {
     return 'Wrong email or password.';

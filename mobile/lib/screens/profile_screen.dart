@@ -9,6 +9,7 @@ import '../widgets/gates.dart';
 import 'channel_screen.dart';
 import 'create_channel_screen.dart';
 import 'login_screen.dart';
+import 'payment_history_screen.dart';
 import 'settings_screen.dart';
 
 /// Profile: name (editable), settings, account, My Channels (created + joined).
@@ -271,6 +272,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     style: const TextStyle(fontSize: 16),
                   ),
                 ],
+              ),
+              const SizedBox(height: 4),
+              TextButton.icon(
+                style: TextButton.styleFrom(padding: EdgeInsets.zero),
+                icon: const Icon(Icons.receipt_long),
+                label: const Text('Payment history'),
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const PaymentHistoryScreen(),
+                  ),
+                ),
               ),
             ],
           ],

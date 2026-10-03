@@ -8,7 +8,7 @@ set client_min_messages = notice;
 -- Helpers
 -- ---------------------------------------------------------------------------
 create schema t;
-grant usage on schema t to anon, authenticated;
+grant usage on schema t to anon, authenticated, service_role;
 
 create function t.ok(cond boolean, msg text) returns void language plpgsql as $$
 begin
@@ -28,7 +28,7 @@ begin
   end;
   raise exception 'FAIL: expected error: %', msg;
 end $$;
-grant execute on all functions in schema t to anon, authenticated;
+grant execute on all functions in schema t to anon, authenticated, service_role;
 
 -- Fixed ids make the tests readable.
 create table t.ids (name text primary key, id uuid not null);
@@ -519,5 +519,185 @@ select t.ok(not public.is_premium_user(), 'creator has no plan');
 select t.ok(exists (select 1 from storage.objects where name = 'posts/70000000-0000-0000-0000-000000000001/v.mp4'),
             'creator plays their own full video without a plan');
 reset role;
+
+-- ---------------------------------------------------------------------------
+-- UPI payments
+-- ---------------------------------------------------------------------------
+create table t.v (k text primary key, v text);
+grant all on t.v to authenticated, service_role;
+grant select on t.ids to service_role;
+create function t.get(p text) returns text language sql stable as $$ select v from t.v where k = p $$;
+create function t.put(p text, val text) returns void language sql as $$
+  insert into t.v values (p, val) on conflict (k) do update set v = excluded.v $$;
+grant execute on function t.get(text), t.put(text, text) to authenticated;
+create function t.order_status(p text) returns text language sql stable security definer as $$
+  select status from public.payment_orders where id = t.get(p)::uuid $$;
+create function t.plan_end(p text) returns timestamptz language sql stable security definer as $$
+  select max(ends_at) from public.subscriptions where user_id = t.id(p) $$;
+grant execute on function t.order_status(text), t.plan_end(text) to authenticated;
+
+set role authenticated;
+select t.act_as('ads_guest');
+select t.fails($$select public.create_payment_order((select id from public.plans where code = 'gold'))$$,
+               'guest cannot create a payment order');
+
+select t.act_as('ads_user');
+select t.put('o1', public.create_payment_order((select id from public.plans where code = 'silver'))->>'order_id');
+select t.ok((select amount_paise from public.payment_orders where id = t.get('o1')::uuid) = 12900,
+            'order amount comes from the server (₹129.00 exactly)');
+select t.ok((select reference ~ '^CS[0-9]{6}[0-9A-F]{12}$' and length(reference) <= 35
+               and status = 'initiated' and upi_response is null and txn_id is null
+               and verified_at is null and verification_source is null and reviewed_by is null
+               from public.payment_orders where id = t.get('o1')::uuid),
+            'new order: alphanumeric reference ≤35, initiated, empty result fields');
+select t.ok((public.create_payment_order((select id from public.plans where code = 'silver'))->>'order_id') = t.get('o1'),
+            'same plan within 24 h reuses the open order');
+select t.ok((public.create_payment_order((select id from public.plans where code = 'silver'))->>'amount') = '129.00',
+            'amount is sent with two decimals');
+select t.put('o2', public.create_payment_order((select id from public.plans where code = 'gold'))->>'order_id');
+select t.ok(t.order_status('o1') = 'cancelled' and t.order_status('o2') = 'initiated',
+            'a new order for another plan closes the other open order');
+
+-- Clients cannot write orders or call the activation function.
+select t.fails($$update public.payment_orders set status = 'approved' where id = t.get('o2')::uuid$$,
+               'user cannot set an order status directly');
+select t.fails($$insert into public.payment_orders (reference, user_id, plan_id, amount_paise)
+                 select 'X1', t.id('ads_user'), id, 100 from public.plans where code = 'gold'$$,
+               'user cannot insert orders');
+select t.fails($$select public.activate_payment(t.get('o2')::uuid, 25900, 'ABC123456', 'admin')$$,
+               'user cannot call activate_payment');
+select t.fails($$select public.provider_confirm_payment('X', 25900, 'ABC123456')$$,
+               'user cannot call the provider hook');
+select t.fails($$select public.admin_mark_payment_paid(t.get('o2')::uuid, 'ABC123456', 259)$$,
+               'user cannot mark an order as paid');
+select t.fails($$insert into public.subscriptions (user_id, plan_id, ends_at)
+                 select t.id('ads_user'), id, now() + interval '1 day' from public.plans where code = 'gold'$$,
+               'user cannot grant themselves a plan');
+
+-- Wrong txnRef → pending, nothing granted.
+select t.ok((public.report_payment_result(t.get('o2')::uuid,
+              'txnId=AXI111111&responseCode=00&Status=SUCCESS&txnRef=CS000000WRONG')->>'status') = 'pending',
+            'SUCCESS with another order''s txnRef stays pending');
+select t.ok(not public.is_premium_user(), '… and grants nothing');
+select t.ok((select upi_response from public.payment_orders where id = t.get('o2')::uuid) like '%CS000000WRONG%',
+            '… and the raw answer is saved');
+-- Missing txn id → pending.
+select t.ok((public.report_payment_result(t.get('o2')::uuid, 'Status=SUCCESS&responseCode=00')->>'status') = 'pending',
+            'SUCCESS without a transaction id stays pending');
+-- Unparseable / NO_RESPONSE / SUBMITTED → pending, answer saved.
+select t.ok((public.report_payment_result(t.get('o2')::uuid, 'Status=NO_RESPONSE')->>'status') = 'pending',
+            'no answer from the UPI app stays pending');
+select t.ok((public.report_payment_result(t.get('o2')::uuid, 'garbage %ZZ %C3')->>'status') = 'pending',
+            'unreadable answer is saved and stays pending');
+select t.ok((select report_count from public.payment_orders where id = t.get('o2')::uuid) = 4,
+            'every answer was recorded');
+
+-- Other user's order.
+select t.act_as('organic_user');
+select t.fails($$select public.report_payment_result(t.get('o2')::uuid, 'Status=SUCCESS&txnId=AXI222222')$$,
+               'user cannot report a result for someone else''s order');
+select t.ok(not exists (select 1 from public.payment_orders where user_id = t.id('ads_user')),
+            'user cannot see someone else''s orders');
+select t.ok(not exists (select 1 from public.payment_settings), 'app users cannot read payment settings');
+
+-- Real success.
+select t.act_as('ads_user');
+select t.ok((public.report_payment_result(t.get('o2')::uuid,
+              'txnId=AXI333333&responseCode=00&Status=SUCCESS&txnRef=' ||
+              (select reference from public.payment_orders where id = t.get('o2')::uuid) ||
+              '&ApprovalRefNo=627312345678')->>'status') = 'approved',
+            'real SUCCESS with matching txnRef + transaction id activates');
+select t.ok(public.is_premium_user(), '… user now has a plan');
+select t.ok((select txn_id = '627312345678' and verification_source = 'upi_app' and verified_at is not null
+               from public.payment_orders where id = t.get('o2')::uuid),
+            '… ApprovalRefNo is stored as the UTR with source upi_app');
+select t.ok(t.plan_end('ads_user') between now() + interval '29 days 23 hours' and now() + interval '30 days 1 hour',
+            '… Gold plan lasts 30 days');
+select t.put('end1', t.plan_end('ads_user')::text);
+
+-- Double report → no second grant.
+select t.ok((public.report_payment_result(t.get('o2')::uuid,
+              'txnId=AXI333333&Status=SUCCESS&ApprovalRefNo=627312345678')->>'status') = 'approved',
+            'reporting again returns approved');
+select t.ok((select count(*) from public.subscriptions where user_id = t.id('ads_user')) = 1,
+            '… and does not grant a second plan');
+
+-- Reused transaction id on a new order → pending.
+select t.put('o3', public.create_payment_order((select id from public.plans where code = 'trial'))->>'order_id');
+select t.ok((public.report_payment_result(t.get('o3')::uuid,
+              'Status=SUCCESS&ApprovalRefNo=627312345678')->>'status') = 'pending',
+            'a transaction id that was already used stays pending');
+select t.ok((select count(*) from public.subscriptions where user_id = t.id('ads_user')) = 1, '… nothing granted');
+
+-- Failure.
+select t.ok((public.report_payment_result(t.get('o3')::uuid, 'Status=FAILURE&responseCode=ZD')->>'status') = 'failed',
+            'FAILURE marks the order failed');
+select t.ok((public.report_payment_result(t.get('o3')::uuid, 'Status=SUCCESS&ApprovalRefNo=AXI999999')->>'status') = 'failed',
+            'a failed order cannot become successful from the app');
+
+-- Order older than 2 hours → pending.
+select t.put('o4', public.create_payment_order((select id from public.plans where code = 'silver'))->>'order_id');
+reset role;
+update public.payment_orders set created_at = now() - interval '3 hours' where id = t.get('o4')::uuid;
+set role authenticated;
+select t.act_as('ads_user');
+select t.ok((public.report_payment_result(t.get('o4')::uuid, 'Status=SUCCESS&ApprovalRefNo=AXI444444')->>'status') = 'pending',
+            'SUCCESS for an order older than 2 hours stays pending');
+
+-- Owner: Mark as paid / Revoke.
+select t.act_as('content_admin');
+select t.fails($$select public.admin_mark_payment_paid(t.get('o4')::uuid, 'BANKUTR4444', 129)$$,
+               'content admin cannot mark payments as paid');
+select t.fails($$select * from public.admin_payment_orders()$$, 'content admin cannot list payments');
+select t.act_as('owner');
+select t.ok((select count(*) from public.admin_payment_orders('all')) = 4, 'owner sees all orders');
+select t.ok((select count(*) from public.admin_payment_orders('pending')) = 1, 'owner can filter pending orders');
+select t.ok((select upi_response from public.admin_payment_orders('pending')) like '%AXI444444%',
+            'owner sees the raw UPI answer');
+select t.fails($$select public.admin_mark_payment_paid(t.get('o4')::uuid, 'BANKUTR4444', 100)$$,
+               'Mark as paid needs the exact amount');
+select t.fails($$select public.admin_mark_payment_paid(t.get('o4')::uuid, '', 129)$$,
+               'Mark as paid needs a UTR');
+select t.fails($$select public.admin_mark_payment_paid(t.get('o4')::uuid, '627312345678', 129)$$,
+               'Mark as paid refuses a UTR already used');
+select t.ok((public.admin_mark_payment_paid(t.get('o4')::uuid, 'BANKUTR4444', 129)->>'status') = 'approved',
+            'owner marks a pending order as paid with the bank UTR');
+select t.ok((public.admin_mark_payment_paid(t.get('o4')::uuid, 'BANKUTR4444', 129)->>'already')::boolean,
+            'marking twice is idempotent');
+select t.ok((select verification_source = 'admin' and reviewed_by = t.id('owner')
+               from public.payment_orders where id = t.get('o4')::uuid), '… recorded as admin + reviewer');
+select t.ok(t.plan_end('ads_user') between t.get('end1')::timestamptz + interval '6 days 23 hours'
+                                       and t.get('end1')::timestamptz + interval '7 days 1 hour',
+            'plans stack: new expiry = current expiry + 7 days');
+select t.ok((select count(*) from public.subscriptions where user_id = t.id('ads_user')) = 2, '… one grant per paid order');
+
+select public.admin_revoke_payment(t.get('o4')::uuid, 'not in bank statement');
+select public.admin_revoke_payment(t.get('o2')::uuid, 'not in bank statement');
+select t.ok(t.order_status('o2') = 'revoked' and t.order_status('o4') = 'revoked', 'owner revokes payments');
+select t.fails($$select public.admin_revoke_payment(t.get('o3')::uuid)$$, 'only approved payments can be revoked');
+select t.act_as('ads_user');
+select t.ok(not public.is_premium_user(), 'revoked payments remove access');
+select t.ok((public.report_payment_result(t.get('o2')::uuid, 'Status=SUCCESS&ApprovalRefNo=627312345678')->>'status') = 'revoked',
+            'a revoked order cannot be re-activated from the app');
+
+-- Provider hook (service role).
+select t.put('o5', public.create_payment_order((select id from public.plans where code = 'trial'))->>'order_id');
+set role service_role;
+select t.fails($$select public.provider_confirm_payment((select reference from public.payment_orders where id = t.get('o5')::uuid), 100, 'PROV55555')$$,
+               'provider hook checks the amount');
+select t.ok((public.provider_confirm_payment((select reference from public.payment_orders where id = t.get('o5')::uuid), 6900, 'PROV55555')->>'status') = 'approved',
+            'provider hook activates with source provider_api');
+reset role;
+select t.ok((select verification_source from public.payment_orders where id = t.get('o5')::uuid) = 'provider_api',
+            '… recorded as provider_api');
+
+-- Auto-cancel after 24 h.
+set role authenticated;
+select t.act_as('organic_user');
+select t.put('o6', public.create_payment_order((select id from public.plans where code = 'gold'))->>'order_id');
+reset role;
+update public.payment_orders set created_at = now() - interval '25 hours' where id = t.get('o6')::uuid;
+select public.cancel_stale_payment_orders();
+select t.ok(t.order_status('o6') = 'cancelled', 'orders open for more than 24 hours are cancelled');
 \echo
 \echo 'All tests passed.'

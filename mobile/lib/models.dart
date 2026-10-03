@@ -259,3 +259,49 @@ class CloudFile {
     createdAt: DateTime.parse(j['created_at'] as String).toLocal(),
   );
 }
+
+/// A UPI payment order (read-only for the app; only server functions change it).
+class PaymentOrder {
+  final String id;
+  final String reference;
+  final int amountPaise;
+  final String
+  status; // initiated | pending | approved | failed | cancelled | revoked
+  final String? clientStatus;
+  final String? txnId;
+  final String? planName;
+  final DateTime createdAt;
+  final DateTime? verifiedAt;
+
+  const PaymentOrder({
+    required this.id,
+    required this.reference,
+    required this.amountPaise,
+    required this.status,
+    required this.createdAt,
+    this.clientStatus,
+    this.txnId,
+    this.planName,
+    this.verifiedAt,
+  });
+
+  static const select =
+      'id, reference, amount_paise, status, client_status, txn_id, created_at, verified_at, plans(name)';
+
+  bool get isOpen => status == 'initiated' || status == 'pending';
+  String get amountLabel => '₹${(amountPaise / 100).toStringAsFixed(2)}';
+
+  factory PaymentOrder.fromJson(Map<String, dynamic> j) => PaymentOrder(
+    id: j['id'] as String,
+    reference: j['reference'] as String,
+    amountPaise: (j['amount_paise'] as num).toInt(),
+    status: j['status'] as String,
+    clientStatus: j['client_status'] as String?,
+    txnId: j['txn_id'] as String?,
+    planName: (j['plans'] as Map?)?['name'] as String?,
+    createdAt: DateTime.parse(j['created_at'] as String),
+    verifiedAt: j['verified_at'] == null
+        ? null
+        : DateTime.parse(j['verified_at'] as String),
+  );
+}

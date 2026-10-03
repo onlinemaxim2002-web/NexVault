@@ -719,5 +719,60 @@ select t.ok((select review_status = 'approved' and status = 'published' and audi
                from public.channels where name = 'Panel channel'),
             'admin panel channels (with created_by) are unchanged');
 reset role;
+
+-- ---------------------------------------------------------------------------
+-- Meta Pixel / Conversions API events
+-- ---------------------------------------------------------------------------
+-- Disabled by default: nothing is queued.
+insert into public.installs (install_id, referrer_status, source) values (gen_random_uuid(), 'apk', 'meta');
+select t.ok((select count(*) from public.meta_events) = 0, 'no Meta events while tracking is off');
+
+update public.meta_settings set pixel_id = '1234567890', access_token = 'TEST_TOKEN', enabled = true where id = 1;
+insert into public.installs (install_id, referrer_status, source) values ('99999999-0000-0000-0000-000000000001', 'apk', 'meta');
+select t.ok((select count(*) from public.meta_events where event_name = 'AppInstall') = 1, 'install → AppInstall');
+
+insert into auth.users (id, email, is_anonymous) values ('99999999-0000-0000-0000-0000000000aa', null, true);
+update auth.users set email = 'Buyer@Example.com', is_anonymous = false where id = '99999999-0000-0000-0000-0000000000aa';
+select t.ok((select count(*) from public.meta_events where event_name = 'CompleteRegistration'
+               and user_id = '99999999-0000-0000-0000-0000000000aa') = 1, 'guest → account = CompleteRegistration');
+
+set role authenticated;
+select t.act_as('ads_user');
+select public.log_event('99999999-0000-0000-0000-000000000001', 'content_view',
+                        '20000000-0000-0000-0000-000000000001', gen_random_uuid());
+select t.ok(not exists (select 1 from public.meta_events), 'app users cannot read Meta events');
+select t.ok(not exists (select 1 from public.meta_settings), 'app users cannot read the Meta token');
+select t.fails($$select public.meta_dispatch()$$, 'app users cannot run the sender');
+select t.put('mo', public.create_payment_order((select id from public.plans where code = 'gold'))->>'order_id');
+reset role;
+select t.ok((select count(*) from public.meta_events where event_name = 'ViewContent') = 1, 'content view → ViewContent');
+select t.ok((select custom_data->>'value' from public.meta_events where event_name = 'InitiateCheckout'
+               and event_id = 'checkout-' || t.get('mo')) = '259.00', 'payment order → InitiateCheckout with plan price');
+
+set role authenticated;
+select t.act_as('owner');
+select public.admin_mark_payment_paid(t.get('mo')::uuid, 'METAUTR12345', 259);
+select public.admin_mark_payment_paid(t.get('mo')::uuid, 'METAUTR12345', 259);
+reset role;
+select t.ok((select count(*) from public.meta_events where event_id = 'purchase-' || t.get('mo')) = 1
+            and (select count(*) from public.meta_events where event_id = 'subscribe-' || t.get('mo')) = 1,
+            'approved payment → one Purchase + one Subscribe (no duplicates)');
+select t.ok((select p->'custom_data'->>'value' = '259.00' and p->'custom_data'->>'currency' = 'INR'
+                    and p->>'action_source' = 'app' and p->'app_data'->'extinfo'->>1 = 'com.cloudstorage.app'
+                    and jsonb_array_length(p->'user_data'->'external_id') = 1
+               from (select public.meta_event_payload(e, s) p
+                       from public.meta_events e, public.meta_settings s
+                      where e.event_id = 'purchase-' || t.get('mo')) x),
+            'Purchase payload has value, INR, app data and hashed user id');
+select t.ok((select public.meta_event_payload(e, s)->'user_data'->'em'->>0
+               from public.meta_events e, public.meta_settings s
+              where e.event_name = 'CompleteRegistration' and e.user_id = '99999999-0000-0000-0000-0000000000aa')
+            = encode(sha256(convert_to('buyer@example.com', 'UTF8')), 'hex'),
+            'email is sent only as a lower-cased SHA-256 hash');
+select t.ok(public.meta_dispatch() = 0, 'sender is a no-op without pg_net (local tests)');
+set role authenticated;
+select t.act_as('owner');
+select t.ok((select count(*) from public.admin_meta_events()) >= 5, 'owner sees the event log');
+reset role;
 \echo
 \echo 'All tests passed.'

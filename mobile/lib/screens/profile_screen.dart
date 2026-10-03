@@ -103,7 +103,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               slivers: [
                 SliverAppBar(
                   pinned: true,
-                  expandedHeight: 190,
+                  expandedHeight: 168,
                   backgroundColor: AppColors.background,
                   flexibleSpace: FlexibleSpaceBar(
                     background: Stack(
@@ -138,7 +138,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                         SafeArea(
                           child: Padding(
-                            padding: const EdgeInsets.fromLTRB(20, 60, 8, 14),
+                            padding: const EdgeInsets.fromLTRB(20, 50, 8, 12),
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [

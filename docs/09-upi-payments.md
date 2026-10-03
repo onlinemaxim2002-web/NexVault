@@ -118,3 +118,25 @@ Before real users (emails needed for confirmation and Forgot password):
   `com.cloudstorage.app://login-callback` so confirmation and password-reset
   links open the app.
 - Then you can turn **Confirm email** back ON.
+
+## Meta Pixel / Conversions API
+
+Admin panel → **Meta Pixel**: enter the Pixel (dataset) ID and a Conversions
+API access token, tick **Tracking on**, Save. The database then sends these
+events to Meta every minute (pg_cron + pg_net), with no app update needed:
+
+| Event | When |
+|---|---|
+| AppInstall (custom) | first launch of an install |
+| CompleteRegistration | a guest creates an account / first login |
+| ViewContent | a video, image or trailer is opened |
+| InitiateCheckout | a UPI order is created (plan price) |
+| Purchase + Subscribe | a payment is approved (amount, INR); event_id = order id, sent once |
+
+User data is only hashed (SHA-256 email + user id). The token is readable only
+by the owner and the database. Every event and Meta's answer is listed on the
+page; use a Test event code from Events Manager → Test events to verify.
+
+Limits: Meta attributes app installs best through the Facebook SDK / Play Store;
+for a direct APK these server events report conversions (especially Purchase)
+but install attribution for direct-download ads is limited.

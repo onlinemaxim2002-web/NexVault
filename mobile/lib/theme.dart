@@ -143,6 +143,7 @@ ThemeData buildTheme() {
     textTheme: text,
     scaffoldBackgroundColor: AppColors.background,
     canvasColor: AppColors.background,
+    visualDensity: VisualDensity.compact,
     splashFactory: InkSparkle.splashFactory,
     pageTransitionsTheme: const PageTransitionsTheme(
       builders: {TargetPlatform.android: FadeForwardsPageTransitionsBuilder()},
@@ -153,9 +154,10 @@ ThemeData buildTheme() {
       elevation: 0,
       scrolledUnderElevation: 0,
       centerTitle: false,
+      toolbarHeight: 52,
       titleTextStyle: TextStyle(
         fontFamily: 'Poppins',
-        fontSize: 21,
+        fontSize: 20,
         fontWeight: FontWeight.w700,
         letterSpacing: -0.2,
         color: AppColors.text,
@@ -197,7 +199,7 @@ ThemeData buildTheme() {
         foregroundColor: Colors.white,
         disabledBackgroundColor: AppColors.surfaceHigh,
         disabledForegroundColor: AppColors.muted,
-        minimumSize: const Size(0, 52),
+        minimumSize: const Size(0, 48),
         elevation: 0,
         shape: rounded,
         textStyle: const TextStyle(
@@ -275,8 +277,9 @@ ThemeData buildTheme() {
         fontFamily: 'Poppins',
         color: AppColors.text,
         fontWeight: FontWeight.w500,
-        fontSize: 13,
+        fontSize: 12.5,
       ),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
       checkmarkColor: Colors.white,
     ),
     dialogTheme: DialogThemeData(
@@ -364,7 +367,7 @@ ThemeData buildTheme() {
       backgroundColor: const Color(0xFF111114),
       surfaceTintColor: Colors.transparent,
       elevation: 0,
-      height: 66,
+      height: 60,
       indicatorColor: Colors.transparent,
       overlayColor: const WidgetStatePropertyAll(Color(0x14FF7A1A)),
       labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,

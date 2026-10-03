@@ -205,9 +205,9 @@ class _ExploreGridState extends State<_ExploreGrid>
                   sliver: SliverGrid(
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: cols,
-                      mainAxisSpacing: 18,
+                      mainAxisSpacing: 12,
                       crossAxisSpacing: 12,
-                      mainAxisExtent: cardW * 9 / 16 + 62,
+                      mainAxisExtent: cardW * 9 / 16 + 52,
                     ),
                     delegate: SliverChildBuilderDelegate(
                       (context, i) => _Tile(post: rest[i]),

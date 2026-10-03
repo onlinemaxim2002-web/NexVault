@@ -79,19 +79,20 @@ class _ChannelsScreenState extends State<ChannelsScreen> with ContentReload {
           title: const Text('Channels'),
           actions: const [CrownButton()],
           bottom: PreferredSize(
-            preferredSize: const Size.fromHeight(116),
+            preferredSize: const Size.fromHeight(100),
             child: Column(
               children: [
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
                   child: TextField(
                     decoration: const InputDecoration(
                       hintText: 'Search',
                       prefixIcon: Icon(Icons.search_rounded),
                       fillColor: AppColors.surfaceHigh,
+                      isDense: true,
                       contentPadding: EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
+                        horizontal: 14,
+                        vertical: 10,
                       ),
                     ),
                     onChanged: (v) {
@@ -104,8 +105,8 @@ class _ChannelsScreenState extends State<ChannelsScreen> with ContentReload {
                   ),
                 ),
                 Container(
-                  margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                  padding: const EdgeInsets.all(4),
+                  margin: const EdgeInsets.fromLTRB(16, 0, 16, 6),
+                  padding: const EdgeInsets.all(3),
                   decoration: BoxDecoration(
                     color: AppColors.surface,
                     borderRadius: BorderRadius.circular(14),
@@ -126,8 +127,8 @@ class _ChannelsScreenState extends State<ChannelsScreen> with ContentReload {
                       fontWeight: FontWeight.w600,
                     ),
                     tabs: const [
-                      Tab(height: 36, text: 'Discover'),
-                      Tab(height: 36, text: 'Joined'),
+                      Tab(height: 32, text: 'Discover'),
+                      Tab(height: 32, text: 'Joined'),
                     ],
                   ),
                 ),
@@ -160,7 +161,7 @@ class _ChannelsScreenState extends State<ChannelsScreen> with ContentReload {
                   Column(
                     children: [
                       Padding(
-                        padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 2),
                         child: Row(
                           children: [
                             for (final s in const [
@@ -217,18 +218,17 @@ class _ChannelsScreenState extends State<ChannelsScreen> with ContentReload {
     return RefreshIndicator(
       onRefresh: reload,
       child: ListView.separated(
-        padding: const EdgeInsets.only(bottom: 88),
+        padding: const EdgeInsets.only(top: 4, bottom: 80),
         itemCount: channels.length,
-        separatorBuilder: (_, _) => const SizedBox(height: 2),
+        separatorBuilder: (_, _) => const SizedBox(height: 0),
         itemBuilder: (context, i) {
           final c = channels[i];
           final isJoined = joinedIds.contains(c.id);
           return ListTile(
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 4,
-            ),
-            leading: ChannelAvatar(url: c.iconUrl, name: c.name, size: 48),
+            dense: true,
+            minVerticalPadding: 6,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+            leading: ChannelAvatar(url: c.iconUrl, name: c.name, size: 42),
             title: Text(
               c.name,
               maxLines: 1,
@@ -257,7 +257,8 @@ class _ChannelsScreenState extends State<ChannelsScreen> with ContentReload {
             trailing: isJoined
                 ? OutlinedButton(
                     style: OutlinedButton.styleFrom(
-                      minimumSize: const Size(84, 34),
+                      minimumSize: const Size(76, 30),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       padding: const EdgeInsets.symmetric(horizontal: 14),
                       shape: const StadiumBorder(),
                       disabledForegroundColor: AppColors.muted,
@@ -272,7 +273,8 @@ class _ChannelsScreenState extends State<ChannelsScreen> with ContentReload {
                   )
                 : OutlinedButton(
                     style: OutlinedButton.styleFrom(
-                      minimumSize: const Size(84, 34),
+                      minimumSize: const Size(76, 30),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       padding: const EdgeInsets.symmetric(horizontal: 14),
                       shape: const StadiumBorder(),
                       foregroundColor: AppColors.primary,

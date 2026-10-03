@@ -18,6 +18,7 @@ export default async function PanelLayout({ children }: { children: React.ReactN
       ? [
           { href: "/approvals", label: "Approvals", badge: pending },
           { href: "/payments", label: "Payments", badge: Number(pendingPayments ?? 0) },
+          { href: "/meta", label: "Meta Pixel" },
           { href: "/users", label: "Users", badge: openRequests },
           { href: "/plans", label: "Plans" },
           { href: "/admins", label: "Admins" },

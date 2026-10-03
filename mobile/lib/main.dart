@@ -30,6 +30,14 @@ class CloudStorageApp extends StatelessWidget {
       title: Config.appName,
       debugShowCheckedModeBanner: false,
       theme: buildTheme(),
+      // Keep layouts compact when the phone uses a very large font size.
+      builder: (context, child) => MediaQuery(
+        data: MediaQuery.of(context).copyWith(
+          textScaler: MediaQuery.textScalerOf(context)
+              .clamp(minScaleFactor: 0.9, maxScaleFactor: 1.1),
+        ),
+        child: child!,
+      ),
       home: ListenableBuilder(
         listenable: app,
         builder: (context, _) {

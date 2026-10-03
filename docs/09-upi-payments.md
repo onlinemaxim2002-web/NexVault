@@ -101,5 +101,20 @@ Google sign-in needs, once, in the Supabase dashboard:
 - Authentication → URL Configuration → Redirect URLs: add
   `com.cloudstorage.app://login-callback` (also used by password-reset emails).
 
-Until Google is enabled, the app shows "Google sign-in is not set up yet. Please
-log in with email."
+Until Google is enabled, the app shows "Google sign-in is coming soon. Please log
+in with email." (It switches on by itself once Google is enabled in Supabase.)
+
+## Email login setup (Supabase dashboard)
+
+Testing phase (no email sending needed):
+- Authentication → Sign In / Providers → **Email**: enabled; turn **Confirm email
+  OFF** → Save. Create Account then works instantly in the app.
+
+Before real users (emails needed for confirmation and Forgot password):
+- Authentication → Emails → **SMTP Settings**: enable custom SMTP (e.g. Brevo,
+  Resend, or Gmail with an app password). The built-in sender only allows a few
+  emails per hour and may only deliver to your team's addresses.
+- Authentication → URL Configuration → Redirect URLs: add
+  `com.cloudstorage.app://login-callback` so confirmation and password-reset
+  links open the app.
+- Then you can turn **Confirm email** back ON.

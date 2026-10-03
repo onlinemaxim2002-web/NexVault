@@ -126,6 +126,8 @@ class AppState extends ChangeNotifier {
   Future<bool> createAccount(String email, String password) async {
     final res = await sb.auth.updateUser(
       UserAttributes(email: email, password: password),
+      // If email confirmation is on, the link in the email opens the app.
+      emailRedirectTo: kIsWeb ? null : authRedirect,
     );
     await refreshStatus();
     bumpContent();
@@ -148,7 +150,7 @@ class AppState extends ChangeNotifier {
   Future<void> signInWithGoogle() async {
     if (!await _providerEnabled('google')) {
       throw StateError(
-        'Google sign-in is not set up yet. Please log in with email.',
+        'Google sign-in is coming soon. Please log in with email.',
       );
     }
     await sb.auth.signInWithOAuth(

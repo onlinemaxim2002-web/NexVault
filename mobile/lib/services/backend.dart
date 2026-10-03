@@ -516,6 +516,12 @@ String friendlyError(Object e) {
   if (text.contains('payments are not available')) {
     return 'Payments are not available right now.';
   }
+  if (text.contains('Email not confirmed')) {
+    return 'Please confirm your email first: open the link we sent you.';
+  }
+  if (text.contains('rate limit')) {
+    return 'Too many emails were sent. Please try again in an hour.';
+  }
   if (text.contains('Invalid login credentials')) {
     return 'Wrong email or password.';
   }

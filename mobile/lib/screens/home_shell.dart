@@ -8,6 +8,7 @@ import 'channels_screen.dart';
 import 'cloud_screen.dart';
 import 'explore_screen.dart';
 import 'feed_screen.dart';
+import 'login_screen.dart';
 import 'payment_status_screen.dart';
 import 'policy_screen.dart';
 import 'premium_screen.dart';
@@ -28,6 +29,20 @@ class _HomeShellState extends State<HomeShell> {
       await _maybeAskConsent();
       await _resumePayment();
     });
+    app.passwordRecovery.addListener(_onPasswordRecovery);
+  }
+
+  @override
+  void dispose() {
+    app.passwordRecovery.removeListener(_onPasswordRecovery);
+    super.dispose();
+  }
+
+  /// Opened a password-reset link from the email: ask for the new password.
+  Future<void> _onPasswordRecovery() async {
+    if (!app.passwordRecovery.value || !mounted) return;
+    app.passwordRecovery.value = false;
+    await showNewPasswordDialog(context);
   }
 
   /// The app was closed or killed while the UPI app was open: show the

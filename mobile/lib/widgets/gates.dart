@@ -9,12 +9,33 @@ import '../services/backend.dart';
 import '../state/app_state.dart';
 import 'common.dart';
 
-/// Login gate: guests are sent to log in / create an account.
+/// Login gate: guests see a "Please log in" pop-up, then the login screen.
 Future<bool> ensureLoggedIn(BuildContext context, {String? reason}) async {
   if (!app.isGuest) return true;
-  final ok = await Navigator.of(
-    context,
-  ).push<bool>(MaterialPageRoute(builder: (_) => LoginScreen(reason: reason)));
+  final go = await showDialog<bool>(
+    context: context,
+    builder: (_) => AlertDialog(
+      icon: const Icon(Icons.lock_outline, size: 36),
+      title: const Text('Please log in'),
+      content: Text(
+        reason ?? 'Log in to continue.',
+        textAlign: TextAlign.center,
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: const Text('Not now'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(context, true),
+          child: const Text('Log in'),
+        ),
+      ],
+    ),
+  );
+  if (go != true || !context.mounted) return false;
+  final ok = await Navigator.of(context)
+      .push<bool>(MaterialPageRoute(builder: (_) => const LoginScreen()));
   return ok == true && !app.isGuest;
 }
 

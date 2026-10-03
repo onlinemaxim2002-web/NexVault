@@ -1,11 +1,19 @@
-import 'package:flutter/material.dart';
+import 'dart:async';
+import 'dart:math' as math;
 
+import 'package:flutter/gestures.dart';
+import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../config.dart';
 import '../services/backend.dart';
 import '../state/app_state.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
+import 'policy_screen.dart';
 
-/// Create an account (keeps the current guest data) or log in to an existing one.
+/// Login choice: Google or email, with the policy links below.
+/// Pops `true` once the user is logged in (no longer a guest).
 class LoginScreen extends StatefulWidget {
   final String? reason;
   const LoginScreen({super.key, this.reason});
@@ -15,12 +23,249 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  StreamSubscription<AuthState>? _sub;
+  bool _googleBusy = false;
+  bool _closed = false;
+
+  /// Email login and the auth listener can both report success: close once.
+  void _close() {
+    if (_closed || !mounted) return;
+    _closed = true;
+    Navigator.of(context).pop(true);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // Google login finishes in the browser and comes back through a deep
+    // link; close this screen as soon as a real (non-guest) session arrives.
+    _sub = sb.auth.onAuthStateChange.listen((s) async {
+      final user = s.session?.user;
+      if (s.event == AuthChangeEvent.signedIn &&
+          user != null &&
+          !user.isAnonymous) {
+        if (_closed || !mounted) return;
+        // Email login is finished by EmailLoginScreen (it already logged
+        // the attribution); Google login is finished here.
+        if (ModalRoute.of(context)?.isCurrent ?? false) {
+          await app.afterExternalLogin();
+          _close();
+        }
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _sub?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _google() async {
+    setState(() => _googleBusy = true);
+    try {
+      await app.signInWithGoogle();
+    } catch (e) {
+      if (mounted) showSnack(context, friendlyError(e));
+    } finally {
+      if (mounted) setState(() => _googleBusy = false);
+    }
+  }
+
+  Future<void> _email() async {
+    final ok = await Navigator.of(
+      context,
+    ).push<bool>(MaterialPageRoute(builder: (_) => const EmailLoginScreen()));
+    if (ok == true) _close();
+  }
+
+  void _policy(String key) => Navigator.of(context)
+      .push(MaterialPageRoute(builder: (_) => PolicyScreen(policyKey: key)));
+
+  @override
+  Widget build(BuildContext context) {
+    const linkStyle = TextStyle(
+      color: Color(0xFF1A0DAB),
+      decoration: TextDecoration.underline,
+    );
+    return Scaffold(
+      backgroundColor: Colors.white,
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        foregroundColor: Colors.white,
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            flex: 5,
+            child: Container(
+              width: double.infinity,
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Color(0xFFB71C1C), Color(0xFFDFA3A3), Colors.white],
+                  stops: [0, 0.6, 1],
+                ),
+              ),
+              child: SafeArea(
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(28),
+                        child: Image.asset(
+                          'assets/logo.png',
+                          width: 104,
+                          height: 104,
+                        ),
+                      ),
+                      if (widget.reason != null) ...[
+                        const SizedBox(height: 16),
+                        Text(
+                          widget.reason!,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 4,
+            child: SafeArea(
+              top: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
+                child: Column(
+                  children: [
+                    const Spacer(),
+                    _AuthButton(
+                      icon: const GoogleLogo(size: 24),
+                      label: 'Sign in with google',
+                      busy: _googleBusy,
+                      onPressed: _googleBusy ? null : _google,
+                    ),
+                    const SizedBox(height: 18),
+                    _AuthButton(
+                      icon: const Icon(Icons.email, size: 26),
+                      label: 'Login with email',
+                      onPressed: _email,
+                    ),
+                    const Spacer(flex: 2),
+                    Text.rich(
+                      TextSpan(
+                        style: const TextStyle(
+                          fontSize: 15,
+                          color: Colors.black87,
+                        ),
+                        children: [
+                          const TextSpan(
+                            text:
+                                'I understand and agree to the ${Config.appName}\n',
+                          ),
+                          TextSpan(
+                            text: 'Privacy Policy',
+                            style: linkStyle,
+                            recognizer: TapGestureRecognizer()
+                              ..onTap = () => _policy('privacy'),
+                          ),
+                          const TextSpan(text: ' and '),
+                          TextSpan(
+                            text: 'Terms & Conditions',
+                            style: linkStyle,
+                            recognizer: TapGestureRecognizer()
+                              ..onTap = () => _policy('terms'),
+                          ),
+                          const TextSpan(text: '.'),
+                        ],
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AuthButton extends StatelessWidget {
+  final Widget icon;
+  final String label;
+  final bool busy;
+  final VoidCallback? onPressed;
+  const _AuthButton({
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+    this.busy = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return OutlinedButton(
+      onPressed: onPressed,
+      style: OutlinedButton.styleFrom(
+        foregroundColor: Colors.black,
+        minimumSize: const Size.fromHeight(56),
+        side: const BorderSide(color: Colors.black87, width: 1.4),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+      ),
+      child: Row(
+        children: [
+          SizedBox(width: 28, child: icon),
+          Expanded(
+            child: busy
+                ? const Center(
+                    child: SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  )
+                : Text(
+                    label,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 18),
+                  ),
+          ),
+          const SizedBox(width: 28),
+        ],
+      ),
+    );
+  }
+}
+
+/// Login / create account with email + password. Pops `true` when logged in.
+class EmailLoginScreen extends StatefulWidget {
+  const EmailLoginScreen({super.key});
+
+  @override
+  State<EmailLoginScreen> createState() => _EmailLoginScreenState();
+}
+
+class _EmailLoginScreenState extends State<EmailLoginScreen> {
   final _form = GlobalKey<FormState>();
   final _email = TextEditingController();
   final _password = TextEditingController();
-  bool _create = true;
+  bool _create = false;
   bool _busy = false;
   bool _showPassword = false;
+
+  static final _emailRe = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
 
   @override
   void dispose() {
@@ -38,20 +283,9 @@ class _LoginScreenState extends State<LoginScreen> {
         final done = await app.createAccount(email, _password.text);
         if (!done) {
           if (!mounted) return;
-          await showDialog<void>(
-            context: context,
-            builder: (_) => AlertDialog(
-              title: const Text('Confirm your email'),
-              content: Text(
-                'We sent a confirmation link to $email. Open it, then come back and log in.',
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('OK'),
-                ),
-              ],
-            ),
+          await _info(
+            'Confirm your email',
+            'We sent a confirmation link to $email. Open it, then come back and log in.',
           );
           setState(() => _create = false);
           return;
@@ -75,61 +309,95 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  Future<void> _forgot() async {
+    final email = _email.text.trim();
+    if (!_emailRe.hasMatch(email)) {
+      showSnack(context, 'Enter your email above first.');
+      return;
+    }
+    try {
+      await app.sendPasswordReset(email);
+      if (mounted) {
+        await _info(
+          'Check your email',
+          'We sent a password reset link to $email. Open it on this phone to set a new password.',
+        );
+      }
+    } catch (e) {
+      if (mounted) showSnack(context, friendlyError(e));
+    }
+  }
+
+  Future<void> _info(String title, String text) => showDialog<void>(
+    context: context,
+    builder: (_) => AlertDialog(
+      title: Text(title),
+      content: Text(text),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('OK'),
+        ),
+      ],
+    ),
+  );
+
+  InputDecoration _field(String hint, {Widget? suffix}) => InputDecoration(
+    hintText: hint,
+    hintStyle: const TextStyle(color: Colors.black38, fontSize: 18),
+    suffixIcon: suffix,
+    contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+  );
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(_create ? 'Create account' : 'Log in')),
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new),
+          tooltip: 'Back',
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
       body: Form(
         key: _form,
         child: ListView(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
           children: [
-            const Icon(Icons.cloud_upload, size: 72, color: AppColors.primary),
-            const SizedBox(height: 12),
             Text(
-              widget.reason ??
-                  (_create ? 'Create an account to continue' : 'Welcome back'),
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+              _create ? 'Create account' : 'Login with email',
+              style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w700),
             ),
-            const SizedBox(height: 24),
-            SegmentedButton<bool>(
-              segments: const [
-                ButtonSegment(value: true, label: Text('Create account')),
-                ButtonSegment(value: false, label: Text('Log in')),
-              ],
-              selected: {_create},
-              onSelectionChanged: (s) => setState(() => _create = s.first),
-            ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 64),
             TextFormField(
               controller: _email,
               keyboardType: TextInputType.emailAddress,
               autofillHints: const [AutofillHints.email],
-              decoration: const InputDecoration(
-                labelText: 'Email',
-                prefixIcon: Icon(Icons.email_outlined),
-              ),
-              validator: (v) =>
-                  (v == null ||
-                      !RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(v.trim()))
+              style: const TextStyle(fontSize: 18),
+              decoration: _field('abc@gmail.com'),
+              validator: (v) => (v == null || !_emailRe.hasMatch(v.trim()))
                   ? 'Enter a valid email'
                   : null,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             TextFormField(
               controller: _password,
               obscureText: !_showPassword,
               autofillHints: [
                 _create ? AutofillHints.newPassword : AutofillHints.password,
               ],
-              decoration: InputDecoration(
-                labelText: 'Password',
-                prefixIcon: const Icon(Icons.lock_outline),
-                suffixIcon: IconButton(
+              style: const TextStyle(fontSize: 18),
+              decoration: _field(
+                'Password',
+                suffix: IconButton(
                   icon: Icon(
                     _showPassword ? Icons.visibility_off : Icons.visibility,
                   ),
+                  tooltip: _showPassword ? 'Hide password' : 'Show password',
                   onPressed: () =>
                       setState(() => _showPassword = !_showPassword),
                 ),
@@ -137,9 +405,27 @@ class _LoginScreenState extends State<LoginScreen> {
               validator: (v) =>
                   (v == null || v.length < 6) ? 'At least 6 characters' : null,
             ),
+            Align(
+              alignment: Alignment.centerRight,
+              child: _create
+                  ? const SizedBox(height: 16)
+                  : TextButton(
+                      onPressed: _forgot,
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.black54,
+                      ),
+                      child: const Text(
+                        'Forgot password?',
+                        style: TextStyle(fontSize: 16),
+                      ),
+                    ),
+            ),
             const SizedBox(height: 24),
             FilledButton(
               onPressed: _busy ? null : _submit,
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(56),
+              ),
               child: _busy
                   ? const SizedBox(
                       width: 22,
@@ -149,19 +435,138 @@ class _LoginScreenState extends State<LoginScreen> {
                         strokeWidth: 2,
                       ),
                     )
-                  : Text(_create ? 'Create account' : 'Log in'),
+                  : Text(
+                      _create ? 'Create Account' : 'Login',
+                      style: const TextStyle(fontSize: 20),
+                    ),
             ),
-            if (_create) ...[
-              const SizedBox(height: 12),
-              const Text(
-                'Your channels and settings from this device are kept.',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: AppColors.muted),
-              ),
-            ],
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  _create
+                      ? 'Already have an account?'
+                      : "Don't have an account?",
+                  style: const TextStyle(fontSize: 16, color: Colors.black54),
+                ),
+                TextButton(
+                  onPressed: () => setState(() => _create = !_create),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.primary,
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                  ),
+                  child: Text(
+                    _create ? 'Login' : 'Create Account',
+                    style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),
     );
   }
+}
+
+/// Set a new password after opening the reset link from the email.
+Future<void> showNewPasswordDialog(BuildContext context) async {
+  final ctrl = TextEditingController();
+  final password = await showDialog<String>(
+    context: context,
+    barrierDismissible: false,
+    builder: (_) => AlertDialog(
+      title: const Text('Set a new password'),
+      content: TextField(
+        controller: ctrl,
+        obscureText: true,
+        autofocus: true,
+        decoration: const InputDecoration(labelText: 'New password'),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(context, ctrl.text),
+          child: const Text('Save'),
+        ),
+      ],
+    ),
+  );
+  if (password == null || !context.mounted) return;
+  if (password.length < 6) {
+    showSnack(context, 'Password must have at least 6 characters.');
+    return;
+  }
+  try {
+    await sb.auth.updateUser(UserAttributes(password: password));
+    if (context.mounted) showSnack(context, 'Password changed.');
+  } catch (e) {
+    if (context.mounted) showSnack(context, friendlyError(e));
+  }
+}
+
+/// The multi-colour Google "G", drawn so no image file is needed.
+class GoogleLogo extends StatelessWidget {
+  final double size;
+  const GoogleLogo({super.key, this.size = 24});
+
+  @override
+  Widget build(BuildContext context) =>
+      CustomPaint(size: Size.square(size), painter: _GooglePainter());
+}
+
+class _GooglePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final s = size.width;
+    final stroke = s * 0.2;
+    final rect = Rect.fromLTWH(stroke / 2, stroke / 2, s - stroke, s - stroke);
+    Paint p(Color c) => Paint()
+      ..color = c
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = stroke;
+    const deg = math.pi / 180;
+    canvas.drawArc(
+      rect,
+      -40 * deg,
+      -100 * deg,
+      false,
+      p(const Color(0xFFEA4335)),
+    );
+    canvas.drawArc(
+      rect,
+      -140 * deg,
+      -80 * deg,
+      false,
+      p(const Color(0xFFFBBC05)),
+    );
+    canvas.drawArc(
+      rect,
+      140 * deg,
+      -95 * deg,
+      false,
+      p(const Color(0xFF34A853)),
+    );
+    canvas.drawArc(
+      rect,
+      45 * deg,
+      -45 * deg,
+      false,
+      p(const Color(0xFF4285F4)),
+    );
+    canvas.drawRect(
+      Rect.fromLTWH(s / 2, s / 2 - stroke / 2, s / 2 - stroke / 4, stroke),
+      Paint()..color = const Color(0xFF4285F4),
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

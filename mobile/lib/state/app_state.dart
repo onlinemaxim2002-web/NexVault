@@ -1,6 +1,9 @@
 import 'dart:async';
 
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
@@ -27,6 +30,13 @@ class AppState extends ChangeNotifier {
   /// Bumped whenever what the user may see changes (login, logout, source
   /// recorded, plan granted). Screens reload their data when it changes.
   final contentVersion = ValueNotifier<int>(0);
+
+  /// Set when the user opened a password-reset link; the UI asks for a new
+  /// password.
+  final passwordRecovery = ValueNotifier<bool>(false);
+
+  /// Deep link that brings Google login and password-reset links back to the app.
+  static const authRedirect = 'com.cloudstorage.app://login-callback';
 
   /// Selected bottom tab: 0 Cloud, 1 Feed, 2 Explore, 3 Channels, 4 Profile.
   final tab = ValueNotifier<int>(2);
@@ -55,6 +65,9 @@ class AppState extends ChangeNotifier {
       Backend.logEvent(installId, 'app_open');
 
       _authSub ??= sb.auth.onAuthStateChange.listen((s) async {
+        if (s.event == AuthChangeEvent.passwordRecovery) {
+          passwordRecovery.value = true;
+        }
         if (s.event == AuthChangeEvent.signedIn ||
             s.event == AuthChangeEvent.userUpdated) {
           await refreshStatus();
@@ -127,6 +140,53 @@ class AppState extends ChangeNotifier {
     Backend.logEvent(installId, 'login');
     await refreshStatus();
     bumpContent();
+  }
+
+  /// Google login in the browser. The session comes back through the
+  /// [authRedirect] deep link (handled by supabase_flutter); the login screen
+  /// then calls [afterExternalLogin].
+  Future<void> signInWithGoogle() async {
+    if (!await _providerEnabled('google')) {
+      throw StateError(
+        'Google sign-in is not set up yet. Please log in with email.',
+      );
+    }
+    await sb.auth.signInWithOAuth(
+      OAuthProvider.google,
+      redirectTo: kIsWeb ? null : authRedirect,
+      authScreenLaunchMode: kIsWeb
+          ? LaunchMode.platformDefault
+          : LaunchMode.externalApplication,
+    );
+  }
+
+  Future<void> afterExternalLogin() async {
+    try {
+      await Backend.attributeUser(installId);
+    } catch (_) {}
+    Backend.logEvent(installId, 'login');
+    await refreshStatus();
+    bumpContent();
+  }
+
+  Future<void> sendPasswordReset(String email) => sb.auth.resetPasswordForEmail(
+    email,
+    redirectTo: kIsWeb ? null : authRedirect,
+  );
+
+  Future<bool> _providerEnabled(String provider) async {
+    try {
+      final res = await http
+          .get(
+            Uri.parse('${Config.supabaseUrl}/auth/v1/settings'),
+            headers: {'apikey': Config.supabaseKey},
+          )
+          .timeout(const Duration(seconds: 10));
+      final external = (jsonDecode(res.body) as Map)['external'] as Map?;
+      return external?[provider] == true;
+    } catch (_) {
+      return true; // can't tell (offline?): let the browser show the result
+    }
   }
 
   /// Logging out (or deleting the account) starts a fresh guest session.

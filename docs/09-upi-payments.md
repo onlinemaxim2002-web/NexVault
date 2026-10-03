@@ -84,3 +84,22 @@ subscriptions or settings (RLS + revoked grants), and no secret key is in the ap
    failed, never success); start a payment, swipe the app away while the UPI app
    is open, pay, reopen the app (status screen comes back and the answer is sent).
 9. Restore the plan price.
+
+## Buying flow in the app
+
+1. Everyone starts as a guest automatically (organic and ads installs alike).
+2. Premium → select a plan → **Next** → pop-up "Please log in" → **Log in**.
+3. Login screen: **Sign in with google** or **Login with email** (email screen has
+   Forgot password? and Create Account), with the Privacy Policy and Terms links.
+4. After login the user is back on Premium with the plan still selected and the
+   button reads **Continue to payment** → UPI app chooser.
+
+Google sign-in needs, once, in the Supabase dashboard:
+- Authentication → Sign In / Providers → **Google**: enable, paste the Client ID
+  and Client Secret of a Google Cloud OAuth client (type "Web application" whose
+  Authorized redirect URI is `https://lcfiohprmviolzwglkhm.supabase.co/auth/v1/callback`).
+- Authentication → URL Configuration → Redirect URLs: add
+  `com.cloudstorage.app://login-callback` (also used by password-reset emails).
+
+Until Google is enabled, the app shows "Google sign-in is not set up yet. Please
+log in with email."

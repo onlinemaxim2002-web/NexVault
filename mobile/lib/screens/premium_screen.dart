@@ -36,7 +36,6 @@ class _PremiumScreenState extends State<PremiumScreen> with ContentReload {
       if (!mounted) return;
       setState(() {
         plans = list;
-        selected ??= list.isEmpty ? null : list.first.id;
         error = null;
       });
     } catch (e) {
@@ -49,7 +48,13 @@ class _PremiumScreenState extends State<PremiumScreen> with ContentReload {
   Future<void> _next() async {
     final plan = plans?.firstWhere((p) => p.id == selected);
     if (plan == null) return;
-    if (!await ensureLoggedIn(context, reason: 'Log in to get ${plan.name}')) {
+    // Guests log in first and come back here with the plan still selected;
+    // the button then reads "Continue to payment".
+    if (app.isGuest) {
+      await ensureLoggedIn(
+        context,
+        reason: 'Please log in to buy ${plan.name}.',
+      );
       return;
     }
     setState(() => sending = true);
@@ -235,7 +240,15 @@ class _PremiumScreenState extends State<PremiumScreen> with ContentReload {
               const SizedBox(height: 8),
               FilledButton(
                 onPressed: sending || selected == null ? null : _next,
-                child: Text(sending ? 'Opening UPI…' : 'Next'),
+                child: Text(
+                  sending
+                      ? 'Opening UPI…'
+                      : selected == null
+                      ? 'Select a plan'
+                      : app.isGuest
+                      ? 'Next'
+                      : 'Continue to payment',
+                ),
               ),
             ],
           );

@@ -103,70 +103,114 @@ class _ProfileScreenState extends State<ProfileScreen> {
               slivers: [
                 SliverAppBar(
                   pinned: true,
-                  expandedHeight: 150,
-                  flexibleSpace: DecoratedBox(
-                    decoration: const BoxDecoration(
-                      gradient: AppColors.gradient,
-                    ),
-                    child: FlexibleSpaceBar(
-                      background: SafeArea(
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(20, 56, 8, 12),
-                          child: Row(
-                            children: [
-                              CircleAvatar(
-                                radius: 38,
-                                backgroundColor: Colors.white,
-                                child: CircleAvatar(
-                                  radius: 34,
-                                  backgroundColor: AppColors.primary,
-                                  child: Text(
-                                    (s?.displayName ?? 'U').characters.first
-                                        .toUpperCase(),
-                                    style: const TextStyle(
-                                      fontSize: 30,
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w700,
+                  expandedHeight: 190,
+                  backgroundColor: AppColors.background,
+                  flexibleSpace: FlexibleSpaceBar(
+                    background: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        const DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topRight,
+                              end: Alignment.bottomLeft,
+                              colors: [
+                                Color(0xFFFF7A1A),
+                                Color(0xFF8A2D05),
+                                Color(0xFF2A1408),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Color(0x00000000),
+                                Color(0x660B0B0D),
+                                AppColors.background,
+                              ],
+                              stops: [0.3, 0.7, 1],
+                            ),
+                          ),
+                        ),
+                        SafeArea(
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(20, 60, 8, 14),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(3),
+                                  decoration: const BoxDecoration(
+                                    gradient: AppColors.gradient,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: CircleAvatar(
+                                    radius: 34,
+                                    backgroundColor: AppColors.surfaceHigh,
+                                    child: Text(
+                                      (s?.displayName ?? 'U').characters.first
+                                          .toUpperCase(),
+                                      style: const TextStyle(
+                                        fontSize: 28,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w700,
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: Text(
-                                  s?.displayName ?? '',
-                                  style: const TextStyle(
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        s?.displayName ?? '',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      if (s?.isPremium == true) ...[
+                                        const SizedBox(height: 4),
+                                        const PremiumBadge(),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.edit_outlined,
                                     color: Colors.white,
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.w700,
                                   ),
-                                  overflow: TextOverflow.ellipsis,
+                                  tooltip: 'Edit name',
+                                  onPressed: _editName,
                                 ),
-                              ),
-                              IconButton(
-                                icon: const Icon(
-                                  Icons.edit_square,
-                                  color: Colors.white,
-                                ),
-                                tooltip: 'Edit name',
-                                onPressed: _editName,
-                              ),
-                              IconButton(
-                                icon: const Icon(
-                                  Icons.settings,
-                                  color: Colors.white,
-                                ),
-                                tooltip: 'Settings',
-                                onPressed: () => Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (_) => const SettingsScreen(),
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.settings_outlined,
+                                    color: Colors.white,
+                                  ),
+                                  tooltip: 'Settings',
+                                  onPressed: () => Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => const SettingsScreen(),
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
-                      ),
+                      ],
                     ),
                   ),
                 ),

@@ -351,7 +351,7 @@ class _CloudScreenState extends State<CloudScreen> with ContentReload {
               ),
               tooltip: 'Add',
               onPressed: uploading == null ? _add : null,
-              child: const Icon(Icons.add_box, size: 32),
+              child: const Icon(Icons.add_rounded, size: 30),
             ),
             body: Column(
               children: [
@@ -400,27 +400,42 @@ class _CloudScreenState extends State<CloudScreen> with ContentReload {
       child: ListView.separated(
         padding: const EdgeInsets.only(bottom: 96),
         itemCount: files!.length,
-        separatorBuilder: (_, _) => const Divider(height: 1, indent: 72),
+        separatorBuilder: (_, _) => const SizedBox(height: 2),
         itemBuilder: (context, i) {
           final f = files![i];
           return ListTile(
-            leading: CircleAvatar(
-              backgroundColor: f.isFolder
-                  ? AppColors.warningBg
-                  : AppColors.bubble,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+            leading: Container(
+              width: 46,
+              height: 46,
+              decoration: BoxDecoration(
+                color: f.isFolder
+                    ? AppColors.warningBg
+                    : const Color(0xFF2A1A10),
+                borderRadius: BorderRadius.circular(12),
+              ),
               child: Icon(
                 _icon(f),
                 color: f.isFolder ? AppColors.warning : AppColors.primary,
               ),
             ),
-            title: Text(f.name, overflow: TextOverflow.ellipsis),
+            title: Text(
+              f.name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 14.5,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
             subtitle: Text(
               f.isFolder
                   ? 'Folder'
                   : '${formatBytes(f.size)} · ${timeAgo(f.createdAt)}',
+              style: const TextStyle(fontSize: 12, color: AppColors.muted),
             ),
             trailing: IconButton(
-              icon: const Icon(Icons.more_vert),
+              icon: const Icon(Icons.more_vert, color: AppColors.muted),
               onPressed: () => _menu(f),
             ),
             onTap: () => _open(f),
@@ -440,23 +455,71 @@ class _StorageMeter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fraction = quota == 0 ? 0.0 : (used / quota).clamp(0.0, 1.0);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    final shown = fraction < 0.01 && used > 0 ? 0.01 : fraction;
+    final pct = (fraction * 100).round();
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
         children: [
-          Text(
-            '${formatBytes(used)} of ${formatBytes(quota)} used',
-            style: const TextStyle(fontWeight: FontWeight.w600),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Storage Used',
+                  style: TextStyle(color: AppColors.muted, fontSize: 13),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${formatBytes(used)} of ${formatBytes(quota)} used',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: LinearProgressIndicator(
+                    value: shown,
+                    minHeight: 6,
+                    color: AppColors.primary,
+                    backgroundColor: AppColors.surfaceHigh,
+                  ),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 6),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(6),
-            child: LinearProgressIndicator(
-              value: fraction < 0.01 && used > 0 ? 0.01 : fraction,
-              minHeight: 8,
-              color: AppColors.primary,
-              backgroundColor: AppColors.bubble,
+          const SizedBox(width: 18),
+          SizedBox(
+            width: 58,
+            height: 58,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                CircularProgressIndicator(
+                  value: shown,
+                  strokeWidth: 5,
+                  strokeCap: StrokeCap.round,
+                  color: AppColors.primary,
+                  backgroundColor: AppColors.surfaceHigh,
+                ),
+                Center(
+                  child: Text(
+                    '$pct%',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],

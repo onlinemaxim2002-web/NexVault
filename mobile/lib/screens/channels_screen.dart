@@ -79,7 +79,7 @@ class _ChannelsScreenState extends State<ChannelsScreen> with ContentReload {
           title: const Text('Channels'),
           actions: const [CrownButton()],
           bottom: PreferredSize(
-            preferredSize: const Size.fromHeight(112),
+            preferredSize: const Size.fromHeight(116),
             child: Column(
               children: [
                 Padding(
@@ -103,13 +103,33 @@ class _ChannelsScreenState extends State<ChannelsScreen> with ContentReload {
                     },
                   ),
                 ),
-                const TabBar(
-                  indicatorSize: TabBarIndicatorSize.label,
-                  indicatorWeight: 3,
-                  tabs: [
-                    Tab(text: 'Discover'),
-                    Tab(text: 'Joined'),
-                  ],
+                Container(
+                  margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: TabBar(
+                    indicatorSize: TabBarIndicatorSize.tab,
+                    labelColor: Colors.white,
+                    unselectedLabelColor: AppColors.muted,
+                    splashBorderRadius: BorderRadius.circular(10),
+                    indicator: BoxDecoration(
+                      gradient: AppColors.gradient,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    labelStyle: const TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    tabs: const [
+                      Tab(height: 36, text: 'Discover'),
+                      Tab(height: 36, text: 'Joined'),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -199,33 +219,68 @@ class _ChannelsScreenState extends State<ChannelsScreen> with ContentReload {
       child: ListView.separated(
         padding: const EdgeInsets.only(bottom: 88),
         itemCount: channels.length,
-        separatorBuilder: (_, _) => const Divider(height: 1),
+        separatorBuilder: (_, _) => const SizedBox(height: 2),
         itemBuilder: (context, i) {
           final c = channels[i];
           final isJoined = joinedIds.contains(c.id);
           return ListTile(
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
-              vertical: 8,
+              vertical: 4,
             ),
-            leading: ChannelAvatar(url: c.iconUrl, name: c.name),
+            leading: ChannelAvatar(url: c.iconUrl, name: c.name, size: 48),
             title: Text(
               c.name,
-              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
             ),
-            subtitle: Row(
-              children: [
-                const Icon(Icons.people_outline, size: 18),
-                Text(' ${c.membersCount}   '),
-                const Icon(Icons.folder_outlined, size: 18),
-                Text(' ${c.foldersCount}'),
-              ],
+            subtitle: DefaultTextStyle.merge(
+              style: const TextStyle(fontSize: 12, color: AppColors.muted),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.people_outline,
+                    size: 14,
+                    color: AppColors.muted,
+                  ),
+                  Text(' ${c.membersCount}   '),
+                  const Icon(
+                    Icons.folder_outlined,
+                    size: 14,
+                    color: AppColors.muted,
+                  ),
+                  Text(' ${c.foldersCount}'),
+                ],
+              ),
             ),
             trailing: isJoined
-                ? const OutlinedButton(onPressed: null, child: Text('Joined'))
-                : FilledButton(
-                    style: FilledButton.styleFrom(
-                      minimumSize: const Size(80, 40),
+                ? OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size(84, 34),
+                      padding: const EdgeInsets.symmetric(horizontal: 14),
+                      shape: const StadiumBorder(),
+                      disabledForegroundColor: AppColors.muted,
+                      side: const BorderSide(color: AppColors.border),
+                      textStyle: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    onPressed: null,
+                    child: const Text('Joined'),
+                  )
+                : OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size(84, 34),
+                      padding: const EdgeInsets.symmetric(horizontal: 14),
+                      shape: const StadiumBorder(),
+                      foregroundColor: AppColors.primary,
+                      side: const BorderSide(color: AppColors.primary),
+                      textStyle: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     onPressed: () => _join(c),
                     child: const Text('Join'),

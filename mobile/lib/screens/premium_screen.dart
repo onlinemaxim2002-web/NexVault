@@ -178,7 +178,7 @@ class _PremiumScreenState extends State<PremiumScreen> with ContentReload {
                   borderRadius: BorderRadius.circular(24),
                   boxShadow: const [
                     BoxShadow(
-                      color: Color(0x406D4AFF),
+                      color: Color(0x40FF7A1A),
                       blurRadius: 24,
                       offset: Offset(0, 10),
                     ),
@@ -310,7 +310,7 @@ class _PlanCard extends StatelessWidget {
           duration: const Duration(milliseconds: 180),
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
           decoration: BoxDecoration(
-            color: selected ? const Color(0xFF1F1A3A) : AppColors.surface,
+            color: selected ? const Color(0xFF261A10) : AppColors.surface,
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
               color: selected ? AppColors.primary : AppColors.border,
@@ -319,7 +319,7 @@ class _PlanCard extends StatelessWidget {
             boxShadow: selected
                 ? const [
                     BoxShadow(
-                      color: Color(0x266D4AFF),
+                      color: Color(0x26FF7A1A),
                       blurRadius: 16,
                       offset: Offset(0, 6),
                     ),

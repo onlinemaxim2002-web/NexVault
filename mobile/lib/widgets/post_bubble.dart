@@ -20,234 +20,212 @@ class PostBubble extends StatelessWidget {
     this.onDelete,
   });
 
+  void _openPost(BuildContext context) => Navigator.of(context).push(
+    MaterialPageRoute(
+      builder: (_) => PostScreen(postId: post.id, initial: post),
+    ),
+  );
+
+  void _menu(BuildContext context) => showModalBottomSheet<void>(
+    context: context,
+    builder: (_) => SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            leading: const Icon(Icons.open_in_new),
+            title: const Text('Open post'),
+            onTap: () {
+              Navigator.pop(context);
+              _openPost(context);
+            },
+          ),
+          if (onDelete != null)
+            ListTile(
+              leading: const Icon(
+                Icons.delete_outline,
+                color: AppColors.danger,
+              ),
+              title: const Text('Delete post'),
+              onTap: () {
+                Navigator.pop(context);
+                onDelete!();
+              },
+            ),
+        ],
+      ),
+    ),
+  );
+
+  void _share() => SharePlus.instance.share(
+    ShareParams(text: '${post.title} — watch it on ${Config.appName}'),
+  );
+
   @override
   Widget build(BuildContext context) {
     final cover = post.cover;
     final time = TimeOfDay.fromDateTime(post.publishedAt).format(context);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 6, 8, 6),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(Radii.card + 2),
-                border: Border.all(color: AppColors.border),
-              ),
-              clipBehavior: Clip.antiAlias,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.fromLTRB(12, 6, 12, 10),
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppColors.border),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header: channel + time + menu
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 10, 4, 10),
+              child: Row(
                 children: [
-                  if (showChannel)
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
-                      child: Row(
-                        children: [
-                          ChannelAvatar(
-                            url: post.channelIcon,
-                            name: post.channelName,
-                            size: 28,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              post.channelName,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  if (cover != null)
-                    GestureDetector(
-                      onTap: () => post.items.length > 1
-                          ? Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) =>
-                                    PostScreen(postId: post.id, initial: post),
-                              ),
-                            )
-                          : openItem(context, post, cover),
-                      child: AspectRatio(
-                        aspectRatio: 16 / 9,
-                        child: Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            NetThumb(
-                              url: cover.thumbUrl,
-                              fallback: cover.isVideo
-                                  ? Icons.videocam_outlined
-                                  : Icons.image_outlined,
-                            ),
-                            const DecoratedBox(
-                              decoration: BoxDecoration(
-                                gradient: AppColors.scrim,
-                              ),
-                            ),
-                            if (cover.isVideo)
-                              const Center(child: PlayOverlay(size: 56)),
-                            if (cover.isVideo &&
-                                (cover.durationS ?? 0) > 0 &&
-                                post.items.length <= 1)
-                              Positioned(
-                                bottom: 8,
-                                right: 8,
-                                child: ThumbPill(
-                                  formatDuration(cover.durationS!),
-                                ),
-                              ),
-                            if (cover.isPremium)
-                              const Positioned(
-                                top: 8,
-                                left: 8,
-                                child: PremiumBadge(),
-                              ),
-                            if (post.items.length > 1)
-                              Positioned(
-                                bottom: 8,
-                                right: 8,
-                                child: ThumbPill(
-                                  '+${post.items.length - 1} more',
-                                  icon: Icons.collections_outlined,
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+                  ChannelAvatar(
+                    url: post.channelIcon,
+                    name: post.channelName,
+                    size: 36,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          post.title,
+                          showChannel ? post.channelName : post.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                            fontSize: 15.5,
                             fontWeight: FontWeight.w600,
-                            height: 1.3,
+                            fontSize: 14,
                           ),
                         ),
-                        if (post.caption != null && post.caption!.isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 4),
-                            child: Text(
-                              post.caption!,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                color: AppColors.muted,
-                                height: 1.45,
-                              ),
-                            ),
-                          ),
-                        Align(
-                          alignment: Alignment.bottomRight,
-                          child: Text(
-                            time,
-                            style: const TextStyle(
-                              color: AppColors.muted,
-                              fontSize: 12,
-                            ),
+                        Text(
+                          '${timeAgo(post.publishedAt)} · $time',
+                          style: const TextStyle(
+                            color: AppColors.muted,
+                            fontSize: 11.5,
                           ),
                         ),
                       ],
                     ),
+                  ),
+                  IconButton(
+                    tooltip: 'More',
+                    icon: const Icon(Icons.more_vert, color: AppColors.muted),
+                    onPressed: () => _menu(context),
                   ),
                 ],
               ),
             ),
-          ),
-          const SizedBox(width: 6),
-          Column(
-            children: [
-              _RoundIcon(
-                icon: Icons.more_vert,
-                onTap: () => showModalBottomSheet<void>(
-                  context: context,
-                  builder: (_) => SafeArea(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        ListTile(
-                          leading: const Icon(Icons.open_in_new),
-                          title: const Text('Open post'),
-                          onTap: () {
-                            Navigator.pop(context);
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) =>
-                                    PostScreen(postId: post.id, initial: post),
-                              ),
-                            );
-                          },
-                        ),
-                        if (onDelete != null)
-                          ListTile(
-                            leading: const Icon(
-                              Icons.delete_outline,
-                              color: AppColors.danger,
-                            ),
-                            title: const Text('Delete post'),
-                            onTap: () {
-                              Navigator.pop(context);
-                              onDelete!();
-                            },
+            if (cover != null)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                child: GestureDetector(
+                  onTap: () => post.items.length > 1
+                      ? _openPost(context)
+                      : openItem(context, post, cover),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(14),
+                    child: AspectRatio(
+                      aspectRatio: 16 / 9,
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          NetThumb(
+                            url: cover.thumbUrl,
+                            fallback: cover.isVideo
+                                ? Icons.movie_outlined
+                                : Icons.image_outlined,
                           ),
-                      ],
+                          const DecoratedBox(
+                            decoration: BoxDecoration(
+                              gradient: AppColors.scrim,
+                            ),
+                          ),
+                          if (cover.isVideo)
+                            const Center(child: PlayOverlay(size: 54)),
+                          if (cover.isPremium)
+                            const Positioned(
+                              top: 10,
+                              right: 10,
+                              child: PremiumBadge(),
+                            ),
+                          if (cover.isVideo &&
+                              (cover.durationS ?? 0) > 0 &&
+                              post.items.length <= 1)
+                            Positioned(
+                              bottom: 8,
+                              right: 8,
+                              child: ThumbPill(
+                                formatDuration(cover.durationS!),
+                              ),
+                            ),
+                          if (post.items.length > 1)
+                            Positioned(
+                              bottom: 8,
+                              right: 8,
+                              child: ThumbPill(
+                                '+${post.items.length - 1} more',
+                                icon: Icons.collections_outlined,
+                              ),
+                            ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
-              const SizedBox(height: 8),
-              _RoundIcon(
-                icon: Icons.reply,
-                flip: true,
-                onTap: () => SharePlus.instance.share(
-                  ShareParams(
-                    text: '${post.title} — watch it on ${Config.appName}',
-                  ),
-                ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (showChannel)
+                    Text(
+                      post.title,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        height: 1.3,
+                      ),
+                    ),
+                  if (post.caption != null && post.caption!.isNotEmpty)
+                    Padding(
+                      padding: EdgeInsets.only(top: showChannel ? 4 : 0),
+                      child: Text(
+                        post.caption!,
+                        style: const TextStyle(
+                          fontSize: 13.5,
+                          color: AppColors.muted,
+                          height: 1.45,
+                        ),
+                      ),
+                    ),
+                ],
               ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _RoundIcon extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-  final bool flip;
-  const _RoundIcon({
-    required this.icon,
-    required this.onTap,
-    this.flip = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final i = Icon(icon, color: AppColors.text, size: 20);
-    return InkResponse(
-      onTap: onTap,
-      radius: 26,
-      child: Container(
-        width: 44,
-        height: 44,
-        decoration: BoxDecoration(
-          color: AppColors.surfaceHigh,
-          shape: BoxShape.circle,
-          border: Border.all(color: AppColors.border),
+            ),
+            // Actions (existing ones only)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(4, 2, 4, 4),
+              child: Row(
+                children: [
+                  const Spacer(),
+                  IconButton(
+                    tooltip: 'Share',
+                    icon: const Icon(
+                      Icons.send_rounded,
+                      size: 20,
+                      color: AppColors.muted,
+                    ),
+                    onPressed: _share,
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
-        child: Center(child: flip ? Transform.flip(flipX: true, child: i) : i),
       ),
     );
   }

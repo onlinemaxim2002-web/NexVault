@@ -73,10 +73,20 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   gradient: AppColors.gradient,
                   borderRadius: BorderRadius.circular(20),
                 ),
+                labelStyle: const TextStyle(
+                  fontFamily: 'Poppins',
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w600,
+                ),
+                unselectedLabelStyle: const TextStyle(
+                  fontFamily: 'Poppins',
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w500,
+                ),
                 tabs: [
                   for (final t in tabs)
                     Tab(
-                      height: 36,
+                      height: 34,
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 14),
                         child: Text(t.$2),
@@ -174,21 +184,173 @@ class _ExploreGridState extends State<_ExploreGrid>
         },
         child: LayoutBuilder(
           builder: (context, box) {
-            // 2 columns on phones, more on tablets; 16:9 thumbs + title.
+            // First post as a featured hero, the rest as 16:9 cards.
             final cols = (box.maxWidth / 230).floor().clamp(2, 5);
-            final cardW = (box.maxWidth - 12 * (cols + 1)) / cols;
-            return GridView.builder(
-              padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: cols,
-                mainAxisSpacing: 16,
-                crossAxisSpacing: 12,
-                mainAxisExtent: cardW * 9 / 16 + 66,
-              ),
-              itemCount: posts!.length,
-              itemBuilder: (context, i) => _Tile(post: posts![i]),
+            final cardW = (box.maxWidth - 16 * 2 - 12 * (cols - 1)) / cols;
+            final rest = posts!.skip(1).toList();
+            return CustomScrollView(
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                    child: _Hero(post: posts!.first),
+                  ),
+                ),
+                if (rest.isNotEmpty)
+                  const SliverToBoxAdapter(
+                    child: SectionTitle('Recommended for You'),
+                  ),
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                  sliver: SliverGrid(
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: cols,
+                      mainAxisSpacing: 18,
+                      crossAxisSpacing: 12,
+                      mainAxisExtent: cardW * 9 / 16 + 62,
+                    ),
+                    delegate: SliverChildBuilderDelegate(
+                      (context, i) => _Tile(post: rest[i]),
+                      childCount: rest.length,
+                    ),
+                  ),
+                ),
+              ],
             );
           },
+        ),
+      ),
+    );
+  }
+}
+
+void _openPost(BuildContext context, Post post) => Navigator.of(context).push(
+  MaterialPageRoute(
+    builder: (_) => PostScreen(postId: post.id, initial: post),
+  ),
+);
+
+/// Big featured card (same tap as any other post).
+class _Hero extends StatelessWidget {
+  final Post post;
+  const _Hero({required this.post});
+
+  @override
+  Widget build(BuildContext context) {
+    final cover = post.cover;
+    final duration = cover?.durationS;
+    return Semantics(
+      label: post.title,
+      button: true,
+      child: PressScale(
+        child: GestureDetector(
+          onTap: () => _openPost(context, post),
+          child: AspectRatio(
+            aspectRatio: 16 / 10,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x40FF6A00),
+                    blurRadius: 30,
+                    offset: Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    NetThumb(
+                      url: cover?.thumbUrl,
+                      fallback: cover?.isVideo == true
+                          ? Icons.movie_outlined
+                          : Icons.image_outlined,
+                    ),
+                    const DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [Color(0x00000000), Color(0xE6000000)],
+                          stops: [0.35, 1],
+                        ),
+                      ),
+                    ),
+                    if (post.hasPremium)
+                      const Positioned(
+                        top: 12,
+                        right: 12,
+                        child: PremiumBadge(),
+                      ),
+                    Positioned(
+                      left: 16,
+                      right: 16,
+                      bottom: 14,
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  post.channelName,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    color: Color(0xCCFFFFFF),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  post.title,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 19,
+                                    fontWeight: FontWeight.w700,
+                                    height: 1.2,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          if (cover?.isVideo == true)
+                            Container(
+                              width: 46,
+                              height: 46,
+                              decoration: const BoxDecoration(
+                                gradient: AppColors.gradient,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.play_arrow_rounded,
+                                color: Colors.white,
+                                size: 30,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    if (duration != null && duration > 0)
+                      Positioned(
+                        top: 12,
+                        left: 12,
+                        child: ThumbPill(formatDuration(duration)),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -209,11 +371,7 @@ class _Tile extends StatelessWidget {
       child: PressScale(
         child: InkWell(
           borderRadius: BorderRadius.circular(Radii.card),
-          onTap: () => Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => PostScreen(postId: post.id, initial: post),
-            ),
-          ),
+          onTap: () => _openPost(context, post),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -245,12 +403,12 @@ class _Tile extends StatelessWidget {
                           decoration: BoxDecoration(gradient: AppColors.scrim),
                         ),
                         if (cover?.isVideo == true)
-                          const Center(child: PlayOverlay(size: 38)),
+                          const Center(child: PlayOverlay(size: 34)),
                         if (post.hasPremium)
                           const Positioned(
-                            top: 8,
-                            left: 8,
-                            child: PremiumBadge(),
+                            top: 7,
+                            right: 7,
+                            child: PremiumBadge(compact: true),
                           ),
                         Positioned(
                           bottom: 6,
@@ -281,7 +439,7 @@ class _Tile extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(2, 8, 2, 0),
                 child: Text(
                   post.title,
-                  maxLines: 2,
+                  maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     fontSize: 13.5,

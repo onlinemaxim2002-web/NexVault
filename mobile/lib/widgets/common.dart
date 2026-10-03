@@ -26,9 +26,9 @@ class CrownButton extends StatelessWidget {
             width: 38,
             height: 38,
             decoration: BoxDecoration(
-              color: const Color(0x26FFB547),
+              color: const Color(0x26FFC24D),
               shape: BoxShape.circle,
-              border: Border.all(color: const Color(0x80FFB547)),
+              border: Border.all(color: const Color(0x80FFC24D)),
             ),
             child: const Icon(
               Icons.workspace_premium_rounded,
@@ -202,7 +202,7 @@ class ChannelAvatar extends StatelessWidget {
   }
 }
 
-/// Small "Premium" pill shown on premium thumbnails.
+/// Small glass "Premium" chip shown on premium thumbnails.
 class PremiumBadge extends StatelessWidget {
   final bool compact;
   const PremiumBadge({super.key, this.compact = false});
@@ -211,32 +211,30 @@ class PremiumBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: EdgeInsets.symmetric(
-        horizontal: compact ? 6 : 8,
-        vertical: compact ? 3 : 4,
+        horizontal: compact ? 5 : 7,
+        vertical: compact ? 3 : 3.5,
       ),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFFFFC870), Color(0xFFFFA62B)],
-        ),
+        color: const Color(0xB3000000),
         borderRadius: BorderRadius.circular(20),
-        boxShadow: const [BoxShadow(color: Color(0x66000000), blurRadius: 8)],
+        border: Border.all(color: const Color(0x66FFC24D), width: 0.8),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            Icons.lock_rounded,
+            Icons.workspace_premium_rounded,
             size: compact ? 11 : 12,
-            color: AppColors.ink,
+            color: AppColors.gold,
           ),
           if (!compact) ...[
             const SizedBox(width: 3),
             const Text(
               'Premium',
               style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: AppColors.ink,
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                color: AppColors.gold,
                 height: 1.1,
               ),
             ),

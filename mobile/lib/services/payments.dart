@@ -132,7 +132,7 @@ class Payments with WidgetsBindingObserver {
       await _channel.invokeMethod('launch', {'orderId': order.id, 'uri': uri});
     } on PlatformException catch (e) {
       if (e.code == 'NO_UPI_APP') throw NoUpiAppException();
-      rethrow;
+      throw StateError('Could not open the UPI app: ${e.message ?? e.code}');
     }
   }
 

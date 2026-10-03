@@ -492,6 +492,7 @@ class Backend {
 
 /// Turns database/storage errors into short messages for people.
 String friendlyError(Object e) {
+  if (e is StateError) return e.message;
   final text = e is PostgrestException
       ? e.message
       : e is StorageException

@@ -1,6 +1,7 @@
 package com.cloudstorage.cloud_storage
 
 import android.app.Activity
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -55,24 +56,34 @@ class MainActivity : FlutterActivity() {
 
     private fun launch(orderId: String, uri: String, result: MethodChannel.Result) {
         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(uri))
-        val apps = if (Build.VERSION.SDK_INT >= 33) {
-            packageManager.queryIntentActivities(intent, PackageManager.ResolveInfoFlags.of(0))
-        } else {
-            @Suppress("DEPRECATION")
-            packageManager.queryIntentActivities(intent, 0)
-        }
-        if (apps.isEmpty()) {
-            result.error("NO_UPI_APP", "No UPI app is installed", null)
-            return
+        // Some phones (MIUI/ColorOS, work profiles, package-visibility rules)
+        // return an empty list here even when UPI apps are installed, so the
+        // list only decides between a chooser and a direct launch. Only Android
+        // itself saying "no app can open this" counts as "no UPI app".
+        val apps = try {
+            if (Build.VERSION.SDK_INT >= 33) {
+                packageManager.queryIntentActivities(
+                    intent, PackageManager.ResolveInfoFlags.of(PackageManager.MATCH_ALL.toLong())
+                )
+            } else {
+                @Suppress("DEPRECATION")
+                packageManager.queryIntentActivities(intent, PackageManager.MATCH_ALL)
+            }
+        } catch (_: Exception) {
+            emptyList()
         }
         // Persist the order id BEFORE leaving the app.
         store.edit().putString(KEY_LAUNCHED, orderId).commit()
         try {
-            startActivityForResult(Intent.createChooser(intent, "Pay with"), REQUEST_UPI)
+            val target = if (apps.size > 1) Intent.createChooser(intent, "Pay with") else intent
+            startActivityForResult(target, REQUEST_UPI)
             result.success(true)
-        } catch (e: Exception) {
+        } catch (e: ActivityNotFoundException) {
             store.edit().remove(KEY_LAUNCHED).commit()
             result.error("NO_UPI_APP", e.message, null)
+        } catch (e: Exception) {
+            store.edit().remove(KEY_LAUNCHED).commit()
+            result.error("LAUNCH_FAILED", e.toString(), null)
         }
     }
 

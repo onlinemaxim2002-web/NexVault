@@ -783,5 +783,25 @@ select t.ok((select email from public.admin_channel_creators() a join public.cha
 select t.act_as('ads_user');
 select t.fails($$select * from public.admin_channel_creators()$$, 'app users cannot see channel creators');
 reset role;
+
+-- Admin posting from the app into a restricted channel
+set role authenticated;
+select t.act_as('owner');
+update public.channels set audience = 'ads' where name = 'Owner app channel';
+insert into public.posts (channel_id, title, status)
+  select id, 'Owner app post', 'published' from public.channels where name = 'Owner app channel';
+select t.ok((select audience = 'ads' and created_by = t.id('owner') and published_at is not null
+               from public.posts where title = 'Owner app post'),
+            'admin posting from the app gets the channel audience and is the creator');
+insert into public.post_items (post_id, kind, media_key, processing_status)
+  select id, 'video', 'posts/x/owner.mp4', 'ready' from public.posts where title = 'Owner app post';
+select t.ok((select is_premium from public.post_items where media_key = 'posts/x/owner.mp4'),
+            'app uploads are premium by default');
+insert into public.posts (channel_id, title, audience, status, created_by)
+  select id, 'Panel post', 'ads', 'draft', t.id('owner') from public.channels where name = 'Owner app channel';
+select t.fails($$insert into public.posts (channel_id, title, audience, created_by)
+                 select id, 'Panel wrong', 'all', t.id('owner') from public.channels where name = 'Owner app channel'$$,
+               'admin panel posts still must match the channel audience');
+reset role;
 \echo
 \echo 'All tests passed.'

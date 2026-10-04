@@ -125,6 +125,22 @@ class Backend {
     return row == null ? null : Post.fromJson(row);
   }
 
+  /// Other posts by the same uploader ("More from this creator"). The
+  /// database still decides what this user may see (audience, approval).
+  static Future<List<Post>> moreFromCreator(Post post) async {
+    var q = sb
+        .from('posts')
+        .select(Post.select)
+        .eq('status', 'published')
+        .lte('published_at', DateTime.now().toUtc().toIso8601String())
+        .neq('id', post.id);
+    q = post.createdBy != null
+        ? q.eq('created_by', post.createdBy!)
+        : q.eq('channel_id', post.channelId);
+    final rows = await q.order('published_at', ascending: false).limit(30);
+    return rows.map(Post.fromJson).toList();
+  }
+
   static const _channelSelect =
       'id, name, description, category, icon_url, members_count, review_status, created_by, created_at, channel_folders(count)';
 

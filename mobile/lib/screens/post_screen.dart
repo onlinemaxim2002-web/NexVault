@@ -9,7 +9,10 @@ import '../widgets/common.dart';
 import '../widgets/gates.dart';
 import 'channel_screen.dart';
 
-/// A post's items with Watch buttons ("foods · Posted by - Food").
+/// Content page in the style of a streaming app: big poster with a play
+/// button, title and duration, separate "Play" (full content) and "Trailer"
+/// buttons, description, who uploaded it, and more from the same uploader.
+/// Who may play what is unchanged (see widgets/gates.dart).
 class PostScreen extends StatefulWidget {
   final String postId;
   final Post? initial;
@@ -22,6 +25,8 @@ class PostScreen extends StatefulWidget {
 class _PostScreenState extends State<PostScreen> {
   Post? post;
   String? error;
+  List<Post>? more;
+  int selected = 0;
 
   @override
   void initState() {
@@ -37,67 +42,48 @@ class _PostScreenState extends State<PostScreen> {
       setState(() {
         post = p;
         error = p == null ? 'This post is no longer available.' : null;
+        if (selected >= (p?.items.length ?? 0)) selected = 0;
       });
+      if (p != null) _loadMore(p);
     } catch (e) {
       if (mounted) setState(() => error = friendlyError(e));
     }
   }
 
+  Future<void> _loadMore(Post p) async {
+    try {
+      final list = await Backend.moreFromCreator(p);
+      if (mounted) setState(() => more = list);
+    } catch (_) {
+      if (mounted) setState(() => more = const []);
+    }
+  }
+
+  void _openChannel(Post p) => Navigator.of(context).push(
+    MaterialPageRoute(builder: (_) => ChannelScreen(channelId: p.channelId)),
+  );
+
+  void _share(Post p) => SharePlus.instance.share(
+    ShareParams(text: '${p.title} — watch it on ${Config.appName}'),
+  );
+
   @override
   Widget build(BuildContext context) {
     final p = post;
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        flexibleSpace: const DecoratedBox(
-          decoration: BoxDecoration(gradient: AppColors.barGradient),
-          child: SizedBox.expand(),
-        ),
-        titleSpacing: 0,
-        title: p == null
-            ? const Text('Post')
-            : Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    p.title,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  GestureDetector(
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => ChannelScreen(channelId: p.channelId),
-                      ),
-                    ),
-                    child: Text.rich(
-                      TextSpan(
-                        children: [
-                          const TextSpan(text: 'Posted by - '),
-                          TextSpan(
-                            text: p.channelName,
-                            style: const TextStyle(fontWeight: FontWeight.w700),
-                          ),
-                        ],
-                      ),
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: AppColors.muted,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+        backgroundColor: Colors.transparent,
+        surfaceTintColor: Colors.transparent,
+        leading: const _GlassBack(),
         actions: [
           if (p != null)
-            IconButton(
-              icon: const Icon(Icons.share),
-              tooltip: 'Share',
-              onPressed: () => SharePlus.instance.share(
-                ShareParams(text: '${p.title} — watch it on ${Config.appName}'),
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: _GlassIcon(
+                icon: Icons.share_rounded,
+                tooltip: 'Share',
+                onTap: () => _share(p),
               ),
             ),
         ],
@@ -106,152 +92,749 @@ class _PostScreenState extends State<PostScreen> {
           ? (error != null
                 ? ErrorRetry(message: error!, onRetry: _load)
                 : const Center(child: CircularProgressIndicator()))
-          : ListView(
-              padding: const EdgeInsets.only(bottom: 24),
-              children: [
-                if (p.caption != null && p.caption!.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-                    child: Text(
-                      p.caption!,
-                      style: const TextStyle(
-                        fontSize: 14.5,
-                        height: 1.5,
-                        color: AppColors.muted,
-                      ),
-                    ),
-                  ),
-                if (p.items.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.all(24),
-                    child: Text('No media in this post.'),
-                  ),
-                for (final item in p.items) _ItemRow(post: p, item: item),
+          : RefreshIndicator(onRefresh: _load, child: _body(p)),
+    );
+  }
+
+  Widget _body(Post p) {
+    final item = p.items.isEmpty ? null : p.items[selected];
+    final top = MediaQuery.paddingOf(context).top;
+    return ListView(
+      padding: const EdgeInsets.only(bottom: 28),
+      children: [
+        SizedBox(height: top),
+        if (item == null)
+          const Padding(
+            padding: EdgeInsets.all(24),
+            child: Text('No media in this post.'),
+          )
+        else
+          _Hero(post: p, item: item),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                p.title,
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                  height: 1.2,
+                ),
+              ),
+              const SizedBox(height: 8),
+              _MetaRow(post: p, item: item),
+              if (item != null) ...[
+                const SizedBox(height: 14),
+                _Buttons(post: p, item: item),
               ],
-            ),
+              if (p.items.length > 1) ...[
+                const SizedBox(height: 18),
+                _PartsStrip(
+                  post: p,
+                  selected: selected,
+                  onSelect: (i) => setState(() => selected = i),
+                ),
+              ],
+              if (p.caption != null && p.caption!.trim().isNotEmpty) ...[
+                const SizedBox(height: 16),
+                _Description(text: p.caption!.trim()),
+              ],
+              const SizedBox(height: 16),
+              _Uploader(post: p, onTap: () => _openChannel(p)),
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  _ActionIcon(
+                    icon: Icons.send_rounded,
+                    label: 'Share',
+                    onTap: () => _share(p),
+                  ),
+                  _ActionIcon(
+                    icon: Icons.video_library_outlined,
+                    label: 'Channel',
+                    onTap: () => _openChannel(p),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        _MoreFromCreator(posts: more),
+      ],
     );
   }
 }
 
-class _ItemRow extends StatelessWidget {
+// ------------------------------------------------------------------ hero
+
+class _Hero extends StatelessWidget {
   final Post post;
   final PostItem item;
-  const _ItemRow({required this.post, required this.item});
+  const _Hero({required this.post, required this.item});
 
   @override
   Widget build(BuildContext context) {
-    final premiumLocked = item.isPremium && !canWatchFull(post, item);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(Radii.card + 2),
-          border: Border.all(color: AppColors.border),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    final locked = item.isPremium && !canWatchFull(post, item);
+    final trailerOnly = canWatchTrailer(post, item);
+    return AspectRatio(
+      aspectRatio: 16 / 10,
+      child: GestureDetector(
+        onTap: () => openItem(context, post, item),
+        child: Stack(
+          fit: StackFit.expand,
           children: [
-            AspectRatio(
-              aspectRatio: 16 / 9,
-              child: Stack(
-                fit: StackFit.expand,
+            NetThumb(
+              url: item.thumbUrl,
+              fallback: item.isVideo
+                  ? Icons.movie_outlined
+                  : Icons.image_outlined,
+            ),
+            const DecoratedBox(
+              decoration: BoxDecoration(gradient: AppColors.scrim),
+            ),
+            // Fade into the page below.
+            const Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              height: 70,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Color(0x000B0B0D), AppColors.background],
+                  ),
+                ),
+              ),
+            ),
+            if (item.isVideo)
+              Center(
+                child: locked && !trailerOnly
+                    ? const _LockCircle()
+                    : const _BigPlay(),
+              ),
+            Positioned(
+              left: 12,
+              bottom: 12,
+              child: Row(
                 children: [
-                  NetThumb(
-                    url: item.thumbUrl,
-                    fallback: item.isVideo
-                        ? Icons.movie_outlined
-                        : Icons.image_outlined,
-                  ),
-                  const DecoratedBox(
-                    decoration: BoxDecoration(gradient: AppColors.scrim),
-                  ),
-                  if (item.isVideo)
-                    Center(
-                      child: premiumLocked
-                          ? Container(
-                              width: 56,
-                              height: 56,
-                              decoration: BoxDecoration(
-                                color: const Color(0x66000000),
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: const Color(0x99FFB547),
-                                  width: 1.5,
-                                ),
-                              ),
-                              child: const Icon(
-                                Icons.lock_rounded,
-                                color: AppColors.gold,
-                                size: 26,
-                              ),
-                            )
-                          : const PlayOverlay(size: 56),
-                    ),
-                  if (item.isPremium)
-                    const Positioned(top: 10, left: 10, child: PremiumBadge()),
-                  if (item.durationS != null)
-                    Positioned(
-                      bottom: 8,
-                      right: 8,
-                      child: ThumbPill(formatDuration(item.durationS!)),
-                    ),
+                  if (item.hasTrailer && item.isVideo)
+                    const _Tag(text: 'Trailer', icon: Icons.play_arrow_rounded),
+                  if (item.hasTrailer && item.isPremium)
+                    const SizedBox(width: 6),
+                  if (item.isPremium) const PremiumBadge(compact: true),
                 ],
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+            if (item.durationS != null)
+              Positioned(
+                right: 12,
+                bottom: 12,
+                child: ThumbPill(formatDuration(item.durationS!)),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _BigPlay extends StatelessWidget {
+  const _BigPlay();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 68,
+      height: 68,
+      decoration: BoxDecoration(
+        color: const Color(0x59000000),
+        shape: BoxShape.circle,
+        border: Border.all(color: AppColors.primary, width: 2.5),
+      ),
+      child: const Icon(
+        Icons.play_arrow_rounded,
+        color: Colors.white,
+        size: 42,
+      ),
+    );
+  }
+}
+
+class _LockCircle extends StatelessWidget {
+  const _LockCircle();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 62,
+      height: 62,
+      decoration: BoxDecoration(
+        color: const Color(0x66000000),
+        shape: BoxShape.circle,
+        border: Border.all(color: const Color(0x99FFB547), width: 1.5),
+      ),
+      child: const Icon(Icons.lock_rounded, color: AppColors.gold, size: 28),
+    );
+  }
+}
+
+class _Tag extends StatelessWidget {
+  final String text;
+  final IconData? icon;
+  const _Tag({required this.text, this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(6, 3, 8, 3),
+      decoration: BoxDecoration(
+        color: const Color(0xD9000000),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) Icon(icon, color: Colors.white, size: 14),
+          const SizedBox(width: 2),
+          Text(
+            text,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ------------------------------------------------------------------ info
+
+/// "Premium  2026 · 2h 19m · 1.2K views  HD".
+class _MetaRow extends StatelessWidget {
+  final Post post;
+  final PostItem? item;
+  const _MetaRow({required this.post, required this.item});
+
+  static String _long(int s) {
+    final h = s ~/ 3600;
+    final m = (s % 3600) ~/ 60;
+    if (h > 0) return m > 0 ? '${h}h ${m}m' : '${h}h';
+    if (m > 0) return '${m}m';
+    return '${s}s';
+  }
+
+  static String _views(int n) {
+    if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}M views';
+    if (n >= 1000) return '${(n / 1000).toStringAsFixed(1)}K views';
+    return n == 1 ? '1 view' : '$n views';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const style = TextStyle(color: AppColors.muted, fontSize: 13.5);
+    final parts = <String>[
+      '${post.publishedAt.year}',
+      if (item?.durationS != null) _long(item!.durationS!),
+      if (post.viewCount > 0) _views(post.viewCount),
+    ];
+    return Wrap(
+      spacing: 8,
+      runSpacing: 6,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        if (item?.isPremium ?? false)
+          const Text(
+            'Premium',
+            style: TextStyle(
+              color: AppColors.gold,
+              fontSize: 13.5,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        Text(parts.join('  ·  '), style: style),
+        if (item?.isVideo ?? false)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+            decoration: BoxDecoration(
+              border: Border.all(color: AppColors.muted),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: const Text(
+              'HD',
+              style: TextStyle(
+                color: AppColors.muted,
+                fontSize: 10.5,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// "Play" = full content (login → plan gates as before);
+/// "Watch trailer" = the trailer, when this viewer may watch it.
+class _Buttons extends StatelessWidget {
+  final Post post;
+  final PostItem item;
+  const _Buttons({required this.post, required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    final locked = item.isPremium && !canWatchFull(post, item);
+    final trailer = showTrailerButton(post, item);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        FilledButton.icon(
+          style: FilledButton.styleFrom(
+            backgroundColor: Colors.white,
+            foregroundColor: Colors.black,
+            minimumSize: const Size.fromHeight(48),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+            textStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          icon: Icon(
+            !item.isVideo
+                ? Icons.image_outlined
+                : locked
+                ? Icons.lock_rounded
+                : Icons.play_arrow_rounded,
+            size: 26,
+          ),
+          label: Text(
+            !item.isVideo
+                ? 'View'
+                : trailer
+                ? 'Play full content'
+                : 'Play',
+          ),
+          onPressed: () => watchItem(context, post, item),
+        ),
+        if (trailer) ...[
+          const SizedBox(height: 10),
+          FilledButton.icon(
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.surfaceHigh,
+              foregroundColor: Colors.white,
+              minimumSize: const Size.fromHeight(48),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              textStyle: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            icon: const Icon(Icons.movie_filter_outlined, size: 22),
+            label: const Text('Watch trailer'),
+            onPressed: () => watchTrailer(context, post, item),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+/// Posts with several videos/images: pick which one the buttons play.
+class _PartsStrip extends StatelessWidget {
+  final Post post;
+  final int selected;
+  final ValueChanged<int> onSelect;
+  const _PartsStrip({
+    required this.post,
+    required this.selected,
+    required this.onSelect,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'In this post (${post.items.length})',
+          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          height: 78,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: post.items.length,
+            separatorBuilder: (_, _) => const SizedBox(width: 8),
+            itemBuilder: (_, i) {
+              final it = post.items[i];
+              final on = i == selected;
+              return GestureDetector(
+                onTap: () => onSelect(i),
+                child: Container(
+                  width: 124,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: on ? AppColors.primary : AppColors.border,
+                      width: on ? 2 : 1,
+                    ),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      NetThumb(
+                        url: it.thumbUrl,
+                        fallback: it.isVideo
+                            ? Icons.movie_outlined
+                            : Icons.image_outlined,
+                      ),
+                      const DecoratedBox(
+                        decoration: BoxDecoration(gradient: AppColors.scrim),
+                      ),
+                      Positioned(
+                        left: 6,
+                        bottom: 4,
+                        child: Text(
+                          'Part ${i + 1}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      if (it.durationS != null)
+                        Positioned(
+                          right: 4,
+                          bottom: 4,
+                          child: ThumbPill(formatDuration(it.durationS!)),
+                        ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _Description extends StatefulWidget {
+  final String text;
+  const _Description({required this.text});
+
+  @override
+  State<_Description> createState() => _DescriptionState();
+}
+
+class _DescriptionState extends State<_Description> {
+  bool open = false;
+
+  @override
+  Widget build(BuildContext context) {
+    const style = TextStyle(fontSize: 14.5, height: 1.45);
+    return LayoutBuilder(
+      builder: (context, box) {
+        final painter = TextPainter(
+          text: TextSpan(text: widget.text, style: style),
+          maxLines: 4,
+          textDirection: Directionality.of(context),
+          textScaler: MediaQuery.textScalerOf(context),
+        )..layout(maxWidth: box.maxWidth);
+        final long = painter.didExceedMaxLines;
+        painter.dispose();
+        return GestureDetector(
+          onTap: long ? () => setState(() => open = !open) : null,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                widget.text,
+                style: style,
+                maxLines: open ? null : 4,
+                overflow: open ? null : TextOverflow.ellipsis,
+              ),
+              if (long)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                    open ? 'Show less' : 'More',
+                    style: const TextStyle(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _Uploader extends StatelessWidget {
+  final Post post;
+  final VoidCallback onTap;
+  const _Uploader({required this.post, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(Radii.card),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Row(
+          children: [
+            ChannelAvatar(
+              url: post.channelIcon,
+              name: post.channelName,
+              size: 40,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    post.title,
-                    style: const TextStyle(
-                      fontSize: 15.5,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+                  const Text(
+                    'Uploaded by',
+                    style: TextStyle(color: AppColors.muted, fontSize: 12),
                   ),
-                  const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
-                    children: [
-                      if (canWatchTrailer(post, item))
-                        OutlinedButton.icon(
-                          style: OutlinedButton.styleFrom(
-                            minimumSize: const Size(0, 44),
-                          ),
-                          icon: const Icon(Icons.play_circle_outline_rounded),
-                          label: const Text('Trailer'),
-                          onPressed: () => watchTrailer(context, post, item),
-                        ),
-                      FilledButton.icon(
-                        style: FilledButton.styleFrom(
-                          minimumSize: const Size(120, 44),
-                        ),
-                        icon: Icon(
-                          item.isVideo
-                              ? Icons.play_arrow_rounded
-                              : Icons.image_outlined,
-                        ),
-                        onPressed: () => watchItem(context, post, item),
-                        label: Text(
-                          item.isVideo
-                              ? (canWatchTrailer(post, item)
-                                    ? 'Watch full'
-                                    : 'Watch')
-                              : 'View',
-                        ),
-                      ),
-                    ],
+                  Text(
+                    post.channelName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ],
               ),
             ),
+            const Icon(Icons.chevron_right_rounded, color: AppColors.muted),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ActionIcon extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  const _ActionIcon({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(4, 8, 22, 8),
+        child: Column(
+          children: [
+            Icon(icon, size: 24),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: const TextStyle(fontSize: 12, color: AppColors.muted),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ------------------------------------------------------------------ more
+
+class _MoreFromCreator extends StatelessWidget {
+  final List<Post>? posts;
+  const _MoreFromCreator({required this.posts});
+
+  @override
+  Widget build(BuildContext context) {
+    final list = posts;
+    if (list != null && list.isEmpty) return const SizedBox.shrink();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 8),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'More Like This',
+                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+              ),
+              SizedBox(height: 6),
+              SizedBox(
+                width: 92,
+                height: 3,
+                child: ColoredBox(color: AppColors.primary),
+              ),
+              SizedBox(height: 4),
+              Text(
+                'More from this creator',
+                style: TextStyle(color: AppColors.muted, fontSize: 12.5),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        if (list == null)
+          const Padding(
+            padding: EdgeInsets.all(20),
+            child: Center(child: CircularProgressIndicator()),
+          )
+        else
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: list.length,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+              mainAxisSpacing: 8,
+              crossAxisSpacing: 8,
+              childAspectRatio: 2 / 3,
+            ),
+            itemBuilder: (_, i) => _Poster(post: list[i]),
+          ),
+      ],
+    );
+  }
+}
+
+class _Poster extends StatelessWidget {
+  final Post post;
+  const _Poster({required this.post});
+
+  @override
+  Widget build(BuildContext context) {
+    final cover = post.cover;
+    return PressScale(
+      child: GestureDetector(
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => PostScreen(postId: post.id, initial: post),
+          ),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              NetThumb(
+                url: cover?.thumbUrl,
+                fallback: (cover?.isVideo ?? true)
+                    ? Icons.movie_outlined
+                    : Icons.image_outlined,
+              ),
+              const DecoratedBox(
+                decoration: BoxDecoration(gradient: AppColors.scrim),
+              ),
+              if (post.hasPremium)
+                const Positioned(
+                  top: 6,
+                  left: 6,
+                  child: Icon(
+                    Icons.workspace_premium_rounded,
+                    color: AppColors.gold,
+                    size: 18,
+                  ),
+                ),
+              if (cover?.hasTrailer ?? false)
+                const Positioned(
+                  top: 6,
+                  right: 6,
+                  child: _Tag(text: 'Trailer'),
+                ),
+              Positioned(
+                left: 6,
+                right: 6,
+                bottom: 6,
+                child: Text(
+                  post.title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
+                    height: 1.2,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ------------------------------------------------------------------ bar
+
+class _GlassBack extends StatelessWidget {
+  const _GlassBack();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 8),
+      child: _GlassIcon(
+        icon: Icons.arrow_back_rounded,
+        tooltip: 'Back',
+        onTap: () => Navigator.of(context).maybePop(),
+      ),
+    );
+  }
+}
+
+class _GlassIcon extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onTap;
+  const _GlassIcon({
+    required this.icon,
+    required this.tooltip,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Material(
+        color: const Color(0x80000000),
+        shape: const CircleBorder(),
+        child: IconButton(
+          tooltip: tooltip,
+          icon: Icon(icon, color: Colors.white, size: 22),
+          onPressed: onTap,
         ),
       ),
     );

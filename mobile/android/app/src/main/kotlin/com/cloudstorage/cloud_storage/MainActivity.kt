@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
+import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -52,6 +53,18 @@ class MainActivity : FlutterActivity() {
                 }
             }
         }
+        // Video player rotation (separate from payments): "sensor" follows the
+        // phone's tilt like MX Player / VLC, even with auto-rotate off.
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, SCREEN_CHANNEL)
+            .setMethodCallHandler { call, result ->
+                requestedOrientation = when (call.method) {
+                    "sensor" -> ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR
+                    "landscape" -> ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+                    "portrait" -> ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
+                    else -> ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+                }
+                result.success(null)
+            }
     }
 
     private fun launch(orderId: String, uri: String, result: MethodChannel.Result) {
@@ -138,6 +151,7 @@ class MainActivity : FlutterActivity() {
 
     companion object {
         private const val CHANNEL = "cloudstorage/upi"
+        private const val SCREEN_CHANNEL = "cloudstorage/screen"
         private const val PREFS = "upi_payments"
         private const val KEY_LAUNCHED = "launched_order"
         private const val KEY_ANSWERS = "answers"

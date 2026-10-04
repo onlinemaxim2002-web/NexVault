@@ -91,16 +91,26 @@ Future<void> watchTrailer(
   Post post,
   PostItem item,
 ) async {
+  // Viewers who can already watch the full video just see the trailer.
+  final full = canWatchFull(post, item);
   await _play(
     context,
     post,
     item.trailerKey!,
     true,
     'Trailer · ${post.title}',
-    onWatchFull: (ctx) => watchItem(ctx, post, item),
-    onTrailerEnd: (ctx) => subscribeToWatch(ctx, post, item),
+    event: 'preview_view',
+    onWatchFull: full ? null : (ctx) => watchItem(ctx, post, item),
+    onTrailerEnd: full ? null : (ctx) => subscribeToWatch(ctx, post, item),
   );
 }
+
+/// Whether the content page shows a "Trailer" button: ads users before they
+/// subscribe (as before), and anyone who can already watch the full video.
+bool showTrailerButton(Post post, PostItem item) =>
+    item.isVideo &&
+    item.hasTrailer &&
+    (canWatchTrailer(post, item) || canWatchFull(post, item));
 
 /// Tap on a post's media: trailer when that's all the user may watch,
 /// otherwise the full item (with its gates).
@@ -115,6 +125,7 @@ Future<void> _play(
   String key,
   bool isVideo,
   String title, {
+  String? event,
   void Function(BuildContext)? onWatchFull,
   void Function(BuildContext)? onTrailerEnd,
 }) async {
@@ -122,7 +133,7 @@ Future<void> _play(
     final url = await Backend.mediaUrl(key);
     Backend.logEvent(
       app.installId,
-      onWatchFull == null ? 'content_view' : 'preview_view',
+      event ?? (onWatchFull == null ? 'content_view' : 'preview_view'),
       contentId: post.id,
       viewId: const Uuid().v4(),
     );

@@ -12,7 +12,11 @@ import '../theme.dart';
 /// 10 s, big centre controls, thin seek bar with times, fullscreen toggle.
 class PremiumPlayerControls extends StatefulWidget {
   final String title;
-  const PremiumPlayerControls({super.key, required this.title});
+
+  /// Rotate button (MX Player style); without it the button uses Chewie's
+  /// fullscreen.
+  final VoidCallback? onRotate;
+  const PremiumPlayerControls({super.key, required this.title, this.onRotate});
 
   @override
   State<PremiumPlayerControls> createState() => _PremiumPlayerControlsState();
@@ -144,7 +148,9 @@ class _PremiumPlayerControlsState extends State<PremiumPlayerControls> {
     final buffering =
         value.isBuffering && !value.isPlaying ||
         (value.isBuffering && value.isPlaying && pos == Duration.zero);
-    final fullscreen = _chewie!.isFullScreen;
+    final fullscreen = widget.onRotate != null
+        ? MediaQuery.orientationOf(context) == Orientation.landscape
+        : _chewie!.isFullScreen;
 
     return LayoutBuilder(
       builder: (context, box) => Stack(
@@ -371,7 +377,11 @@ class _PremiumPlayerControlsState extends State<PremiumPlayerControls> {
                                 size: 28,
                               ),
                               onPressed: () {
-                                _chewie!.toggleFullScreen();
+                                if (widget.onRotate != null) {
+                                  widget.onRotate!();
+                                } else {
+                                  _chewie!.toggleFullScreen();
+                                }
                                 _poke();
                               },
                             ),

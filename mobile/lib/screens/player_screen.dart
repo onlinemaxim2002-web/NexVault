@@ -1,7 +1,9 @@
 import 'package:chewie/chewie.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
 
+import '../services/screen_rotation.dart';
 import '../state/app_state.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
@@ -34,11 +36,37 @@ class _PlayerScreenState extends State<PlayerScreen> {
   ChewieController? _chewie;
   String? _error;
   bool _endShown = false;
+  bool? _landscape;
 
   @override
   void initState() {
     super.initState();
+    // Turn with the phone, like MX Player / VLC.
+    ScreenRotation.follow();
     _open();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final landscape =
+        MediaQuery.orientationOf(context) == Orientation.landscape;
+    if (landscape == _landscape) return;
+    _landscape = landscape;
+    // Landscape = full screen video: hide the status and navigation bars.
+    SystemChrome.setEnabledSystemUIMode(
+      landscape ? SystemUiMode.immersiveSticky : SystemUiMode.manual,
+      overlays: landscape ? null : SystemUiOverlay.values,
+    );
+  }
+
+  /// Rotate button: switch between portrait and landscape.
+  void _rotate() {
+    if (_landscape ?? false) {
+      ScreenRotation.portrait();
+    } else {
+      ScreenRotation.landscape();
+    }
   }
 
   void _open() {
@@ -55,7 +83,10 @@ class _PlayerScreenState extends State<PlayerScreen> {
               allowFullScreen: true,
               allowMuting: true,
               showOptions: false,
-              customControls: PremiumPlayerControls(title: widget.title),
+              customControls: PremiumPlayerControls(
+                title: widget.title,
+                onRotate: _rotate,
+              ),
               materialProgressColors: ChewieProgressColors(
                 playedColor: AppColors.primary,
                 handleColor: Colors.white,
@@ -146,6 +177,11 @@ class _PlayerScreenState extends State<PlayerScreen> {
     _video.removeListener(_watchEnd);
     _chewie?.dispose();
     _video.dispose();
+    ScreenRotation.reset();
+    SystemChrome.setEnabledSystemUIMode(
+      SystemUiMode.manual,
+      overlays: SystemUiOverlay.values,
+    );
     super.dispose();
   }
 
@@ -154,7 +190,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
     final ready = _chewie != null && _error == null;
     return Scaffold(
       backgroundColor: Colors.black,
-      bottomNavigationBar: widget.onWatchFull == null
+      bottomNavigationBar: widget.onWatchFull == null || (_landscape ?? false)
           ? null
           : SafeArea(
               child: Container(

@@ -29,6 +29,13 @@ type ChannelRequest = {
   created_at: string;
 };
 
+type Creator = {
+  channel_id: string;
+  email: string | null;
+  display_name: string | null;
+  source: "ads" | "organic" | null;
+};
+
 type Row = {
   id: string;
   name: string;
@@ -58,8 +65,12 @@ export default async function ChannelsPage({
     .neq("review_status", "pending")
     .order("created_at", { ascending: false });
   if (audience) query = query.eq("audience", audience);
-  const { data } = await query;
+  const [{ data }, { data: creatorRows }] = await Promise.all([
+    query,
+    supabase.rpc("admin_channel_creators"),
+  ]);
   const rows = (data ?? []) as Row[];
+  const creators = new Map(((creatorRows ?? []) as Creator[]).map((c) => [c.channel_id, c]));
 
   const filters = [
     { value: "", label: "All" },
@@ -138,6 +149,7 @@ export default async function ChannelsPage({
           <thead>
             <tr>
               <Th>Channel</Th>
+              <Th>Created by</Th>
               <Th>Audience</Th>
               <Th>Status</Th>
               <Th className="text-right">Members</Th>
@@ -153,6 +165,23 @@ export default async function ChannelsPage({
                     {c.name}
                   </Link>
                   {c.category && <p className="text-xs text-gray-500">{c.category}</p>}
+                </Td>
+                <Td>
+                  {(() => {
+                    const cr = creators.get(c.id);
+                    if (!cr?.email && !cr?.display_name) {
+                      return <span className="text-xs text-gray-500">Admin panel</span>;
+                    }
+                    return (
+                      <>
+                        <p className="text-sm">{cr.email ?? "Guest"}</p>
+                        <p className="text-xs text-gray-500">
+                          {cr.display_name}
+                          {cr.source && <> · {cr.source === "ads" ? "Ads" : "Organic"}</>}
+                        </p>
+                      </>
+                    );
+                  })()}
                 </Td>
                 <Td><AudienceBadge audience={c.audience} /></Td>
                 <Td>

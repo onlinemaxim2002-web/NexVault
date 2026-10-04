@@ -774,5 +774,14 @@ set role authenticated;
 select t.act_as('owner');
 select t.ok((select count(*) from public.admin_meta_events()) >= 5, 'owner sees the event log');
 reset role;
+
+-- Admin: channel creators
+set role authenticated;
+select t.act_as('owner');
+select t.ok((select email from public.admin_channel_creators() a join public.channels c on c.id = a.channel_id
+              where c.name = 'Owner app channel') = 'owner@example.com', 'admins see who created each channel');
+select t.act_as('ads_user');
+select t.fails($$select * from public.admin_channel_creators()$$, 'app users cannot see channel creators');
+reset role;
 \echo
 \echo 'All tests passed.'

@@ -32,11 +32,16 @@ export default async function ChannelPage({
     .order("position");
   const folders = (folderRows ?? []) as Folder[];
 
+  const { data: creatorRows } = await supabase.rpc("admin_channel_creators");
+  const creator = ((creatorRows ?? []) as { channel_id: string; email: string | null; display_name: string | null }[])
+    .find((c) => c.channel_id === id);
+  const createdBy = creator?.email ?? creator?.display_name ?? null;
+
   return (
     <>
       <PageHeader
         title={channel.name}
-        subtitle={`${channel.members_count} members`}
+        subtitle={`${channel.members_count} members · Created by ${createdBy ?? "admin panel"}`}
         action={
           <div className="flex gap-2">
             <LinkButton variant="secondary" href={`/posts?channel=${id}`}>

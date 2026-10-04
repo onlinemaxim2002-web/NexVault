@@ -9,6 +9,7 @@ import '../widgets/gates.dart';
 import 'channel_screen.dart';
 import 'create_channel_screen.dart';
 import 'login_screen.dart';
+import 'new_post_screen.dart';
 import 'payment_history_screen.dart';
 import 'settings_screen.dart';
 
@@ -24,9 +25,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
   List<Channel>? created;
   List<Channel>? joined;
 
+  String? _uid;
+
   @override
   void initState() {
     super.initState();
+    _uid = sb.auth.currentUser?.id;
+    app.addListener(_onApp);
+    app.contentVersion.addListener(_load);
+    _load();
+  }
+
+  @override
+  void dispose() {
+    app.removeListener(_onApp);
+    app.contentVersion.removeListener(_load);
+    super.dispose();
+  }
+
+  /// Logging in (or out) switches the user: show that user's channels.
+  void _onApp() {
+    final uid = sb.auth.currentUser?.id;
+    if (uid == _uid) return;
+    _uid = uid;
     _load();
   }
 
@@ -323,6 +344,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ],
               ),
               const SizedBox(height: 4),
+              if (_uploadable.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: _uploadPicker,
+                    icon: const Icon(Icons.cloud_upload_rounded),
+                    label: const Text('Upload content'),
+                  ),
+                ),
+              ],
               TextButton.icon(
                 style: TextButton.styleFrom(padding: EdgeInsets.zero),
                 icon: const Icon(Icons.receipt_long),
@@ -340,6 +372,50 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  List<Channel> get _uploadable =>
+      (created ?? []).where((c) => c.reviewStatus == 'approved').toList();
+
+  Future<void> _upload(Channel c) async {
+    final ok = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => NewPostScreen(channelId: c.id, channelName: c.name),
+      ),
+    );
+    if (ok == true) _load();
+  }
+
+  /// One channel → straight to the upload screen; several → pick one.
+  Future<void> _uploadPicker() async {
+    final list = _uploadable;
+    if (list.length == 1) return _upload(list.first);
+    final pick = await showModalBottomSheet<Channel>(
+      context: context,
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Padding(
+              padding: EdgeInsets.fromLTRB(20, 0, 20, 8),
+              child: Text(
+                'Upload to which channel?',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+              ),
+            ),
+            for (final c in list)
+              ListTile(
+                leading: ChannelAvatar(url: c.iconUrl, name: c.name, size: 36),
+                title: Text(c.name),
+                onTap: () => Navigator.pop(context, c),
+              ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+    if (pick != null) await _upload(pick);
+  }
+
   Widget _channelTile(Channel c, {bool mine = false}) {
     Widget? badge;
     if (mine) {
@@ -352,9 +428,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
           label: Text('Not approved'),
           backgroundColor: AppColors.dangerBg,
         ),
-        _ => const Chip(
-          label: Text('Your channel'),
-          backgroundColor: AppColors.successBg,
+        _ => FilledButton.icon(
+          style: FilledButton.styleFrom(
+            minimumSize: const Size(0, 36),
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
+          onPressed: () => _upload(c),
+          icon: const Icon(Icons.upload_rounded, size: 18),
+          label: const Text('Upload'),
         ),
       };
     }

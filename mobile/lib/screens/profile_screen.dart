@@ -4,6 +4,7 @@ import '../models.dart';
 import '../services/backend.dart';
 import '../state/app_state.dart';
 import '../theme.dart';
+import '../widgets/channel_photo.dart';
 import '../widgets/common.dart';
 import '../widgets/gates.dart';
 import 'channel_screen.dart';
@@ -442,7 +443,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      leading: ChannelAvatar(url: c.iconUrl, name: c.name, size: 52),
+      leading: mine
+          ? EditableChannelAvatar(channel: c, size: 52, onChanged: _load)
+          : ChannelAvatar(url: c.iconUrl, name: c.name, size: 52),
       title: Text(
         c.name,
         style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),

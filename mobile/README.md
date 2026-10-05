@@ -1,4 +1,4 @@
-# Cloud Storage — Android app
+# Flixvault — Android app
 
 Flutter app (Android) on Supabase.
 
@@ -23,14 +23,14 @@ What each user sees is decided by the database (audience, premium, approvals).
 
 | File | Install source recorded |
 |---|---|
-| `CloudStorage.apk` | organic (`direct`) |
-| `CloudStorage-ads.apk` | Meta ads (`utm_source=meta…`, via `--dart-define=APK_REFERRER=…`) |
+| `Flixvault.apk` | organic (`direct`) |
+| `Flixvault-ads.apk` | Meta ads (`utm_source=meta…`, via `--dart-define=APK_REFERRER=…`) |
 
 Same package name (`com.cloudstorage.app`) and the same signing key, so either one
 updates the other. The key in `android/app/tester-release.jks` is for **testing only**.
 
 GitHub Actions (`.github/workflows/mobile.yml`) builds both on every push and
-uploads them as the **CloudStorage-apks** artifact on the workflow run.
+uploads them as the **Flixvault-apks** artifact on the workflow run.
 
 ## Build locally
 

@@ -775,6 +775,52 @@ select t.act_as('owner');
 select t.ok((select count(*) from public.admin_meta_events()) >= 5, 'owner sees the event log');
 reset role;
 
+-- Meta ROAS: download page click → install → purchase carries fbc/fbp/IP
+set role anon;
+select t.ok((public.download_page_config()->>'pixel_id') = '1234567890', 'download page gets the Pixel id');
+select t.ok(not (public.download_page_config() ? 'access_token'), 'download page never gets the token');
+select t.ok(public.record_ad_click('lead-evt-1', 'fb.1.1700000000000.ABCclick', 'fb.1.1700000000000.123',
+                                   '203.0.113.7', 'Mozilla/5.0 (Linux; Android 14)') is not null, 'download tap is recorded');
+reset role;
+select t.ok((select count(*) from public.meta_events where event_id = 'lead-evt-1' and event_name = 'Lead') = 1,
+            'download tap → Lead (same event id as the browser Pixel)');
+select set_config('request.headers', '{"x-forwarded-for": "203.0.113.7, 10.0.0.1", "user-agent": "Dart/3.9"}', false);
+set role authenticated;
+select t.act_as('ads_user');
+select public.record_install('99999999-0000-0000-0000-0000000000c1', 'apk', 'utm_source=meta');
+select t.put('ro', public.create_payment_order((select id from public.plans where code = 'silver'))->>'order_id');
+reset role;
+select set_config('request.headers', '', false);
+select t.ok((select fbc from public.installs where install_id = '99999999-0000-0000-0000-0000000000c1')
+            = 'fb.1.1700000000000.ABCclick', 'app install is matched to the ad click by IP');
+select t.ok((select install_id from public.ad_clicks where event_id = 'lead-evt-1')
+            = '99999999-0000-0000-0000-0000000000c1', 'click is marked as matched');
+set role authenticated;
+select t.act_as('owner');
+select public.admin_mark_payment_paid(t.get('ro')::uuid, 'ROASUTR12345', 129);
+reset role;
+select t.ok((select p->'user_data'->>'fbc' = 'fb.1.1700000000000.ABCclick'
+                    and p->'user_data'->>'fbp' = 'fb.1.1700000000000.123'
+                    and p->'user_data'->>'client_ip_address' = '203.0.113.7'
+                    and p->'user_data'->>'client_user_agent' like 'Mozilla%'
+                    and p->'custom_data'->>'value' = '129.00'
+               from (select public.meta_event_payload(e, s) p
+                       from public.meta_events e, public.meta_settings s
+                      where e.event_id = 'purchase-' || t.get('ro')) x),
+            'Purchase carries the ad click (fbc, fbp, IP, browser) and value');
+select set_config('request.headers', '{"x-forwarded-for": "198.51.100.9"}', false);
+insert into public.installs (install_id, referrer_status, source) values ('99999999-0000-0000-0000-0000000000c2', 'apk', 'meta');
+select set_config('request.headers', '', false);
+select t.ok((select ad_click_id is null from public.installs where install_id = '99999999-0000-0000-0000-0000000000c2'),
+            'installs from other networks are not matched');
+set role authenticated;
+select t.act_as('owner');
+select t.ok((public.admin_meta_health()->>'matched_7d')::int = 1, 'owner sees attribution health');
+select t.act_as('ads_user');
+select t.fails($$select public.admin_meta_health()$$, 'app users cannot see attribution health');
+select t.ok(not exists (select 1 from public.ad_clicks), 'app users cannot read ad clicks');
+reset role;
+
 -- Admin: channel creators
 set role authenticated;
 select t.act_as('owner');
@@ -802,6 +848,32 @@ insert into public.posts (channel_id, title, audience, status, created_by)
 select t.fails($$insert into public.posts (channel_id, title, audience, created_by)
                  select id, 'Panel wrong', 'all', t.id('owner') from public.channels where name = 'Owner app channel'$$,
                'admin panel posts still must match the channel audience');
+reset role;
+
+-- Payments reports (owner only)
+set role authenticated;
+select t.act_as('content_admin');
+select t.fails($$select * from public.admin_buyers()$$, 'content admin cannot list buyers');
+select t.fails($$select * from public.admin_plan_sales()$$, 'content admin cannot see plan sales');
+select t.act_as('owner');
+select t.ok((select count(*) from public.admin_payment_orders_filtered('all')) =
+            (select count(*) from public.admin_payment_orders('all')), 'filtered orders: all matches');
+select t.ok((select count(*) from public.admin_payment_orders_filtered('all',
+               (select id from public.plans where code = 'silver'))) =
+            (select count(*) from public.payment_orders where plan_id = (select id from public.plans where code = 'silver')),
+            'filtered orders: by plan');
+select t.ok((select count(*) from public.admin_payment_orders_filtered('all', null, null, now() + interval '1 day')) = 0,
+            'filtered orders: date range');
+select t.ok((select amount_paise from public.admin_payment_orders_filtered('all', null, null, null, null, 'amount_desc') limit 1) =
+            (select max(amount_paise) from public.payment_orders), 'filtered orders: sort by amount');
+select t.ok((select sum(purchases) from public.admin_plan_sales()) =
+            (select count(*) from public.payment_orders where status = 'approved'), 'plan sales count approved purchases');
+select t.ok((select sum(purchases) from public.admin_buyers()) =
+            (select count(*) from public.payment_orders where status = 'approved'), 'buyers cover every purchase');
+select t.ok((select bool_and(jsonb_array_length(history) = purchases) from public.admin_buyers()), 'buyer history lists every purchase');
+select t.ok((select count(*) from public.admin_buyers(2)) =
+            (select count(*) from (select user_id from public.payment_orders where status = 'approved'
+                                    group by user_id having count(*) > 1) x), 'repeat buyers filter');
 reset role;
 \echo
 \echo 'All tests passed.'

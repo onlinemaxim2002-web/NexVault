@@ -15,8 +15,8 @@ class Config {
   // utm_source=meta&utm_medium=paid_social&utm_campaign=apk_download
   static const apkReferrer = String.fromEnvironment('APK_REFERRER');
 
-  static const policyVersion = 'v1';
-  static const appName = 'Cloud Storage';
+  static const policyVersion = 'v2';
+  static const appName = 'Flixvault';
   static const maxUploadBytes = 50 * 1024 * 1024; // Supabase free plan limit
 
   static String publicUrl(String key) =>

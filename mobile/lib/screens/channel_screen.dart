@@ -4,6 +4,7 @@ import '../models.dart';
 import '../services/backend.dart';
 import '../state/app_state.dart';
 import '../theme.dart';
+import '../widgets/channel_photo.dart';
 import '../widgets/common.dart';
 import '../widgets/gates.dart';
 import '../widgets/post_bubble.dart';
@@ -126,7 +127,14 @@ class _ChannelScreenState extends State<ChannelScreen> {
             ? const Text('Channel')
             : Row(
                 children: [
-                  ChannelAvatar(url: c.iconUrl, name: c.name, size: 44),
+                  if (isCreator)
+                    EditableChannelAvatar(
+                      channel: c,
+                      size: 44,
+                      onChanged: _load,
+                    )
+                  else
+                    ChannelAvatar(url: c.iconUrl, name: c.name, size: 44),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
@@ -174,6 +182,20 @@ class _ChannelScreenState extends State<ChannelScreen> {
                 ],
               ),
         actions: [
+          if (isCreator && c != null)
+            PopupMenuButton<String>(
+              onSelected: (v) async {
+                if (v == 'photo' && await changeChannelPhoto(context, c)) {
+                  _load();
+                }
+              },
+              itemBuilder: (_) => const [
+                PopupMenuItem(
+                  value: 'photo',
+                  child: Text('Change channel photo'),
+                ),
+              ],
+            ),
           if (joined && !isCreator)
             PopupMenuButton<String>(
               onSelected: (v) => v == 'leave' ? _leave() : null,

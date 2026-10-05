@@ -36,3 +36,12 @@ export function createServiceClient() {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 }
+
+// Anonymous client for public pages (download page). No session, RLS applies.
+export function createPublicClient() {
+  return createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    { auth: { persistSession: false, autoRefreshToken: false } },
+  );
+}

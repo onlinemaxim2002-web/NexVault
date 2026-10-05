@@ -34,16 +34,16 @@ jobs:
         run: |
           flutter build apk --release
           mkdir -p ../dist
-          cp build/app/outputs/flutter-apk/app-release.apk ../dist/CloudStorage.apk
+          cp build/app/outputs/flutter-apk/app-release.apk ../dist/Flixvault.apk
 
       - name: Build ads APK (Meta)
         run: |
           flutter build apk --release \
             --dart-define=APK_REFERRER="utm_source=meta&utm_medium=paid_social&utm_campaign=apk_download"
-          cp build/app/outputs/flutter-apk/app-release.apk ../dist/CloudStorage-ads.apk
+          cp build/app/outputs/flutter-apk/app-release.apk ../dist/Flixvault-ads.apk
 
       - uses: actions/upload-artifact@v4
         with:
-          name: CloudStorage-apks
+          name: Flixvault.apks
           path: dist/*.apk
           retention-days: 30

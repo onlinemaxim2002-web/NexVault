@@ -3,7 +3,15 @@ import { NextResponse, type NextRequest } from "next/server";
 
 // Refreshes the Supabase session on every request and sends signed-out
 // visitors to /login.
+// Public pages (no login): the app download page used in ads, its click
+// tracker, and the privacy policy.
+const PUBLIC = ["/d", "/api/click", "/privacy"];
+
 export async function middleware(request: NextRequest) {
+  const path = request.nextUrl.pathname;
+  if (PUBLIC.some((p) => path === p || path.startsWith(`${p}/`))) {
+    return NextResponse.next({ request });
+  }
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(

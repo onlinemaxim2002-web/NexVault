@@ -251,6 +251,15 @@ class Backend {
     return sb.storage.from('public').getPublicUrl(key);
   }
 
+  /// The creator changes their channel's photo (the database only lets the
+  /// creator or an admin change it).
+  static Future<void> updateChannelIcon(
+    String channelId,
+    String iconUrl,
+  ) async {
+    await sb.from('channels').update({'icon_url': iconUrl}).eq('id', channelId);
+  }
+
   static Future<Channel> createChannel({
     required String name,
     String? description,

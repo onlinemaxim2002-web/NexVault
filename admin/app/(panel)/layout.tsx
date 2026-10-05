@@ -31,9 +31,9 @@ export default async function PanelLayout({ children }: { children: React.ReactN
       <aside className="border-b border-gray-200 bg-white p-4 md:sticky md:top-0 md:h-screen md:w-60 md:shrink-0 md:border-b-0 md:border-r">
         <div className="mb-4 flex items-center gap-2 md:mb-6">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-700 text-sm font-bold text-white">
-            CS
+            FV
           </div>
-          <span className="font-semibold">Cloud Storage</span>
+          <span className="font-semibold">Flixvault</span>
         </div>
         <Nav items={items} />
         <div className="mt-4 border-t border-gray-200 pt-4 md:absolute md:bottom-4 md:left-4 md:right-4">

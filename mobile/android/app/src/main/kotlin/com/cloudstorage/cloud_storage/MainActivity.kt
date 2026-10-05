@@ -1,6 +1,8 @@
 package com.cloudstorage.cloud_storage
 
 import android.app.Activity
+import android.app.DownloadManager
+import android.os.Environment
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
@@ -53,6 +55,34 @@ class MainActivity : FlutterActivity() {
                 }
             }
         }
+        // Downloads (premium): Android's download manager saves the file to
+        // Downloads/Flixvault and shows a progress notification.
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, DOWNLOAD_CHANNEL)
+            .setMethodCallHandler { call, result ->
+                val url = call.argument<String>("url")
+                val name = call.argument<String>("name")
+                if (call.method != "download" || url.isNullOrEmpty() || name.isNullOrEmpty()) {
+                    result.error("BAD_ARGS", "url and name are required", null)
+                    return@setMethodCallHandler
+                }
+                try {
+                    val request = DownloadManager.Request(Uri.parse(url))
+                        .setTitle(name)
+                        .setDescription("Flixvault")
+                        .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                    call.argument<String>("mime")?.let { request.setMimeType(it) }
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "Flixvault/$name")
+                    } else {
+                        // Android 9 and older: app folder, no storage permission needed.
+                        request.setDestinationInExternalFilesDir(this, Environment.DIRECTORY_DOWNLOADS, name)
+                    }
+                    val dm = getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+                    result.success(dm.enqueue(request))
+                } catch (e: Exception) {
+                    result.error("DOWNLOAD_FAILED", e.message, null)
+                }
+            }
         // Google Play alternative billing (Play build only; a no-op elsewhere).
         PlayBillingChannel.register(flutterEngine, this)
         // Video player rotation (separate from payments): "sensor" follows the
@@ -154,6 +184,7 @@ class MainActivity : FlutterActivity() {
     companion object {
         private const val CHANNEL = "cloudstorage/upi"
         private const val SCREEN_CHANNEL = "cloudstorage/screen"
+        private const val DOWNLOAD_CHANNEL = "cloudstorage/download"
         private const val PREFS = "upi_payments"
         private const val KEY_LAUNCHED = "launched_order"
         private const val KEY_ANSWERS = "answers"

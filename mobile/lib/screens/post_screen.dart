@@ -156,6 +156,12 @@ class _PostScreenState extends State<PostScreen> {
                     label: 'Channel',
                     onTap: () => _openChannel(p),
                   ),
+                  if (item != null)
+                    _ActionIcon(
+                      icon: Icons.download_rounded,
+                      label: 'Download',
+                      onTap: () => downloadItem(context, p, item),
+                    ),
                 ],
               ),
             ],

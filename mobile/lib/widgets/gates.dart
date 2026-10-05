@@ -6,6 +6,7 @@ import '../screens/login_screen.dart';
 import '../screens/player_screen.dart';
 import '../screens/premium_screen.dart';
 import '../services/backend.dart';
+import '../services/downloads.dart';
 import '../state/app_state.dart';
 import 'common.dart';
 
@@ -153,4 +154,79 @@ Future<void> _play(
   } catch (e) {
     if (context.mounted) showSnack(context, friendlyError(e));
   }
+}
+
+/// Premium members can save files to their phone. Others are invited to
+/// get a plan (the normal plans screen).
+Future<bool> ensurePremiumForDownload(BuildContext context) async {
+  if (app.isPremium) return true;
+  final go = await showDialog<bool>(
+    context: context,
+    builder: (_) => AlertDialog(
+      icon: const Icon(Icons.download_rounded, size: 36),
+      title: const Text('Download is a Premium feature'),
+      content: const Text(
+        'Get a Premium plan to save videos, photos and your cloud files to your phone.',
+        textAlign: TextAlign.center,
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: const Text('Not now'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(context, true),
+          child: const Text('See plans'),
+        ),
+      ],
+    ),
+  );
+  if (go == true && context.mounted) await openPlans(context);
+  return false;
+}
+
+Future<void> _saveFrom(
+  BuildContext context,
+  Future<String> Function() url,
+  String name,
+  String? mime,
+) async {
+  try {
+    await Downloads.save(url: await url(), name: name, mime: mime);
+    if (context.mounted) {
+      showSnack(
+        context,
+        'Downloading "${Downloads.safeName(name)}"… See your notifications.',
+      );
+    }
+  } catch (e) {
+    if (context.mounted) showSnack(context, friendlyError(e));
+  }
+}
+
+/// Download a post item (premium; the server still checks access).
+Future<void> downloadItem(
+  BuildContext context,
+  Post post,
+  PostItem item,
+) async {
+  if (!await ensurePremiumForDownload(context) || !context.mounted) return;
+  await _saveFrom(
+    context,
+    () => Backend.mediaUrl(item.mediaKey),
+    Downloads.nameFor(post.title, item.mediaKey),
+    item.isVideo ? 'video/*' : 'image/*',
+  );
+}
+
+/// Download one of the user's own cloud files (premium).
+Future<void> downloadCloudFile(BuildContext context, CloudFile f) async {
+  if (f.storageKey == null) return;
+  if (!await ensurePremiumForDownload(context) || !context.mounted) return;
+  await _saveFrom(
+    context,
+    () => Backend.cloudUrl(f.storageKey!),
+    f.name,
+    f.mime,
+  );
 }

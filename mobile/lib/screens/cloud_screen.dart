@@ -228,6 +228,12 @@ class _CloudScreenState extends State<CloudScreen> with ContentReload {
                 style: const TextStyle(fontWeight: FontWeight.w700),
               ),
             ),
+            if (!f.isFolder)
+              ListTile(
+                leading: const Icon(Icons.download_rounded),
+                title: const Text('Download to phone'),
+                onTap: () => Navigator.pop(context, 'download'),
+              ),
             ListTile(
               leading: const Icon(Icons.edit),
               title: const Text('Rename'),
@@ -245,6 +251,10 @@ class _CloudScreenState extends State<CloudScreen> with ContentReload {
         ),
       ),
     );
+    if (action == 'download') {
+      if (mounted) await downloadCloudFile(context, f);
+      return;
+    }
     try {
       if (action == 'rename') {
         final name = await _askName('Rename', initial: f.name);

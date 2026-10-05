@@ -395,6 +395,15 @@ class Backend {
   }
 
   /// Sends the UPI app's raw answer; the server decides what it means.
+  /// Play build: keep Google's transaction token with the order so the server
+  /// can report the payment to Google Play once it is approved.
+  static Future<void> attachPlayToken(String orderId, String token) async {
+    await sb.rpc(
+      'attach_play_token',
+      params: {'p_order_id': orderId, 'p_token': token},
+    );
+  }
+
   static Future<Map<String, dynamic>> reportPaymentResult(
     String orderId,
     String raw,

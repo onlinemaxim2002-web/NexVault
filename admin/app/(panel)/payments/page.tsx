@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Badge, Button, Card, Empty, Flash, Input, PageHeader, Select, SourceBadge, Table, Td, Th } from "@/components/ui";
 import { requireOwner } from "@/lib/auth";
 import { formatDate } from "@/lib/format";
-import { markPaid, revokePayment, saveSettings } from "./actions";
+import { markPaid, revokePayment, savePlay, saveSettings } from "./actions";
 
 type Order = {
   id: string;
@@ -143,10 +143,13 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
   const back = query(sp, {});
   const { supabase } = await requireOwner();
 
-  const [{ data: planRows }, { data: settings }] = await Promise.all([
+  const [{ data: planRows }, { data: settings }, { data: play }, { data: playSummary }] = await Promise.all([
     supabase.from("plans").select("id, name, price_inr").order("position"),
     supabase.from("payment_settings").select("upi_id, payee_name, enabled").eq("id", 1).maybeSingle(),
+    supabase.from("play_settings").select("package_name, enabled, last_run_at, last_error").eq("id", 1).maybeSingle(),
+    supabase.rpc("admin_play_report_summary"),
   ]);
+  const ps = (playSummary ?? {}) as Record<string, number>;
   const plans = (planRows ?? []) as { id: string; name: string; price_inr: number }[];
 
   const tabs = (
@@ -386,6 +389,14 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
     });
     loadError = error?.message;
     const orders = (data ?? []) as Order[];
+    const { data: playRows } = orders.length
+      ? await supabase.rpc("admin_play_report_rows", { p_ids: orders.map((o) => o.id) })
+      : { data: [] };
+    const playStatus = new Map(
+      ((playRows ?? []) as { id: string; play_report_status: string | null; play_report_error: string | null }[]).map(
+        (r) => [r.id, r],
+      ),
+    );
     const approved = orders.filter((o) => o.status === "approved");
     body = (
       <>
@@ -486,6 +497,18 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
                   <Td>
                     <OrderStatus status={o.status} />
                     {o.status_reason && <p className="mt-1 max-w-48 text-xs text-gray-500">{o.status_reason}</p>}
+                    {playStatus.has(o.id) && (
+                      <p className="mt-1">
+                        <Badge tone={playStatus.get(o.id)!.play_report_status === "failed" ? "red" : "blue"}>
+                          Play Store · Google report: {playStatus.get(o.id)!.play_report_status ?? "after payment"}
+                        </Badge>
+                        {playStatus.get(o.id)!.play_report_error && (
+                          <span className="mt-1 block max-w-48 break-all text-[10px] text-red-600">
+                            {playStatus.get(o.id)!.play_report_error}
+                          </span>
+                        )}
+                      </p>
+                    )}
                   </Td>
                   <Td>
                     <p className="font-mono text-xs">{o.txn_id ?? "—"}</p>
@@ -575,6 +598,53 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
             <Button type="submit">Save</Button>
           </div>
         </form>
+      </Card>
+
+      <Card className="mt-6 max-w-xl">
+        <div className="mb-2 flex items-center justify-between">
+          <h2 className="font-semibold">Google Play reporting (Play Store version only)</h2>
+          {play?.enabled ? <Badge tone="green">On</Badge> : <Badge>Off</Badge>}
+        </div>
+        <p className="mb-3 text-sm text-gray-600">
+          Payments in the Play Store version are still your UPI flow. Google only requires each approved payment to be
+          reported to it (within 24 hours) so it can bill its service fee. This happens automatically every 5 minutes.
+          Payments from the APKs you share yourself are never reported.
+        </p>
+        <div className="mb-3 grid grid-cols-4 gap-2 text-center text-sm">
+          <div><p className="text-lg font-bold">{ps.pending ?? 0}</p><p className="text-xs text-gray-500">waiting</p></div>
+          <div><p className="text-lg font-bold">{ps.reported ?? 0}</p><p className="text-xs text-gray-500">reported</p></div>
+          <div><p className="text-lg font-bold">{ps.refunded ?? 0}</p><p className="text-xs text-gray-500">refunds</p></div>
+          <div><p className={`text-lg font-bold ${ps.failed ? "text-red-600" : ""}`}>{ps.failed ?? 0}</p><p className="text-xs text-gray-500">failed</p></div>
+        </div>
+        {(ps.overdue ?? 0) > 0 && (
+          <p className="mb-3 text-sm font-medium text-red-700">{ps.overdue} payment(s) are close to Google&apos;s 24-hour limit.</p>
+        )}
+        <p className="mb-3 text-xs text-gray-500">
+          Last run: {formatDate(play?.last_run_at)}
+          {play?.last_error && <span className="block text-red-600">Last error: {play.last_error}</span>}
+        </p>
+        <form action={savePlay.bind(null, back)} className="grid gap-3">
+          <label className="text-sm">
+            App package name
+            <Input name="package_name" defaultValue={play?.package_name ?? "com.cloudstorage.app"} required />
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" name="enabled" defaultChecked={play?.enabled ?? false} /> Report Play Store payments to Google
+          </label>
+          <div>
+            <Button type="submit">Save</Button>
+          </div>
+        </form>
+        <details className="mt-4 text-sm text-gray-600">
+          <summary className="cursor-pointer font-medium text-gray-900">One-time setup</summary>
+          <ol className="mt-2 list-decimal space-y-1 pl-5">
+            <li>Play Console → your app → <b>Monetize with Play → Alternative billing</b>: enrol in <b>Alternative billing only</b> for India.</li>
+            <li>Google Cloud Console → create a <b>service account</b> → Keys → <b>Add key → JSON</b> (downloads a file).</li>
+            <li>Play Console → <b>Users and permissions → Invite new users</b> → the service account email → give it access to this app (View financial data / Manage orders).</li>
+            <li>Supabase → Edge Functions → <b>Secrets</b> → add <code>GOOGLE_SERVICE_ACCOUNT_JSON</code> = the whole JSON file content.</li>
+            <li>Tick <b>Report Play Store payments to Google</b> above and Save.</li>
+          </ol>
+        </details>
       </Card>
     </>
   );

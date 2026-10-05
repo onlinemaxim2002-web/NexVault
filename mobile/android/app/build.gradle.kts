@@ -40,6 +40,16 @@ android {
         }
     }
 
+    // direct = APKs shared outside Play (ads / website), UPI only, no Google code.
+    // play   = Play Store build: same app + Google Play "alternative billing
+    //          only" (Google's info screen + transaction report; payment is
+    //          still the same UPI flow).
+    flavorDimensions += "store"
+    productFlavors {
+        create("direct") { dimension = "store" }
+        create("play") { dimension = "store" }
+    }
+
     buildTypes {
         release {
             signingConfig = signingConfigs.getByName("tester")
@@ -58,4 +68,8 @@ kotlin {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    "playImplementation"("com.android.billingclient:billing-ktx:8.0.0")
 }

@@ -53,6 +53,8 @@ class MainActivity : FlutterActivity() {
                 }
             }
         }
+        // Google Play alternative billing (Play build only; a no-op elsewhere).
+        PlayBillingChannel.register(flutterEngine, this)
         // Video player rotation (separate from payments): "sensor" follows the
         // phone's tilt like MX Player / VLC, even with auto-rotate off.
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, SCREEN_CHANNEL)

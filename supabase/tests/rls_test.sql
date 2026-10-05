@@ -875,5 +875,34 @@ select t.ok((select count(*) from public.admin_buyers(2)) =
             (select count(*) from (select user_id from public.payment_orders where status = 'approved'
                                     group by user_id having count(*) > 1) x), 'repeat buyers filter');
 reset role;
+
+-- Google Play alternative billing reporting (Play build)
+set role authenticated;
+select t.act_as('ads_user');
+select t.put('po', public.create_payment_order((select id from public.plans where code = 'gold'))->>'order_id');
+select t.fails($$select public.attach_play_token(t.get('po')::uuid, 'x')$$, 'too-short Play token is rejected');
+select public.attach_play_token(t.get('po')::uuid, 'GOOGLE-EXTERNAL-TOKEN-123');
+select t.fails($$select public.attach_play_token(t.get('po')::uuid, 'GOOGLE-EXTERNAL-TOKEN-456')$$, 'token cannot be replaced');
+select t.act_as('organic_user');
+select t.fails($$select public.attach_play_token(t.get('o1')::uuid, 'GOOGLE-EXTERNAL-TOKEN-789')$$,
+               'cannot attach a token to someone else''s order');
+select t.fails($$select public.admin_play_report_summary()$$, 'app users cannot see Play reporting');
+select t.act_as('owner');
+select public.admin_mark_payment_paid(t.get('po')::uuid, 'PLAYUTR123456', 259);
+reset role;
+select t.ok((select play_report_status from public.payment_orders where id = t.get('po')::uuid) = 'pending',
+            'approved Play-build payment is queued for the Google report');
+select t.ok((select count(*) from public.payment_orders where play_report_status is not null and play_token is null) = 0,
+            'direct-APK payments are never reported');
+update public.payment_orders set play_report_status = 'reported' where id = t.get('po')::uuid;
+set role authenticated;
+select t.act_as('owner');
+select public.admin_revoke_payment(t.get('po')::uuid, 'test');
+select t.ok((public.admin_play_report_summary()->>'pending')::int >= 1, 'owner sees pending Google reports');
+select t.ok((select play_report_status from public.admin_play_report_rows(array[t.get('po')::uuid])) = 'refund_pending',
+            'owner sees the report status per order');
+reset role;
+select t.ok((select play_report_status from public.payment_orders where id = t.get('po')::uuid) = 'refund_pending',
+            'revoking a reported payment queues a refund report');
 \echo
 \echo 'All tests passed.'

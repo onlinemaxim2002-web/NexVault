@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models.dart';
 import '../services/backend.dart';
 import '../services/payments.dart';
+import '../services/play_billing.dart';
 import '../state/app_state.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
@@ -59,7 +60,18 @@ class _PremiumScreenState extends State<PremiumScreen> with ContentReload {
     }
     setState(() => sending = true);
     try {
+      // Play Store build only: Google's information screen + report token.
+      String? playToken;
+      if (PlayBilling.isPlayBuild) {
+        try {
+          playToken = await PlayBilling.prepare();
+        } on PlayBillingException catch (e) {
+          if (mounted && !e.cancelled) _alert('Payment', e.toString());
+          return;
+        }
+      }
       final order = await payments.createOrder(plan);
+      if (playToken != null) await Backend.attachPlayToken(order.id, playToken);
       final payee = await payments.savedPayee();
       try {
         await payments.launch(order, upiId: payee!.$1, payee: payee.$2);

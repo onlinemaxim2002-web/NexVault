@@ -51,3 +51,17 @@ export async function saveSettings(back: string, formData: FormData) {
   revalidatePath("/payments");
   redirect(withMessage(back, "ok", "Payment settings saved."));
 }
+
+export async function savePlay(back: string, formData: FormData) {
+  const { supabase } = await requireOwner();
+  const pkg = String(formData.get("package_name") ?? "").trim();
+  if (!/^[a-zA-Z][\w]*(\.[a-zA-Z][\w]*)+$/.test(pkg)) {
+    redirect(withMessage(back, "error", "Enter the app's package name, e.g. com.cloudstorage.app"));
+  }
+  const { error } = await supabase
+    .from("play_settings")
+    .update({ package_name: pkg, enabled: formData.get("enabled") === "on" })
+    .eq("id", 1);
+  if (error) redirect(withMessage(back, "error", error.message));
+  redirect(withMessage(back, "ok", "Google Play reporting settings saved."));
+}

@@ -6,14 +6,14 @@ void main() {
   test('UPI link has the exact fields, order and encoding', () {
     final uri = Payments.upiUri(
       upiId: '2728412a@bandhan',
-      payee: 'Cloud Storage',
+      payee: 'Flixvault',
       reference: 'CS261003ABCDEF123456',
       amount: '129.00',
     );
     expect(
       uri,
-      'upi://pay?pa=2728412a%40bandhan&pn=Cloud%20Storage&tr=CS261003ABCDEF123456'
-      '&am=129.00&cu=INR&tn=Cloud%20Storage%20CS261003ABCDEF123456',
+      'upi://pay?pa=2728412a%40bandhan&pn=Flixvault&tr=CS261003ABCDEF123456'
+      '&am=129.00&cu=INR&tn=Flixvault%20CS261003ABCDEF123456',
     );
     final parsed = Uri.parse(uri);
     expect(parsed.queryParameters['pa'], '2728412a@bandhan');

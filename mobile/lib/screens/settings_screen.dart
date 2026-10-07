@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+import '../config.dart';
 
 import '../services/backend.dart';
 import '../state/app_state.dart';
@@ -88,6 +91,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
               trailing: const Icon(Icons.chevron_right),
               onTap: () => open(key),
             ),
+          ListTile(
+            title: const Text(
+              'Contact support',
+              style: TextStyle(fontSize: 17),
+            ),
+            subtitle: const Text(Config.supportEmail),
+            trailing: const Icon(Icons.mail_outline),
+            onTap: () => launchUrl(
+              Uri(
+                scheme: 'mailto',
+                path: Config.supportEmail,
+                query:
+                    'subject=${Uri.encodeComponent('${Config.appName} support')}',
+              ),
+            ),
+          ),
           const Spacer(),
           if (registered)
             SafeArea(

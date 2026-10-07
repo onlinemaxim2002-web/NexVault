@@ -33,7 +33,10 @@ const policies = {
         'account. This removes your profile, files and channel memberships. Payment records are kept as required '
         'for accounting and fraud prevention.\n\n'
         'Children\n'
-        'You must be 18 or older, or use ${Config.appName} with a parent\'s or guardian\'s consent.',
+        'You must be 18 or older, or use ${Config.appName} with a parent\'s or guardian\'s consent.\n\n'
+        'Contact\n'
+        'Questions or requests about your data: ${Config.supportEmail}. To ask for account deletion without '
+        'the app, use ${Config.website}/delete-account.',
   ),
   'terms': (
     'Terms & Conditions',
@@ -48,7 +51,8 @@ const policies = {
         'invalid, the plan it activated can be cancelled.\n'
         '• Keep your login details private. You are responsible for activity on your account.\n'
         '• The service is provided as is. We may change features or these terms; we will ask you to agree again '
-        'when the terms change.',
+        'when the terms change.\n'
+        '• Contact: ${Config.supportEmail}',
   ),
   'community': (
     'Community Guidelines',
@@ -57,7 +61,11 @@ const policies = {
         '• No content that copies others\' work without permission (movies, music, shows you don\'t own).\n'
         '• No misleading titles, thumbnails or trailers.\n\n'
         'All channels are reviewed before they go live, and we may remove posts, channels or accounts that break '
-        'these rules.',
+        'these rules.\n\n'
+        'Copyright complaints (DMCA)\n'
+        'If your work was posted without permission, report it at ${Config.website}/report-content or email '
+        '${Config.supportEmail} with a link to the content and proof that you own it. We remove infringing content '
+        'promptly and may close repeat infringers\' accounts.',
   ),
   'refund': (
     'Refund Policy',
@@ -66,7 +74,8 @@ const policies = {
         'UTR; we will activate the plan or refund the payment after checking it.\n'
         '• If you were charged twice for the same order, the extra payment is refunded.\n'
         '• Other refund requests (for example after using a plan) are reviewed case by case.\n\n'
-        'Refunds are sent back to the UPI account the payment came from.',
+        'Refunds are sent back to the UPI account the payment came from.\n\n'
+        'Contact: ${Config.supportEmail}',
   ),
 };
 

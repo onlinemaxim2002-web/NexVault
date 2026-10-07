@@ -904,5 +904,24 @@ select t.ok((select play_report_status from public.admin_play_report_rows(array[
 reset role;
 select t.ok((select play_report_status from public.payment_orders where id = t.get('po')::uuid) = 'refund_pending',
             'revoking a reported payment queues a refund report');
+
+-- Support requests (delete account / content reports)
+select set_config('request.jwt.claim.sub', '', false);
+set role anon;
+select t.ok(public.submit_support_request('delete_account', ' Ads@Example.com ') is not null, 'anyone can request account deletion');
+select t.fails($$select public.submit_support_request('delete_account', 'not-an-email')$$, 'email is validated');
+select t.fails($$select public.submit_support_request('content_report', 'a@b.co')$$, 'report needs details');
+select t.ok(public.submit_support_request('content_report', 'r@b.co', 'R', 'https://x', 'My video') is not null, 'anyone can report content');
+select t.ok(not exists (select 1 from public.support_requests), 'visitors cannot read requests');
+reset role;
+set role authenticated;
+select t.act_as('ads_user');
+select t.fails($$select public.admin_close_support_request((select id from public.support_requests limit 1), 'done')$$,
+               'app users cannot close requests');
+select t.act_as('owner');
+select t.ok(public.admin_open_support_requests() = 2, 'owner sees open requests');
+select public.admin_close_support_request((select id from public.support_requests where kind = 'content_report'), 'done', 'removed');
+select t.ok(public.admin_open_support_requests() = 1, 'owner can close a request');
+reset role;
 \echo
 \echo 'All tests passed.'

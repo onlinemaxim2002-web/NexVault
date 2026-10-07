@@ -17,6 +17,8 @@ class Config {
 
   static const policyVersion = 'v2';
   static const appName = 'Flixvault';
+  static const supportEmail = 'info.flixvault@gmail.com';
+  static const website = 'https://flixvault-app.vercel.app';
   static const maxUploadBytes = 50 * 1024 * 1024; // Supabase free plan limit
 
   static String publicUrl(String key) =>

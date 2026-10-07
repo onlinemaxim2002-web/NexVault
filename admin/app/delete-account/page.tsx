@@ -18,6 +18,14 @@ export default function DeleteAccountPage() {
           <h2 className="mb-1 font-semibold text-gray-900">Option 2 — request it here</h2>
           <p>Enter the email address of your Flixvault account. We delete the account and reply by email within 7 days.</p>
         </div>
+        <div>
+          <h2 className="mb-1 font-semibold text-gray-900">Delete only some data (keep your account)</h2>
+          <p>
+            In the app, open <b>Cloud</b>, open the menu of any file or folder → <b>Delete</b>. Channel creators can
+            delete their posts from their channel. Or email <b>info.flixvault@gmail.com</b> from your account email
+            saying what to delete — we delete it and reply within 7 days.
+          </p>
+        </div>
         <div className="rounded-xl bg-gray-50 p-4 text-sm">
           <p className="font-semibold text-gray-900">What is deleted</p>
           <p>Your profile, the files in your cloud storage, your channel memberships, and channels and posts you created.</p>

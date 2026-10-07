@@ -47,7 +47,12 @@ android {
     flavorDimensions += "store"
     productFlavors {
         create("direct") { dimension = "store" }
-        create("play") { dimension = "store" }
+        // Play Store app id (permanent once uploaded). Shared APKs keep
+        // com.cloudstorage.app so existing installs keep updating.
+        create("play") {
+            dimension = "store"
+            applicationId = "com.flixvault.app"
+        }
     }
 
     buildTypes {

@@ -5,7 +5,7 @@ import { NextResponse, type NextRequest } from "next/server";
 // visitors to /login.
 // Public pages (no login): the app download page used in ads, its click
 // tracker, the policies and the account-deletion / copyright-report forms.
-const PUBLIC = ["/d", "/api/click", "/privacy", "/terms", "/delete-account", "/report-content"];
+const PUBLIC = ["/home", "/site", "/d", "/api/click", "/privacy", "/terms", "/delete-account", "/report-content"];
 
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
@@ -36,6 +36,13 @@ export async function middleware(request: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  // Visitors (not logged in) see the public website at "/"; admins see the dashboard.
+  if (!user && request.nextUrl.pathname === "/") {
+    const url = request.nextUrl.clone();
+    url.pathname = "/home";
+    return NextResponse.rewrite(url);
+  }
 
   if (!user && !request.nextUrl.pathname.startsWith("/login")) {
     const url = request.nextUrl.clone();

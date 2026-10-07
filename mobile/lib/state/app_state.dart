@@ -11,6 +11,7 @@ import 'package:uuid/uuid.dart';
 import '../config.dart';
 import '../models.dart';
 import '../services/backend.dart';
+import '../services/blocks.dart';
 import '../services/payments.dart';
 
 /// App-wide state: the session (guest or logged in), install attribution,
@@ -53,6 +54,7 @@ class AppState extends ChangeNotifier {
     notifyListeners();
     try {
       _prefs = await SharedPreferences.getInstance();
+      await Blocks.load();
       installId = _prefs.getString('install_id') ?? const Uuid().v4();
       await _prefs.setString('install_id', installId);
 

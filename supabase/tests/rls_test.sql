@@ -923,5 +923,15 @@ select t.ok(public.admin_open_support_requests() = 2, 'owner sees open requests'
 select public.admin_close_support_request((select id from public.support_requests where kind = 'content_report'), 'done', 'removed');
 select t.ok(public.admin_open_support_requests() = 1, 'owner can close a request');
 reset role;
+
+-- In-app reports
+set role authenticated;
+select t.act_as('ads_user');
+select t.ok(public.report_content_in_app((select id from public.posts limit 1), null, 'Copyright') is not null, 'users can report a post in the app');
+select t.ok(public.report_content_in_app(null, (select id from public.channels limit 1), 'Spam', 'details') is not null, 'users can report a channel');
+select t.fails($$select public.report_content_in_app(null, null, 'Spam')$$, 'report needs a target');
+select t.fails($$select public.report_content_in_app((select id from public.posts limit 1), null, '')$$, 'report needs a reason');
+reset role;
+select t.ok((select count(*) from public.support_requests where name = 'In-app report') = 2, 'in-app reports reach the admin Requests');
 \echo
 \echo 'All tests passed.'

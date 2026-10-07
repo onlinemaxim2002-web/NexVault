@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
 import '../models.dart';
+import 'blocks.dart';
 
 SupabaseClient get sb => Supabase.instance.client;
 const _uuid = Uuid();
@@ -79,6 +80,7 @@ class Backend {
         .select(Post.select);
     return (rows as List)
         .map((e) => Post.fromJson(e as Map<String, dynamic>))
+        .where((p) => !Blocks.has(p.channelId))
         .toList();
   }
 
@@ -94,6 +96,7 @@ class Backend {
         .select(Post.select);
     return (rows as List)
         .map((e) => Post.fromJson(e as Map<String, dynamic>))
+        .where((p) => !Blocks.has(p.channelId))
         .toList();
   }
 
@@ -163,7 +166,7 @@ class Backend {
       _ => 'members_count',
     };
     final rows = await q.order(column, ascending: false).limit(100);
-    return rows.map(Channel.fromJson).toList();
+    return rows.map(Channel.fromJson).where((c) => !Blocks.has(c.id)).toList();
   }
 
   static Future<Channel?> channel(String id) async {
@@ -401,6 +404,24 @@ class Backend {
     await sb.rpc(
       'attach_play_token',
       params: {'p_order_id': orderId, 'p_token': token},
+    );
+  }
+
+  /// Report a post or channel to the Flixvault team.
+  static Future<void> reportContent({
+    String? postId,
+    String? channelId,
+    required String reason,
+    String? details,
+  }) async {
+    await sb.rpc(
+      'report_content_in_app',
+      params: {
+        'p_post_id': postId,
+        'p_channel_id': channelId,
+        'p_reason': reason,
+        'p_details': details,
+      },
     );
   }
 

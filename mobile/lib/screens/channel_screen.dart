@@ -7,6 +7,8 @@ import '../theme.dart';
 import '../widgets/channel_photo.dart';
 import '../widgets/common.dart';
 import '../widgets/gates.dart';
+import '../widgets/report.dart';
+import '../services/blocks.dart';
 import '../widgets/post_bubble.dart';
 import 'new_post_screen.dart';
 
@@ -110,8 +112,11 @@ class _ChannelScreenState extends State<ChannelScreen> {
   Widget build(BuildContext context) {
     final c = channel;
     final approved = c?.reviewStatus == 'approved';
+    final blocked = c != null && Blocks.has(c.id);
     final shown = posts == null
         ? null
+        : blocked
+        ? <Post>[]
         : (folderId == null
               ? posts!
               : posts!.where((p) => p.folderId == folderId).toList());
@@ -196,11 +201,34 @@ class _ChannelScreenState extends State<ChannelScreen> {
                 ),
               ],
             ),
-          if (joined && !isCreator)
+          if (!isCreator && c != null)
             PopupMenuButton<String>(
-              onSelected: (v) => v == 'leave' ? _leave() : null,
-              itemBuilder: (_) => const [
-                PopupMenuItem(value: 'leave', child: Text('Leave channel')),
+              onSelected: (v) async {
+                if (v == 'leave') {
+                  _leave();
+                } else if (v == 'report') {
+                  reportContent(context, channelId: c.id, title: c.name);
+                } else if (v == 'block') {
+                  await toggleBlockChannel(context, c.id, c.name);
+                  if (mounted) setState(() {});
+                }
+              },
+              itemBuilder: (_) => [
+                if (joined)
+                  const PopupMenuItem(
+                    value: 'leave',
+                    child: Text('Leave channel'),
+                  ),
+                const PopupMenuItem(
+                  value: 'report',
+                  child: Text('Report channel'),
+                ),
+                PopupMenuItem(
+                  value: 'block',
+                  child: Text(
+                    Blocks.has(c.id) ? 'Unblock channel' : 'Block channel',
+                  ),
+                ),
               ],
             ),
         ],
@@ -250,7 +278,9 @@ class _ChannelScreenState extends State<ChannelScreen> {
                       ? const Center(child: CircularProgressIndicator())
                       : shown.isEmpty
                       ? EmptyState(
-                          message: isCreator && approved
+                          message: blocked
+                              ? 'You blocked this channel. Use ⋮ → Unblock channel to see its posts again.'
+                              : isCreator && approved
                               ? 'Post your first video or image with the + button.'
                               : 'No posts yet.',
                           icon: Icons.video_library_outlined,

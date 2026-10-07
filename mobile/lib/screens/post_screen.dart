@@ -7,6 +7,7 @@ import '../services/backend.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 import '../widgets/gates.dart';
+import '../widgets/report.dart';
 import 'channel_screen.dart';
 
 /// Content page in the style of a streaming app: big poster with a play
@@ -155,6 +156,15 @@ class _PostScreenState extends State<PostScreen> {
                     icon: Icons.video_library_outlined,
                     label: 'Channel',
                     onTap: () => _openChannel(p),
+                  ),
+                  _ActionIcon(
+                    icon: Icons.flag_outlined,
+                    label: 'Report',
+                    onTap: () => reportContent(
+                      context,
+                      postId: p.id,
+                      title: 'this post',
+                    ),
                   ),
                   if (item != null)
                     _ActionIcon(

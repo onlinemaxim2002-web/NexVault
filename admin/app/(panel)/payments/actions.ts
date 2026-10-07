@@ -56,7 +56,7 @@ export async function savePlay(back: string, formData: FormData) {
   const { supabase } = await requireOwner();
   const pkg = String(formData.get("package_name") ?? "").trim();
   if (!/^[a-zA-Z][\w]*(\.[a-zA-Z][\w]*)+$/.test(pkg)) {
-    redirect(withMessage(back, "error", "Enter the app's package name, e.g. com.cloudstorage.app"));
+    redirect(withMessage(back, "error", "Enter the app's package name, e.g. com.flixvault.app"));
   }
   const { error } = await supabase
     .from("play_settings")

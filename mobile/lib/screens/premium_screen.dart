@@ -44,53 +44,10 @@ class _PremiumScreenState extends State<PremiumScreen> with ContentReload {
     }
   }
 
-  /// Server creates the order (amount from the plans table), then the UPI app
-  /// opens. The result screen shows only what the server decided.
+  /// Premium purchases are intentionally disabled in the free NexVault build.
   Future<void> _next() async {
-    final plan = plans?.firstWhere((p) => p.id == selected);
-    if (plan == null) return;
-    // Guests log in first and come back here with the plan still selected;
-    // the button then reads "Continue to payment".
-    if (app.isGuest) {
-      await ensureLoggedIn(
-        context,
-        reason: 'Please log in to buy ${plan.name}.',
-      );
-      return;
-    }
-    setState(() => sending = true);
-    try {
-      // Play Store build only: Google's information screen + report token.
-      String? playToken;
-      if (PlayBilling.isPlayBuild) {
-        try {
-          playToken = await PlayBilling.prepare();
-        } on PlayBillingException catch (e) {
-          if (mounted && !e.cancelled) _alert('Payment', e.toString());
-          return;
-        }
-      }
-      final order = await payments.createOrder(plan);
-      if (playToken != null) await Backend.attachPlayToken(order.id, playToken);
-      final payee = await payments.savedPayee();
-      try {
-        await payments.launch(order, upiId: payee!.$1, payee: payee.$2);
-      } on NoUpiAppException catch (e) {
-        if (mounted) _alert('No UPI app found', e.toString());
-        return;
-      } on UnsupportedError catch (e) {
-        // Web test builds: the order exists, but no UPI app can be opened.
-        if (mounted) {
-          showSnack(context, e.message ?? 'UPI is not available here.');
-        }
-      }
-      if (!mounted) return;
-      await _openStatus(order);
-    } catch (e) {
-      if (mounted) showSnack(context, friendlyError(e));
-    } finally {
-      if (mounted) setState(() => sending = false);
-    }
+    if (!mounted) return;
+    showSnack(context, 'Premium payments are disabled in this free version.');
   }
 
   Future<void> _openStatus(OpenOrder order) async {
@@ -282,15 +239,11 @@ class _PremiumScreenState extends State<PremiumScreen> with ContentReload {
               ),
               const SizedBox(height: 8),
               FilledButton(
-                onPressed: sending || selected == null ? null : _next,
+                onPressed: null,
                 child: Text(
-                  sending
-                      ? 'Opening UPI…'
-                      : selected == null
+                  selected == null
                       ? 'Select a plan'
-                      : app.isGuest
-                      ? 'Next'
-                      : 'Continue to payment',
+                      : 'Premium payments unavailable',
                 ),
               ),
             ],

@@ -3,7 +3,7 @@ import { reportContent } from "@/app/public-actions/support";
 import { PublicPage } from "@/components/public-page";
 import { SupportForm } from "@/components/support-form";
 
-export const metadata: Metadata = { title: "Flixvault — Report content / copyright", robots: { index: true } };
+export const metadata: Metadata = { title: "NexVault — Report content / copyright", robots: { index: true } };
 
 // Copyright (DMCA) and content reports.
 export default function ReportContentPage() {
@@ -11,7 +11,7 @@ export default function ReportContentPage() {
     <PublicPage title="Report content or copyright">
       <div className="mb-8 space-y-3 text-gray-700">
         <p>
-          All Flixvault channels are created by users and reviewed by our team. If you find content that breaks our
+          All NexVault channels are created by users and reviewed by our team. If you find content that breaks our
           Community Guidelines, or your copyrighted work was posted without permission, tell us below.
         </p>
         <p className="text-sm">

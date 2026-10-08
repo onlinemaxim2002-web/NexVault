@@ -19,7 +19,7 @@ export default async function LoginPage({
           <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-red-700 text-xl font-bold text-white">
             FV
           </div>
-          <h1 className="text-xl font-semibold">Flixvault Admin</h1>
+          <h1 className="text-xl font-semibold">NexVault Admin</h1>
           <p className="mt-1 text-sm text-gray-500">Sign in to manage content and users</p>
         </div>
         <form action={signIn} className="space-y-4 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">

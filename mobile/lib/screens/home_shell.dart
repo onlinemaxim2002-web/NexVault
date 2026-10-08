@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../config.dart';
-import '../services/payments.dart';
 import '../state/app_state.dart';
 import '../theme.dart';
 import 'channels_screen.dart';
@@ -9,7 +8,6 @@ import 'cloud_screen.dart';
 import 'explore_screen.dart';
 import 'feed_screen.dart';
 import 'login_screen.dart';
-import 'payment_status_screen.dart';
 import 'policy_screen.dart';
 import 'premium_screen.dart';
 
@@ -27,7 +25,6 @@ class _HomeShellState extends State<HomeShell> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await _maybeAskConsent();
-      await _resumePayment();
     });
     app.passwordRecovery.addListener(_onPasswordRecovery);
   }
@@ -43,17 +40,6 @@ class _HomeShellState extends State<HomeShell> {
     if (!app.passwordRecovery.value || !mounted) return;
     app.passwordRecovery.value = false;
     await showNewPasswordDialog(context);
-  }
-
-  /// The app was closed or killed while the UPI app was open: show the
-  /// payment's status again (the saved answer is being sent meanwhile).
-  Future<void> _resumePayment() async {
-    if (!await payments.hasUnfinishedPayment()) return;
-    final order = await payments.openOrder();
-    if (order == null || !mounted) return;
-    await Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => PaymentStatusScreen(order: order)),
-    );
   }
 
   Future<void> _maybeAskConsent() async {

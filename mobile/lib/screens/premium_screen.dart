@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../models.dart';
 import '../services/backend.dart';
-import '../services/payments.dart';
 import '../state/app_state.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
@@ -22,7 +21,6 @@ class _PremiumScreenState extends State<PremiumScreen> with ContentReload {
   List<Plan>? plans;
   String? selected;
   String? error;
-  bool sending = false;
 
   @override
   Future<void> reload() async {
@@ -37,12 +35,6 @@ class _PremiumScreenState extends State<PremiumScreen> with ContentReload {
     } catch (e) {
       if (mounted) setState(() => error = friendlyError(e));
     }
-  }
-
-  /// Premium purchases are intentionally disabled in the free NexVault build.
-  Future<void> _next() async {
-    if (!mounted) return;
-    showSnack(context, 'Premium payments are disabled in this free version.');
   }
 
   @override
@@ -90,7 +82,7 @@ class _PremiumScreenState extends State<PremiumScreen> with ContentReload {
                   icon: Icons.verified,
                   text:
                       'You have ${s!.planName}${s.planEndsAt != null ? ' until ${s.planEndsAt!.toLocal().toString().substring(0, 10)}' : ''}.',
-                )
+                ),
               if (s?.openRequest != null)
                 _Banner(
                   color: AppColors.warningBg,

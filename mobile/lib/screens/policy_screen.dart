@@ -14,9 +14,7 @@ const policies = {
         'app as a guest with an anonymous account.\n'
         '• Your content: files you store in your cloud, channels you create or join, and posts you upload.\n'
         '• Usage: what you watch or open in the app, and a random install ID that tells us how the app was '
-        'installed (for example from an ad). We do not collect your advertising ID, contacts or location.\n'
-        '• Payments: for a plan purchase we keep the order number, plan, amount, time and the UPI transaction '
-        'reference (UTR). Payments are made in your own UPI app; we never see your bank account, card or UPI PIN.\n\n'
+        'installed (for example from an ad). We do not collect your advertising ID, contacts or location.\n\n'
         'How we use it\n'
         'To run the app, keep your files private to you, show channel content to the right audience, activate '
         'your plan, prevent fraud, and improve the app.\n\n'
@@ -30,13 +28,12 @@ const policies = {
         'files (Supabase). Content you post in a channel is visible to that channel\'s audience once approved.\n\n'
         'Your choices\n'
         'You can change your name in your profile and delete your account at any time from Settings → Delete '
-        'account. This removes your profile, files and channel memberships. Payment records are kept as required '
-        'for accounting and fraud prevention.\n\n'
+        'account. This removes your profile, files and channel memberships.\n\n'
         'Children\n'
         'You must be 18 or older, or use ${Config.appName} with a parent\'s or guardian\'s consent.\n\n'
         'Contact\n'
-        'Questions or requests about your data: ${Config.supportEmail}. To ask for account deletion without '
-        'the app, use ${Config.website}/delete-account.',
+        'Questions or requests about your data: ${Config.supportEmail}. You can also request account deletion '
+        'by emailing ${Config.supportEmail}.',
   ),
   'terms': (
     'Terms & Conditions',
@@ -44,11 +41,8 @@ const policies = {
         '• Use the app lawfully. Upload only content you own or have the right to share.\n'
         '• Channels you create are reviewed before they become visible. You are responsible for what you post. '
         'We may hide or remove content, channels or accounts that break these terms or our Community Guidelines.\n'
-        '• Premium plans give access to premium content and cloud storage for the plan period shown on the '
-        'Premium page. Prices are in Indian rupees. A plan starts once your payment is confirmed and does not '
-        'renew automatically; buy again to extend it.\n'
-        '• Payments are made by UPI directly to ${Config.appName}. If a payment is reversed or found to be '
-        'invalid, the plan it activated can be cancelled.\n'
+        '• This free build does not offer in-app purchases or collect payments. Premium access, where available, '
+        'is controlled by the service and is not purchased inside this app.\n'
         '• Keep your login details private. You are responsible for activity on your account.\n'
         '• The service is provided as is. We may change features or these terms; we will ask you to agree again '
         'when the terms change.\n'
@@ -69,13 +63,10 @@ const policies = {
   ),
   'refund': (
     'Refund Policy',
-    'Plans are activated for the period shown on the Premium page as soon as your UPI payment is confirmed.\n\n'
-        '• If money left your account but your plan was not activated, contact us with your order number and '
-        'UTR; we will activate the plan or refund the payment after checking it.\n'
-        '• If you were charged twice for the same order, the extra payment is refunded.\n'
-        '• Other refund requests (for example after using a plan) are reviewed case by case.\n\n'
-        'Refunds are sent back to the UPI account the payment came from.\n\n'
-        'Contact: ${Config.supportEmail}',
+    '${Config.appName} is distributed as a free app and this build does not process in-app purchases or collect '
+        'payments. Therefore there are no app purchases to refund. If you believe you were charged by mistake in '
+        'connection with ${Config.appName}, contact ${Config.supportEmail} with the relevant details so we can '
+        'investigate.',
   ),
 };
 

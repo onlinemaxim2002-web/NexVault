@@ -3,13 +3,10 @@ import 'package:flutter/material.dart';
 import '../models.dart';
 import '../services/backend.dart';
 import '../services/payments.dart';
-import '../services/play_billing.dart';
 import '../state/app_state.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
-import '../widgets/gates.dart';
 import '../widgets/reload.dart';
-import 'payment_status_screen.dart';
 import 'profile_screen.dart';
 
 /// Premium plans. Also the Profile tab; the person icon opens the profile.
@@ -26,14 +23,12 @@ class _PremiumScreenState extends State<PremiumScreen> with ContentReload {
   String? selected;
   String? error;
   bool sending = false;
-  OpenOrder? openOrder;
 
   @override
   Future<void> reload() async {
     try {
       final list = await Backend.plans();
       await app.refreshStatus();
-      await _loadOpenOrder();
       if (!mounted) return;
       setState(() {
         plans = list;
@@ -48,35 +43,6 @@ class _PremiumScreenState extends State<PremiumScreen> with ContentReload {
   Future<void> _next() async {
     if (!mounted) return;
     showSnack(context, 'Premium payments are disabled in this free version.');
-  }
-
-  Future<void> _openStatus(OpenOrder order) async {
-    await Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => PaymentStatusScreen(order: order)),
-    );
-    await _loadOpenOrder();
-    await app.refreshStatus();
-  }
-
-  Future<void> _loadOpenOrder() async {
-    final o = await payments.openOrder();
-    if (mounted) setState(() => openOrder = o);
-  }
-
-  void _alert(String title, String text) {
-    showDialog<void>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: Text(title),
-        content: Text(text),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
   }
 
   @override
@@ -125,17 +91,7 @@ class _PremiumScreenState extends State<PremiumScreen> with ContentReload {
                   text:
                       'You have ${s!.planName}${s.planEndsAt != null ? ' until ${s.planEndsAt!.toLocal().toString().substring(0, 10)}' : ''}.',
                 )
-              else if (openOrder != null)
-                InkWell(
-                  onTap: () => _openStatus(openOrder!),
-                  child: _Banner(
-                    color: AppColors.warningBg,
-                    icon: Icons.hourglass_top,
-                    text:
-                        'Payment for ${openOrder!.planName} (order ${openOrder!.reference}) is being checked. Tap to see the status.',
-                  ),
-                )
-              else if (s?.openRequest != null)
+              if (s?.openRequest != null)
                 _Banner(
                   color: AppColors.warningBg,
                   icon: Icons.hourglass_top,

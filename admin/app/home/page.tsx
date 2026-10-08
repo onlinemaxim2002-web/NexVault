@@ -7,13 +7,13 @@ import { createPublicClient } from "@/lib/supabase/server";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Flixvault – 2 TB Cloud Storage & Creator Channels",
+  title: "NexVault – 2 TB Cloud Storage & Creator Channels",
   description:
     "Simple, secure and swift. Back up photos, videos and documents in the cloud, share them, and watch creator channels.",
   robots: { index: true },
 };
 
-const PLAY_URL = "https://play.google.com/store/apps/details?id=com.flixvault.app";
+const PLAY_URL = "https://play.google.com/store/apps/details?id=com.nexvault.play";
 
 type Plan = { code: string; name: string; duration_days: number; price_inr: number };
 
@@ -57,7 +57,7 @@ export default async function HomePage() {
           <Link href="/" className="flex items-center gap-2">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/site/icon.png" alt="" width={34} height={34} className="h-[34px] w-[34px] rounded-lg" />
-            <span className="text-2xl font-extrabold tracking-tight text-[#FF6A0D]">Flixvault</span>
+            <span className="text-2xl font-extrabold tracking-tight text-[#FF6A0D]">NexVault</span>
           </Link>
           <nav className="ml-auto hidden items-center gap-7 text-sm font-medium text-gray-600 md:flex">
             <a href="#backup" className="hover:text-gray-900">Features</a>
@@ -129,7 +129,7 @@ export default async function HomePage() {
       <section id="security" className="scroll-mt-20 bg-orange-50/60">
         <div className="mx-auto grid max-w-6xl items-center gap-10 px-5 py-20 md:grid-cols-2">
           <div className="order-2 md:order-1">
-            <h2 className="text-3xl font-bold md:text-4xl">Flixvault Protects Your Data</h2>
+            <h2 className="text-3xl font-bold md:text-4xl">NexVault Protects Your Data</h2>
             <p className="mt-4 text-lg leading-relaxed text-gray-600">
               We prioritise your privacy and data security. Every connection is encrypted, your cloud files are private to
               your account, and you stay in control — delete your account and data any time.
@@ -160,7 +160,7 @@ export default async function HomePage() {
       <section className="mx-auto max-w-6xl px-5 py-20">
         <div className="grid items-center gap-10 md:grid-cols-2">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/site/1-explore.jpg" alt="Flixvault channels" className="mx-auto w-56 rounded-[2rem] border-[6px] border-gray-900 shadow-2xl" />
+          <img src="/site/1-explore.jpg" alt="NexVault channels" className="mx-auto w-56 rounded-[2rem] border-[6px] border-gray-900 shadow-2xl" />
           <div>
             <h2 className="text-3xl font-bold md:text-4xl">Channels &amp; Creator Content</h2>
             <p className="mt-4 text-lg leading-relaxed text-gray-600">
@@ -180,7 +180,7 @@ export default async function HomePage() {
       {/* Plans */}
       <section id="plans" className="scroll-mt-20 bg-gray-50">
         <div className="mx-auto max-w-5xl px-5 py-20">
-          <h2 className="text-center text-3xl font-bold md:text-4xl">Choose Your Best Flixvault Plan</h2>
+          <h2 className="text-center text-3xl font-bold md:text-4xl">Choose Your Best NexVault Plan</h2>
           <p className="mx-auto mt-3 max-w-xl text-center text-gray-600">Unlock premium privileges and supercharge your cloud storage.</p>
           <div className="mt-10 grid gap-6 md:grid-cols-2">
             <div className="rounded-2xl border border-gray-200 bg-white p-7 shadow-sm">
@@ -209,7 +209,7 @@ export default async function HomePage() {
                   </div>
                 ))}
               </div>
-              <a href={PLAY_URL} className="mt-5 block rounded-lg bg-[#FF7A1A] py-3 text-center font-semibold text-white">Get Flixvault to subscribe</a>
+              <a href={PLAY_URL} className="mt-5 block rounded-lg bg-[#FF7A1A] py-3 text-center font-semibold text-white">Get NexVault to subscribe</a>
               <p className="mt-2 text-center text-xs text-gray-500">Buy in the app with any UPI app. Plans don&apos;t renew automatically.</p>
             </div>
           </div>
@@ -221,7 +221,7 @@ export default async function HomePage() {
         <div className="mx-auto grid max-w-6xl gap-10 px-5 py-12 text-sm md:grid-cols-3">
           <div>
             <p className="mb-3 text-base font-semibold text-white">About</p>
-            <p className="italic text-white/90">Flixvault</p>
+            <p className="italic text-white/90">NexVault</p>
             <p className="mt-1"><span className="underline">Email</span>: <a href={`mailto:${SUPPORT_EMAIL}`} className="hover:text-white">{SUPPORT_EMAIL}</a></p>
             <p className="mt-1">Secure cloud storage and creator channels.</p>
           </div>
@@ -243,7 +243,7 @@ export default async function HomePage() {
           </div>
         </div>
         <p className="border-t border-white/10 py-5 text-center text-xs text-white/50">
-          Copyright ©{new Date().getFullYear()} Flixvault. All Rights Reserved.
+          Copyright ©{new Date().getFullYear()} NexVault. All Rights Reserved.
         </p>
       </footer>
     </div>

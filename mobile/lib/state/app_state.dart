@@ -12,7 +12,6 @@ import '../config.dart';
 import '../models.dart';
 import '../services/backend.dart';
 import '../services/blocks.dart';
-import '../services/payments.dart';
 
 /// App-wide state: the session (guest or logged in), install attribution,
 /// consent, and the user's status (premium, source, storage).
@@ -77,8 +76,6 @@ class AppState extends ChangeNotifier {
         }
       });
       ready = true;
-      // Saved UPI answers (also from before a crash/kill) are sent now.
-      payments.start();
     } catch (e) {
       startupError = friendlyError(e);
     }

@@ -119,7 +119,7 @@ export default async function MetaPage({
           <Step done={!!settings.pixel_id}>Pixel ID saved</Step>
           <Step done={!!settings.access_token}>Conversions API access token saved</Step>
           <Step done={settings.enabled}>Tracking turned on</Step>
-          <Step done={!!settings.apk_url}>APK uploaded for the download page (use <b>Flixvault-ads.apk</b>)</Step>
+          <Step done={!!settings.apk_url}>APK uploaded for the download page (use <b>NexVault-ads.apk</b>)</Step>
           <Step done={settings.action_source === "website"}>
             Event source set to <b>Download page (website)</b> — needed for Sales campaigns that optimise for purchase value
           </Step>
@@ -179,7 +179,7 @@ export default async function MetaPage({
             </div>
             <label className="text-sm font-medium">
               Download page title
-              <Input name="page_title" defaultValue={settings.page_title ?? "Flixvault"} maxLength={60} />
+              <Input name="page_title" defaultValue={settings.page_title ?? "NexVault"} maxLength={60} />
             </label>
             <label className="text-sm font-medium">
               Download page text

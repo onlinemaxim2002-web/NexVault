@@ -13,7 +13,7 @@
 -- ---------------------------------------------------------------------------
 alter table public.meta_settings
   add column if not exists apk_url text,
-  add column if not exists page_title text not null default 'Flixvault',
+  add column if not exists page_title text not null default 'NexVault',
   add column if not exists page_subtitle text not null
     default 'Premium videos, trailers and 2 TB cloud storage — all in one app.';
 

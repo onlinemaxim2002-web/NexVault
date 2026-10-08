@@ -17,7 +17,7 @@ create index if not exists payment_orders_play_report_idx on public.payment_orde
 
 create table if not exists public.play_settings (
   id            int primary key default 1 check (id = 1),
-  package_name  text not null default 'com.flixvault.app',
+  package_name  text not null default 'com.nexvault.play',
   enabled       boolean not null default false,
   function_url  text,
   last_run_at   timestamptz,

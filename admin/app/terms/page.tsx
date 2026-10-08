@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { PublicPage } from "@/components/public-page";
 import { POLICIES } from "@/lib/policies";
 
-export const metadata: Metadata = { title: "Flixvault — Terms & Conditions", robots: { index: true } };
+export const metadata: Metadata = { title: "NexVault — Terms & Conditions", robots: { index: true } };
 
 export default function TermsPage() {
   const order = ["terms", "community", "refund"];

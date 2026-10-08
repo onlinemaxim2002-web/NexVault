@@ -35,7 +35,7 @@ export default async function PanelLayout({ children }: { children: React.ReactN
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-700 text-sm font-bold text-white">
             FV
           </div>
-          <span className="font-semibold">Flixvault</span>
+          <span className="font-semibold">NexVault</span>
         </div>
         <Nav items={items} />
         <div className="mt-4 border-t border-gray-200 pt-4 md:absolute md:bottom-4 md:left-4 md:right-4">

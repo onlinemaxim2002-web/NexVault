@@ -3,26 +3,26 @@ import { requestDeletion } from "@/app/public-actions/support";
 import { PublicPage } from "@/components/public-page";
 import { SupportForm } from "@/components/support-form";
 
-export const metadata: Metadata = { title: "Flixvault — Delete your account", robots: { index: true } };
+export const metadata: Metadata = { title: "NexVault — Delete your account", robots: { index: true } };
 
 // Account deletion page required by Google Play (Data safety → delete account URL).
 export default function DeleteAccountPage() {
   return (
-    <PublicPage title="Delete your Flixvault account">
+    <PublicPage title="Delete your NexVault account">
       <div className="mb-8 space-y-4 text-gray-700">
         <div>
           <h2 className="mb-1 font-semibold text-gray-900">Option 1 — in the app (instant)</h2>
-          <p>Open Flixvault → <b>Profile</b> → <b>⚙ Settings</b> → <b>Delete Account</b> → confirm.</p>
+          <p>Open NexVault → <b>Profile</b> → <b>⚙ Settings</b> → <b>Delete Account</b> → confirm.</p>
         </div>
         <div>
           <h2 className="mb-1 font-semibold text-gray-900">Option 2 — request it here</h2>
-          <p>Enter the email address of your Flixvault account. We delete the account and reply by email within 7 days.</p>
+          <p>Enter the email address of your NexVault account. We delete the account and reply by email within 7 days.</p>
         </div>
         <div>
           <h2 className="mb-1 font-semibold text-gray-900">Delete only some data (keep your account)</h2>
           <p>
             In the app, open <b>Cloud</b>, open the menu of any file or folder → <b>Delete</b>. Channel creators can
-            delete their posts from their channel. Or email <b>info.flixvault@gmail.com</b> from your account email
+            delete their posts from their channel. Or email <b>help.nexvault@gmail.com</b> from your account email
             saying what to delete — we delete it and reply within 7 days.
           </p>
         </div>
@@ -39,7 +39,7 @@ export default function DeleteAccountPage() {
           { name: "email", label: "Account email", type: "email", required: true, placeholder: "you@gmail.com" },
           { name: "reason", label: "Reason (optional)", textarea: true },
         ]}
-        confirm="I want my Flixvault account and its data to be permanently deleted."
+        confirm="I want my NexVault account and its data to be permanently deleted."
         submit="Request account deletion"
       />
     </PublicPage>

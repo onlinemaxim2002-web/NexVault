@@ -23,7 +23,7 @@ create table public.meta_settings (
   test_event_code  text,
   action_source    text not null default 'app' check (action_source in ('app', 'website')),
   website_url      text,
-  app_package      text not null default 'com.cloudstorage.app',
+  app_package      text not null default 'com.nexvault.app',
   enabled          boolean not null default false,
   updated_at       timestamptz not null default now()
 );

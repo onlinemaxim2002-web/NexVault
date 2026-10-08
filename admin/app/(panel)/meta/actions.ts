@@ -34,7 +34,7 @@ export async function saveMeta(formData: FormData) {
     test_event_code: testCode || null,
     action_source: source === "app" ? "app" : "website",
     apk_url: apkUrl || null,
-    page_title: title || "Flixvault",
+    page_title: title || "NexVault",
     page_subtitle: subtitle || "Premium videos, trailers and 2 TB cloud storage — all in one app.",
     enabled,
     updated_at: new Date().toISOString(),

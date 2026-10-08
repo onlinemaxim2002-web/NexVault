@@ -2,13 +2,13 @@
 class Config {
   static const supabaseUrl = String.fromEnvironment(
     'SUPABASE_URL',
-    defaultValue: 'https://lcfiohprmviolzwglkhm.supabase.co',
+    defaultValue: 'https://zasnnhnoyattlyioaarc.supabase.co',
   );
 
   // Publishable key: safe to ship in the app, access is enforced by the database.
   static const supabaseKey = String.fromEnvironment(
     'SUPABASE_KEY',
-    defaultValue: 'sb_publishable_KZUCGz_lwtWOp20INvdP9Q_fw6a1Yjm',
+    defaultValue: 'sb_publishable_IBClDZby5ZvfkUHYTOKoog_pJXYtmD4',
   );
 
   // Set only in the ads APK build, e.g.
@@ -16,9 +16,9 @@ class Config {
   static const apkReferrer = String.fromEnvironment('APK_REFERRER');
 
   static const policyVersion = 'v2';
-  static const appName = 'Flixvault';
-  static const supportEmail = 'info.flixvault@gmail.com';
-  static const website = 'https://flixvault-app.vercel.app';
+  static const appName = 'NexVault';
+  static const supportEmail = 'help.nexvault@gmail.com';
+  static const website = '';
   static const maxUploadBytes = 50 * 1024 * 1024; // Supabase free plan limit
 
   static String publicUrl(String key) =>

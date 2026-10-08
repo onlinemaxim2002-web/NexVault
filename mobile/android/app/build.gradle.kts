@@ -15,7 +15,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.cloudstorage.app"
+        applicationId = "com.nexvault.app"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
@@ -48,10 +48,10 @@ android {
     productFlavors {
         create("direct") { dimension = "store" }
         // Play Store app id (permanent once uploaded). Shared APKs keep
-        // com.cloudstorage.app so existing installs keep updating.
+        // com.nexvault.app so existing installs keep updating.
         create("play") {
             dimension = "store"
-            applicationId = "com.flixvault.app"
+            applicationId = "com.nexvault.play"
         }
     }
 

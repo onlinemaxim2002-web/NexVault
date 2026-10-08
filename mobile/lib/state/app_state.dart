@@ -37,7 +37,7 @@ class AppState extends ChangeNotifier {
   final passwordRecovery = ValueNotifier<bool>(false);
 
   /// Deep link that brings Google login and password-reset links back to the app.
-  static const authRedirect = 'com.cloudstorage.app://login-callback';
+  static const authRedirect = 'com.nexvault.app://login-callback';
 
   /// Selected bottom tab: 0 Cloud, 1 Feed, 2 Explore, 3 Channels, 4 Profile.
   final tab = ValueNotifier<int>(2);

@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
 
-import '../models.dart';
-import '../services/backend.dart';
 import '../state/app_state.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
-import '../widgets/reload.dart';
 import 'profile_screen.dart';
 
-/// Premium plans. Also the Profile tab; the person icon opens the profile.
+/// NexVault is free for everyone. This screen explains the included 15 GB quota.
 class PremiumScreen extends StatefulWidget {
   final bool standalone;
   const PremiumScreen({super.key, this.standalone = false});
@@ -17,24 +14,11 @@ class PremiumScreen extends StatefulWidget {
   State<PremiumScreen> createState() => _PremiumScreenState();
 }
 
-class _PremiumScreenState extends State<PremiumScreen> with ContentReload {
-  List<Plan>? plans;
-  String? selected;
-  String? error;
-
+class _PremiumScreenState extends State<PremiumScreen> {
   @override
-  Future<void> reload() async {
-    try {
-      final list = await Backend.plans();
-      await app.refreshStatus();
-      if (!mounted) return;
-      setState(() {
-        plans = list;
-        error = null;
-      });
-    } catch (e) {
-      if (mounted) setState(() => error = friendlyError(e));
-    }
+  void initState() {
+    super.initState();
+    app.refreshStatus();
   }
 
   @override
@@ -46,7 +30,7 @@ class _PremiumScreenState extends State<PremiumScreen> with ContentReload {
           child: SizedBox.expand(),
         ),
         automaticallyImplyLeading: widget.standalone,
-        title: const Text('Premium'),
+        title: const Text('Free Cloud Storage'),
         actions: [
           IconButton(
             icon: const Icon(Icons.account_circle_outlined, size: 32),
@@ -59,37 +43,19 @@ class _PremiumScreenState extends State<PremiumScreen> with ContentReload {
       body: ListenableBuilder(
         listenable: app,
         builder: (context, _) {
-          if (error != null && plans == null) {
-            return ErrorRetry(message: error!, onRetry: reload);
-          }
-          if (plans == null) {
+          final status = app.status;
+          if (status == null) {
             return const Center(child: CircularProgressIndicator());
           }
-          final s = app.status;
-          final perks = plans!.isNotEmpty && plans!.first.perks.isNotEmpty
-              ? plans!.first.perks
-              : const [
-                  'Ad-Free Experience',
-                  'Access 2 TB Cloud Storage',
-                  'Fast Upload & Download Speed',
-                ];
+          const defaultQuota = 15 * 1024 * 1024 * 1024;
+          final quota = status.quotaBytes > 0 ? status.quotaBytes : defaultQuota;
+          final used = status.usedBytes;
+          final fraction = (used / quota).clamp(0.0, 1.0);
           return ListView(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(20),
             children: [
-              if (s?.isPremium == true)
-                _Banner(
-                  color: AppColors.successBg,
-                  icon: Icons.verified,
-                  text:
-                      'You have ${s!.planName}${s.planEndsAt != null ? ' until ${s.planEndsAt!.toLocal().toString().substring(0, 10)}' : ''}.',
-                ),
-              if (s?.openRequest != null)
-                _Banner(
-                  color: AppColors.warningBg,
-                  icon: Icons.hourglass_top,
-                  text: 'Your ${s!.openRequest} request is being processed.',
-                ),
               Container(
+                padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
                   gradient: AppColors.gradient,
                   borderRadius: BorderRadius.circular(24),
@@ -101,98 +67,74 @@ class _PremiumScreenState extends State<PremiumScreen> with ContentReload {
                     ),
                   ],
                 ),
-                padding: const EdgeInsets.all(20),
-                child: Column(
+                child: const Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 5,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.gold,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.workspace_premium,
-                            size: 18,
-                            color: AppColors.ink,
-                          ),
-                          SizedBox(width: 6),
-                          Text(
-                            'Premium',
-                            style: TextStyle(
-                              color: AppColors.ink,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 15,
-                            ),
-                          ),
-                        ],
+                    Icon(Icons.cloud_done_rounded, size: 44, color: Colors.white),
+                    SizedBox(height: 18),
+                    Text(
+                      '15 GB Free Cloud Storage',
+                      style: TextStyle(
+                        fontSize: 25,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
                       ),
                     ),
-                    const SizedBox(height: 14),
-                    for (final perk in perks)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 5),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 26,
-                              height: 26,
-                              decoration: const BoxDecoration(
-                                color: Color(0x33FFFFFF),
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.check,
-                                color: Colors.white,
-                                size: 18,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                perk,
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ],
+                    SizedBox(height: 8),
+                    Text(
+                      'Your storage is included at no cost. No plans, subscriptions, or in-app payments.',
+                      style: TextStyle(fontSize: 15, color: Colors.white),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(18),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Your storage',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        '${formatBytes(used)} used of ${formatBytes(quota)}',
+                        style: const TextStyle(fontSize: 15, color: AppColors.muted),
+                      ),
+                      const SizedBox(height: 14),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: LinearProgressIndicator(
+                          value: fraction,
+                          minHeight: 9,
+                          color: AppColors.primary,
+                          backgroundColor: AppColors.surfaceHigh,
                         ),
                       ),
-                  ],
+                      const SizedBox(height: 8),
+                      Text('${(fraction * 100).round()}% used'),
+                    ],
+                  ),
                 ),
               ),
-              const SizedBox(height: 16),
-              RadioGroup<String>(
-                groupValue: selected,
-                onChanged: (v) => setState(() => selected = v),
-                child: Column(
-                  children: [
-                    for (final p in plans!)
-                      _PlanCard(
-                        plan: p,
-                        selected: p.id == selected,
-                        onTap: () => setState(() => selected = p.id),
-                      ),
-                  ],
-                ),
+              const SizedBox(height: 12),
+              const _FeatureTile(
+                icon: Icons.folder_open_rounded,
+                title: 'Your files and folders',
+                subtitle: 'Upload, preview, organise, rename, and delete your files.',
               ),
-              const SizedBox(height: 8),
-              FilledButton(
-                onPressed: null,
-                child: Text(
-                  selected == null
-                      ? 'Select a plan'
-                      : 'Premium payments unavailable',
-                ),
+              const _FeatureTile(
+                icon: Icons.download_rounded,
+                title: 'Downloads included',
+                subtitle: 'Save your own cloud files to your device without a subscription.',
+              ),
+              const _FeatureTile(
+                icon: Icons.play_circle_outline_rounded,
+                title: 'All app features are free',
+                subtitle: 'No paid plans or in-app purchases are offered in NexVault.',
               ),
             ],
           );
@@ -202,107 +144,24 @@ class _PremiumScreenState extends State<PremiumScreen> with ContentReload {
   }
 }
 
-class _PlanCard extends StatelessWidget {
-  final Plan plan;
-  final bool selected;
-  final VoidCallback onTap;
-  const _PlanCard({
-    required this.plan,
-    required this.selected,
-    required this.onTap,
+class _FeatureTile extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+
+  const _FeatureTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(18),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
-          decoration: BoxDecoration(
-            color: selected ? const Color(0xFF261A10) : AppColors.surface,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(
-              color: selected ? AppColors.primary : AppColors.border,
-              width: selected ? 2 : 1.2,
-            ),
-            boxShadow: selected
-                ? const [
-                    BoxShadow(
-                      color: Color(0x26FF7A1A),
-                      blurRadius: 16,
-                      offset: Offset(0, 6),
-                    ),
-                  ]
-                : null,
-          ),
-          child: Row(
-            children: [
-              Radio<String>(value: plan.id, activeColor: AppColors.primary),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      plan.name,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    Text(
-                      plan.durationLabel,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        color: AppColors.muted,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(right: 12),
-                child: Text(
-                  '₹ ${plan.priceInr}',
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.primary,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _Banner extends StatelessWidget {
-  final Color color;
-  final IconData icon;
-  final String text;
-  const _Banner({required this.color, required this.icon, required this.text});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          Icon(icon),
-          const SizedBox(width: 10),
-          Expanded(child: Text(text, style: const TextStyle(fontSize: 15))),
-        ],
+    return Card(
+      child: ListTile(
+        leading: Icon(icon, color: AppColors.primary, size: 28),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
+        subtitle: Text(subtitle),
       ),
     );
   }

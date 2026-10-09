@@ -82,7 +82,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
                     ),
                     SizedBox(height: 8),
                     Text(
-                      'Your storage is included at no cost. No plans, subscriptions, or in-app payments.',
+                      'Securely store your files with NexVault. Your 15 GB quota is included for free—no plans, subscriptions, or in-app payments.',
                       style: TextStyle(fontSize: 15, color: Colors.white),
                     ),
                   ],
@@ -123,18 +123,18 @@ class _PremiumScreenState extends State<PremiumScreen> {
               const SizedBox(height: 12),
               const _FeatureTile(
                 icon: Icons.folder_open_rounded,
-                title: 'Your files and folders',
+                title: 'Files and folders',
                 subtitle: 'Upload, preview, organise, rename, and delete your files.',
               ),
               const _FeatureTile(
                 icon: Icons.download_rounded,
                 title: 'Downloads included',
-                subtitle: 'Save your own cloud files to your device without a subscription.',
+                subtitle: 'Download your own cloud files without a subscription.',
               ),
               const _FeatureTile(
-                icon: Icons.play_circle_outline_rounded,
-                title: 'All app features are free',
-                subtitle: 'No paid plans or in-app purchases are offered in NexVault.',
+                icon: Icons.all_inclusive_rounded,
+                title: 'Every feature is free',
+                subtitle: 'NexVault has no paid plans or in-app purchases.',
               ),
             ],
           );

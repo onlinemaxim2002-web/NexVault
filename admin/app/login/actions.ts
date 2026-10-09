@@ -3,20 +3,23 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
-// Explicit allowlist for the verified NexVault owner/admin account.
+// Exact Supabase Auth identity verified against the production database.
 const ADMIN_EMAIL = "perfumwala@gmail.com";
+const ADMIN_USER_ID = "efc36630-092b-444b-8ac6-319f838eae76";
 
 export async function signIn(formData: FormData) {
-  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
   const supabase = await createClient();
 
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
   if (error || !data.user) redirect("/login?error=invalid");
 
-  // Allow only the exact verified admin email, using the email returned by
-  // Supabase Auth (not the untrusted form input).
-  if ((data.user.email ?? "").trim().toLowerCase() !== ADMIN_EMAIL) {
+  const authenticatedEmail = (data.user.email ?? "").trim().toLowerCase();
+  const isAllowedAdmin =
+    data.user.id === ADMIN_USER_ID || authenticatedEmail === ADMIN_EMAIL;
+
+  if (!isAllowedAdmin) {
     await supabase.auth.signOut();
     redirect("/login?error=not_admin");
   }

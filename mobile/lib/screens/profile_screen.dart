@@ -331,10 +331,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Row(
                 children: [
                   Icon(
-                    s.isPremium
+                    s.isPremium && s.planName != 'Free'
                         ? Icons.workspace_premium
                         : Icons.person_outline,
-                    color: s.isPremium ? AppColors.gold : AppColors.muted,
+                    color: s.isPremium && s.planName != 'Free'
+                        ? AppColors.gold
+                        : AppColors.muted,
                   ),
                   const SizedBox(width: 8),
                   Text(

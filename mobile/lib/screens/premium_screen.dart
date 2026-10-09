@@ -50,7 +50,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
           const defaultQuota = 15 * 1024 * 1024 * 1024;
           final quota = status.quotaBytes > 0 ? status.quotaBytes : defaultQuota;
           final used = status.usedBytes;
-          final fraction = (used / quota).clamp(0.0, 1.0);
+          final fraction = (used / quota).clamp(0.0, 1.0).toDouble();
           return ListView(
             padding: const EdgeInsets.all(20),
             children: [

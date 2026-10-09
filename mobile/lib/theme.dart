@@ -1,60 +1,60 @@
 import 'package:flutter/material.dart';
 
-/// Design system: dark, cinematic, one violet accent, amber for premium.
+/// NexVault visual system: premium midnight navy with electric-blue and teal accents.
 class AppColors {
-  // Accent
-  static const primary = Color(0xFFFF7A1A);
-  static const primaryDark = Color(0xFFE25A00);
-  static const accent = Color(0xFFFFB347);
-  static const gold = Color(0xFFFFC24D);
+  // Brand accents
+  static const primary = Color(0xFF5687FF);
+  static const primaryDark = Color(0xFF3569E8);
+  static const accent = Color(0xFF39D6C5);
+  static const gold = Color(0xFFFFC857); // retained for premium-content labels
 
   // Surfaces (darkest → lightest)
-  static const background = Color(0xFF0B0B0D);
-  static const surface = Color(0xFF16161A);
-  static const surfaceHigh = Color(0xFF1F1F25);
-  static const bubble = Color(0xFF1F1F25); // raised cards / chips
-  static const border = Color(0xFF2A2A31);
+  static const background = Color(0xFF080D18);
+  static const surface = Color(0xFF101827);
+  static const surfaceHigh = Color(0xFF182338);
+  static const bubble = Color(0xFF182338);
+  static const border = Color(0xFF26344B);
 
   // Text
-  static const text = Color(0xFFF5F5F7);
-  static const muted = Color(0xFF9B9BA5);
-  static const ink = Color(0xFF1A1005); // text on gold/orange
+  static const text = Color(0xFFF4F7FC);
+  static const muted = Color(0xFF9BAAC0);
+  static const ink = Color(0xFF071225);
 
   // Status
-  static const success = Color(0xFF34D399);
-  static const warning = Color(0xFFFFB347);
-  static const danger = Color(0xFFFF5A5F);
-  static const successBg = Color(0xFF10261D);
-  static const warningBg = Color(0xFF2A1F10);
-  static const dangerBg = Color(0xFF2B1414);
+  static const success = Color(0xFF39D6A0);
+  static const warning = Color(0xFFFFC857);
+  static const danger = Color(0xFFFF6878);
+  static const successBg = Color(0xFF102A28);
+  static const warningBg = Color(0xFF2B2618);
+  static const dangerBg = Color(0xFF301A27);
 
-  /// Hero areas (premium card, splash, avatars, CTAs).
+  /// Brand gradient for splash screens, key actions, and visual highlights.
   static const gradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFFFF5F1F), Color(0xFFFF8A00), Color(0xFFFFB347)],
+    colors: [Color(0xFF3569E8), Color(0xFF5687FF), Color(0xFF39D6C5)],
   );
 
-  /// Top bars: near-black with a faint warm glow in the corner.
+  /// App bars use a restrained midnight-blue glow.
   static const Gradient barGradient = RadialGradient(
     center: Alignment(1.1, -2.2),
     radius: 2.4,
-    colors: [Color(0xFF3A1B08), Color(0xFF0B0B0D)],
+    colors: [Color(0xFF1B3564), Color(0xFF080D18)],
     stops: [0, 0.75],
   );
 
-  /// Subtle warm-dark fill for placeholders and soft cards.
+  /// Subtle cool-toned fill for placeholders and raised surfaces.
   static const softGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFF221A14), Color(0xFF16161A)],
+    colors: [Color(0xFF1B2940), Color(0xFF101827)],
   );
 
-  /// Warm glow behind headers (top-right orange haze).
+  /// Low-contrast blue glow behind headers.
   static const glow = RadialGradient(
     center: Alignment(0.9, -1.2),
     radius: 1.3,
-    colors: [Color(0x55FF6A00), Color(0x00FF6A00)],
+    colors: [Color(0x554F83FF), Color(0x004F83FF)],
   );
 
   /// Bottom fade over thumbnails so overlay text stays readable.
@@ -75,7 +75,7 @@ class Gap {
 }
 
 class Radii {
-  static const card = 16.0;
+  static const card = 18.0;
   static const button = 14.0;
   static const chip = 20.0;
 }
@@ -114,7 +114,7 @@ ThemeData buildTheme() {
           headlineSmall: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.w700,
-            letterSpacing: -0.2,
+            letterSpacing: -0.3,
           ),
           titleLarge: TextStyle(fontSize: 19, fontWeight: FontWeight.w700),
           titleMedium: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
@@ -154,12 +154,12 @@ ThemeData buildTheme() {
       elevation: 0,
       scrolledUnderElevation: 0,
       centerTitle: false,
-      toolbarHeight: 52,
+      toolbarHeight: 56,
       titleTextStyle: TextStyle(
         fontFamily: 'Poppins',
         fontSize: 20,
         fontWeight: FontWeight.w700,
-        letterSpacing: -0.2,
+        letterSpacing: -0.3,
         color: AppColors.text,
       ),
     ),
@@ -183,6 +183,7 @@ ThemeData buildTheme() {
       color: AppColors.surface,
       elevation: 0,
       margin: EdgeInsets.zero,
+      surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(Radii.card),
         side: const BorderSide(color: AppColors.border),
@@ -191,6 +192,7 @@ ThemeData buildTheme() {
     listTileTheme: const ListTileThemeData(
       iconColor: AppColors.muted,
       textColor: AppColors.text,
+      minVerticalPadding: 8,
     ),
     iconTheme: const IconThemeData(color: AppColors.text),
     filledButtonTheme: FilledButtonThemeData(
@@ -199,7 +201,7 @@ ThemeData buildTheme() {
         foregroundColor: Colors.white,
         disabledBackgroundColor: AppColors.surfaceHigh,
         disabledForegroundColor: AppColors.muted,
-        minimumSize: const Size(0, 48),
+        minimumSize: const Size(0, 50),
         elevation: 0,
         shape: rounded,
         textStyle: const TextStyle(
@@ -219,7 +221,7 @@ ThemeData buildTheme() {
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
         foregroundColor: AppColors.text,
-        minimumSize: const Size(0, 48),
+        minimumSize: const Size(0, 50),
         side: const BorderSide(color: AppColors.border, width: 1.2),
         shape: rounded,
         textStyle: const TextStyle(
@@ -250,7 +252,7 @@ ThemeData buildTheme() {
     floatingActionButtonTheme: FloatingActionButtonThemeData(
       backgroundColor: AppColors.primary,
       foregroundColor: Colors.white,
-      elevation: 4,
+      elevation: 3,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
     ),
     inputDecorationTheme: InputDecorationTheme(
@@ -339,8 +341,7 @@ ThemeData buildTheme() {
     ),
     switchTheme: SwitchThemeData(
       thumbColor: WidgetStateProperty.resolveWith(
-        (s) =>
-            s.contains(WidgetState.selected) ? Colors.white : AppColors.muted,
+        (s) => s.contains(WidgetState.selected) ? Colors.white : AppColors.muted,
       ),
       trackColor: WidgetStateProperty.resolveWith(
         (s) => s.contains(WidgetState.selected)
@@ -364,12 +365,12 @@ ThemeData buildTheme() {
     ),
     dividerTheme: const DividerThemeData(color: AppColors.border, thickness: 1),
     navigationBarTheme: NavigationBarThemeData(
-      backgroundColor: const Color(0xFF111114),
+      backgroundColor: const Color(0xFF0D1422),
       surfaceTintColor: Colors.transparent,
       elevation: 0,
-      height: 60,
-      indicatorColor: Colors.transparent,
-      overlayColor: const WidgetStatePropertyAll(Color(0x14FF7A1A)),
+      height: 66,
+      indicatorColor: const Color(0x263D75F5),
+      overlayColor: const WidgetStatePropertyAll(Color(0x164F87FF)),
       labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
       labelTextStyle: WidgetStateProperty.resolveWith(
         (s) => TextStyle(

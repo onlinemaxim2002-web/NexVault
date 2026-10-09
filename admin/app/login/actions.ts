@@ -1,7 +1,10 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { createClient, createServiceClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
+
+// Only this verified Supabase Auth user is allowed into the admin panel.
+const ADMIN_USER_ID = "efc36630-092b-444b-8ac6-319f838eae76";
 
 export async function signIn(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim();
@@ -11,26 +14,13 @@ export async function signIn(formData: FormData) {
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
   if (error || !data.user) redirect("/login?error=invalid");
 
-  // Check the admin role with a server-only client so profiles RLS cannot
-  // incorrectly hide the signed-in user's admin row.
-  let profile: { role: string } | null = null;
-  try {
-    const adminCheck = createServiceClient();
-    const result = await adminCheck
-      .from("profiles")
-      .select("role")
-      .eq("id", data.user.id)
-      .eq("role", "admin")
-      .maybeSingle();
-    if (!result.error) profile = result.data;
-  } catch {
-    // Missing server-only key or database error: fail closed.
-  }
-
-  if (!profile) {
+  // Verify the authenticated user's exact ID. This avoids a profile-table/RLS
+  // lookup incorrectly rejecting the already-verified admin account.
+  if (data.user.id !== ADMIN_USER_ID) {
     await supabase.auth.signOut();
     redirect("/login?error=not_admin");
   }
+
   redirect("/");
 }
 

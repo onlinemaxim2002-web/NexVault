@@ -11,12 +11,15 @@ export async function signIn(formData: FormData) {
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
   if (error || !data.user) redirect("/login?error=invalid");
 
-  const { data: admin } = await supabase
-    .from("admins")
+  // The Supabase schema stores admin privileges in profiles.role.
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
     .select("role")
-    .eq("user_id", data.user.id)
+    .eq("id", data.user.id)
+    .eq("role", "admin")
     .maybeSingle();
-  if (!admin) {
+
+  if (profileError || !profile) {
     await supabase.auth.signOut();
     redirect("/login?error=not_admin");
   }

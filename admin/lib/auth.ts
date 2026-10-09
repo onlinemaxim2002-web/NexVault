@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
+import { getAdminContext } from "@/lib/admin-access";
 import { createClient } from "@/lib/supabase/server";
 
-export type AdminRole = "owner" | "content_admin";
+export type { AdminRole } from "@/lib/admin-access";
 
 // Every panel page and action starts here: signed in AND listed in admins.
 export async function requireAdmin() {
@@ -11,14 +12,10 @@ export async function requireAdmin() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: admin } = await supabase
-    .from("admins")
-    .select("role")
-    .eq("user_id", user.id)
-    .maybeSingle();
+  const admin = await getAdminContext(supabase, user.id);
   if (!admin) redirect("/login?error=not_admin");
 
-  return { supabase, user, role: admin.role as AdminRole };
+  return { supabase, user, role: admin.role };
 }
 
 export async function requireOwner() {

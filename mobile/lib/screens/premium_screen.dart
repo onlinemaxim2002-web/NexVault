@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../state/app_state.dart';
 import '../theme.dart';
-import '../widgets/common.dart';
+import 'login_screen.dart';
 import 'profile_screen.dart';
 
-/// NexVault is free for everyone. This screen explains the included 15 GB quota.
+/// Account entry point: no premium plans or subscriptions are offered.
 class PremiumScreen extends StatefulWidget {
   final bool standalone;
   const PremiumScreen({super.key, this.standalone = false});
@@ -15,10 +15,31 @@ class PremiumScreen extends StatefulWidget {
 }
 
 class _PremiumScreenState extends State<PremiumScreen> {
+  bool _openingLogin = false;
+
   @override
   void initState() {
     super.initState();
     app.refreshStatus();
+  }
+
+  Future<void> _login() async {
+    if (_openingLogin) return;
+    setState(() => _openingLogin = true);
+    try {
+      await Navigator.of(context).push<bool>(
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+      );
+      await app.refreshStatus();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not open login: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _openingLogin = false);
+    }
   }
 
   @override
@@ -30,7 +51,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
           child: SizedBox.expand(),
         ),
         automaticallyImplyLeading: widget.standalone,
-        title: const Text('Free Cloud Storage'),
+        title: const Text('Account'),
         actions: [
           IconButton(
             icon: const Icon(Icons.account_circle_outlined, size: 32),
@@ -47,121 +68,122 @@ class _PremiumScreenState extends State<PremiumScreen> {
           if (status == null) {
             return const Center(child: CircularProgressIndicator());
           }
-          const defaultQuota = 15 * 1024 * 1024 * 1024;
-          final quota = status.quotaBytes > 0 ? status.quotaBytes : defaultQuota;
-          final used = status.usedBytes;
-          final fraction = (used / quota).clamp(0.0, 1.0).toDouble();
+          final isGuest = status.isGuest;
           return ListView(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.fromLTRB(20, 28, 20, 24),
             children: [
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  gradient: AppColors.gradient,
+                  color: AppColors.surface,
                   borderRadius: BorderRadius.circular(24),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x40FF7A1A),
-                      blurRadius: 24,
-                      offset: Offset(0, 10),
-                    ),
-                  ],
+                  border: Border.all(color: AppColors.border),
                 ),
-                child: const Column(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.cloud_done_rounded, size: 44, color: Colors.white),
-                    SizedBox(height: 18),
-                    Text(
-                      '15 GB Free Cloud Storage',
-                      style: TextStyle(
-                        fontSize: 25,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
+                    Container(
+                      width: 64,
+                      height: 64,
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceHigh,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Icon(
+                        isGuest ? Icons.person_add_alt_1_rounded : Icons.verified_user_rounded,
+                        color: AppColors.primary,
+                        size: 34,
                       ),
                     ),
-                    SizedBox(height: 8),
+                    const SizedBox(height: 22),
                     Text(
-                      'Securely store your files with NexVault. Your 15 GB quota is included for free—no plans, subscriptions, or in-app payments.',
-                      style: TextStyle(fontSize: 15, color: Colors.white),
+                      isGuest ? 'Log in to NexVault' : 'You’re signed in',
+                      style: const TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
+                    const SizedBox(height: 10),
+                    Text(
+                      isGuest
+                          ? 'Create an account or log in to keep your account connected across devices and make it easier to access your files.'
+                          : 'Your NexVault account is connected. You can manage your profile and continue using your free cloud storage.',
+                      style: const TextStyle(
+                        fontSize: 15,
+                        height: 1.5,
+                        color: AppColors.muted,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    if (isGuest)
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton.icon(
+                          onPressed: _openingLogin ? null : _login,
+                          icon: _openingLogin
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Icon(Icons.login_rounded),
+                          label: Text(
+                            _openingLogin ? 'Opening login…' : 'Log in / Create account',
+                          ),
+                          style: FilledButton.styleFrom(
+                            minimumSize: const Size.fromHeight(54),
+                          ),
+                        ),
+                      )
+                    else
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: () => Navigator.of(context).push(
+                            MaterialPageRoute(builder: (_) => const ProfileScreen()),
+                          ),
+                          icon: const Icon(Icons.person_outline_rounded),
+                          label: const Text('Manage account'),
+                          style: OutlinedButton.styleFrom(
+                            minimumSize: const Size.fromHeight(54),
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 18),
               Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(18),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Your storage',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        '${formatBytes(used)} used of ${formatBytes(quota)}',
-                        style: const TextStyle(fontSize: 15, color: AppColors.muted),
-                      ),
-                      const SizedBox(height: 14),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: LinearProgressIndicator(
-                          value: fraction,
-                          minHeight: 9,
-                          color: AppColors.primary,
-                          backgroundColor: AppColors.surfaceHigh,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text('${(fraction * 100).round()}% used'),
-                    ],
+                child: ListTile(
+                  leading: const Icon(Icons.cloud_done_rounded, color: AppColors.primary, size: 30),
+                  title: const Text(
+                    '15 GB free cloud storage',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  subtitle: const Text(
+                    'Included for every account. No paid plans, subscriptions, or in-app payments.',
                   ),
                 ),
               ),
               const SizedBox(height: 12),
-              const _FeatureTile(
-                icon: Icons.folder_open_rounded,
-                title: 'Files and folders',
-                subtitle: 'Upload, preview, organise, rename, and delete your files.',
-              ),
-              const _FeatureTile(
-                icon: Icons.download_rounded,
-                title: 'Downloads included',
-                subtitle: 'Download your own cloud files without a subscription.',
-              ),
-              const _FeatureTile(
-                icon: Icons.all_inclusive_rounded,
-                title: 'Every feature is free',
-                subtitle: 'NexVault has no paid plans or in-app purchases.',
+              Card(
+                child: ListTile(
+                  leading: const Icon(Icons.security_rounded, color: AppColors.primary, size: 30),
+                  title: const Text(
+                    'Your account, your files',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  subtitle: const Text(
+                    'Sign in to keep your account details connected when you change devices.',
+                  ),
+                ),
               ),
             ],
           );
         },
-      ),
-    );
-  }
-}
-
-class _FeatureTile extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-
-  const _FeatureTile({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: ListTile(
-        leading: Icon(icon, color: AppColors.primary, size: 28),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
-        subtitle: Text(subtitle),
       ),
     );
   }

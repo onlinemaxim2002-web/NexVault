@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { getAdminContext } from "@/lib/admin-access";
 
 // Refreshes the Supabase session on every request and sends signed-out
 // visitors to /login.
@@ -50,6 +51,18 @@ export async function middleware(request: NextRequest) {
     url.search = "";
     return NextResponse.redirect(url);
   }
+
+  if (user && !request.nextUrl.pathname.startsWith("/login")) {
+    const isAdmin = !!(await getAdminContext(supabase, user.id));
+
+    if (!isAdmin) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      url.search = "?error=not_admin";
+      return NextResponse.redirect(url);
+    }
+  }
+
   return response;
 }
 

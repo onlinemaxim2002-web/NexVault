@@ -11,7 +11,6 @@ import 'channel_screen.dart';
 import 'create_channel_screen.dart';
 import 'login_screen.dart';
 import 'new_post_screen.dart';
-import 'payment_history_screen.dart';
 import 'settings_screen.dart';
 
 /// Profile: name (editable), settings, account, My Channels (created + joined).
@@ -201,7 +200,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                       ),
-                                      if (s?.isPremium == true) ...[
+                                      if (s?.isPremium == true && s?.planName != 'Free') ...[
                                         const SizedBox(height: 4),
                                         const PremiumBadge(),
                                       ],
@@ -339,7 +338,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    s.isPremium ? '${s.planName} active' : 'Free account',
+                    s.isPremium && s.planName != 'Free' ? '${s.planName} active' : 'Free account',
                     style: const TextStyle(fontSize: 16),
                   ),
                 ],
@@ -356,16 +355,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
               ],
-              TextButton.icon(
-                style: TextButton.styleFrom(padding: EdgeInsets.zero),
-                icon: const Icon(Icons.receipt_long),
-                label: const Text('Payment history'),
-                onPressed: () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const PaymentHistoryScreen(),
-                  ),
-                ),
-              ),
             ],
           ],
         ),

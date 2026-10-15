@@ -1,4 +1,4 @@
-package com.cloudstorage.cloud_storage
+package com.nexvault.app
 
 import android.app.Activity
 import android.app.DownloadManager
@@ -56,7 +56,7 @@ class MainActivity : FlutterActivity() {
             }
         }
         // Downloads (premium): Android's download manager saves the file to
-        // Downloads/Flixvault and shows a progress notification.
+        // Downloads/NexVault and shows a progress notification.
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, DOWNLOAD_CHANNEL)
             .setMethodCallHandler { call, result ->
                 val url = call.argument<String>("url")
@@ -68,11 +68,11 @@ class MainActivity : FlutterActivity() {
                 try {
                     val request = DownloadManager.Request(Uri.parse(url))
                         .setTitle(name)
-                        .setDescription("Flixvault")
+                        .setDescription("NexVault")
                         .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
                     call.argument<String>("mime")?.let { request.setMimeType(it) }
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                        request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "Flixvault/$name")
+                        request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "NexVault/$name")
                     } else {
                         // Android 9 and older: app folder, no storage permission needed.
                         request.setDestinationInExternalFilesDir(this, Environment.DIRECTORY_DOWNLOADS, name)
@@ -83,8 +83,6 @@ class MainActivity : FlutterActivity() {
                     result.error("DOWNLOAD_FAILED", e.message, null)
                 }
             }
-        // Google Play alternative billing (Play build only; a no-op elsewhere).
-        PlayBillingChannel.register(flutterEngine, this)
         // Video player rotation (separate from payments): "sensor" follows the
         // phone's tilt like MX Player / VLC, even with auto-rotate off.
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, SCREEN_CHANNEL)
@@ -182,9 +180,9 @@ class MainActivity : FlutterActivity() {
     private fun pendingAnswers(): String = answers().toString()
 
     companion object {
-        private const val CHANNEL = "cloudstorage/upi"
-        private const val SCREEN_CHANNEL = "cloudstorage/screen"
-        private const val DOWNLOAD_CHANNEL = "cloudstorage/download"
+        private const val CHANNEL = "app/upi"
+        private const val SCREEN_CHANNEL = "app/screen"
+        private const val DOWNLOAD_CHANNEL = "app/download"
         private const val PREFS = "upi_payments"
         private const val KEY_LAUNCHED = "launched_order"
         private const val KEY_ANSWERS = "answers"

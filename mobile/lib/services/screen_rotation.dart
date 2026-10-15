@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 /// with the phone's tilt like MX Player / VLC, even when auto-rotate is off;
 /// "reset" hands control back to the phone's own setting.
 class ScreenRotation {
-  static const _channel = MethodChannel('cloudstorage/screen');
+  static const _channel = MethodChannel('app/screen');
 
   static Future<void> follow() => _call('sensor');
   static Future<void> landscape() => _call('landscape');

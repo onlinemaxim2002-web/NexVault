@@ -69,7 +69,7 @@ class Payments with WidgetsBindingObserver {
   Payments._();
   static final instance = Payments._();
 
-  static const _channel = MethodChannel('cloudstorage/upi');
+  static const _channel = MethodChannel('app/upi');
   static const _openKey = 'upi_open_order';
 
   /// Bumped after an answer was accepted by the server (screens re-check).

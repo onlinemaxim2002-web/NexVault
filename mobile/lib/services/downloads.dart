@@ -2,10 +2,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-/// Saves a file to the phone (Android download manager → Downloads/Flixvault,
+/// Saves a file to the phone (Android download manager → Downloads/NexVault,
 /// with a notification). On web the browser downloads it.
 class Downloads {
-  static const _channel = MethodChannel('cloudstorage/download');
+  static const _channel = MethodChannel('app/download');
 
   static Future<void> save({
     required String url,
@@ -38,6 +38,6 @@ class Downloads {
     final ext = dot > key.lastIndexOf('/') && dot >= 0
         ? key.substring(dot)
         : '';
-    return '${title.trim().isEmpty ? 'Flixvault' : title.trim()}$ext';
+    return '${title.trim().isEmpty ? 'NexVault' : title.trim()}$ext';
   }
 }

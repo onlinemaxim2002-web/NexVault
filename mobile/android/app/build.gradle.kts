@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.cloudstorage.cloud_storage"
+    namespace = "com.nexvault.app"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -28,40 +28,14 @@ android {
         versionName = flutter.versionName
     }
 
-    // One fixed key for every tester build, so the organic and ads APKs can
-    // update each other. TESTING ONLY: create a new private key (kept out of
-    // the repo) before any Play Store release.
-    signingConfigs {
-        create("tester") {
-            storeFile = file("tester-release.jks")
-            storePassword = "cloudstorage-tester"
-            keyAlias = "cloudstorage"
-            keyPassword = "cloudstorage-tester"
-        }
-    }
-
-    // direct = APKs shared outside Play (ads / website), UPI only, no Google code.
-    // play   = Play Store build: same app + Google Play "alternative billing
-    //          only" (Google's info screen + transaction report; payment is
-    //          still the same UPI flow).
+    // Both variants have the same Android application id and can update the
+    // same installation. Their install source is supplied at build time with
+    // --dart-define=APK_REFERRER for the ads APK; no Google Play Billing code
+    // is included in either one.
     flavorDimensions += "store"
     productFlavors {
-        create("direct") { dimension = "store" }
-        // Play Store app id (permanent once uploaded). Shared APKs keep
-        // com.nexvault.app so existing installs keep updating.
-        create("play") {
-            dimension = "store"
-            applicationId = "com.nexvault.play"
-        }
-    }
-
-    buildTypes {
-        release {
-            signingConfig = signingConfigs.getByName("tester")
-        }
-        debug {
-            signingConfig = signingConfigs.getByName("tester")
-        }
+        create("normal") { dimension = "store" }
+        create("ads") { dimension = "store" }
     }
 }
 
@@ -73,8 +47,4 @@ kotlin {
 
 flutter {
     source = "../.."
-}
-
-dependencies {
-    "playImplementation"("com.android.billingclient:billing-ktx:8.0.0")
 }

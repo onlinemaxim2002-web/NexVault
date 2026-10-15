@@ -14,7 +14,7 @@ const _reasons = [
   'Other',
 ];
 
-/// Report a post or a channel. Reports reach the Flixvault team (admin panel).
+/// Report a post or a channel. Reports reach the NexVault team (admin panel).
 Future<void> reportContent(
   BuildContext context, {
   String? postId,

@@ -41,8 +41,7 @@ const policies = {
         '• Use the app lawfully. Upload only content you own or have the right to share.\n'
         '• Channels you create are reviewed before they become visible. You are responsible for what you post. '
         'We may hide or remove content, channels or accounts that break these terms or our Community Guidelines.\n'
-        '• This free build does not offer in-app purchases or collect payments. Premium access, where available, '
-        'is controlled by the service and is not purchased inside this app.\n'
+        '• Premium plans, where offered, are paid directly in your UPI app. They do not renew automatically.\n'
         '• Keep your login details private. You are responsible for activity on your account.\n'
         '• The service is provided as is. We may change features or these terms; we will ask you to agree again '
         'when the terms change.\n'
@@ -63,10 +62,9 @@ const policies = {
   ),
   'refund': (
     'Refund Policy',
-    '${Config.appName} is distributed as a free app and this build does not process in-app purchases or collect '
-        'payments. Therefore there are no app purchases to refund. If you believe you were charged by mistake in '
-        'connection with ${Config.appName}, contact ${Config.supportEmail} with the relevant details so we can '
-        'investigate.',
+    'If you believe a UPI payment for ${Config.appName} was incorrect or duplicated, contact '
+        '${Config.supportEmail} with the payment reference and UTR so we can investigate. Approved refunds are '
+        'returned to the UPI account that made the payment.',
   ),
 };
 

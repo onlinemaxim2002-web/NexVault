@@ -64,10 +64,10 @@ class Backend {
   static Future<void> saveConsent(String version) async {
     final uid = sb.auth.currentUser?.id;
     if (uid == null) return;
-    await sb.from('consents').insert({
+    await sb.from('consents').upsert({
       'user_id': uid,
-      'policy_version': version,
-    });
+      'version': version,
+    }, onConflict: 'user_id,version');
   }
 
   // ---------------------------------------------------------------- content

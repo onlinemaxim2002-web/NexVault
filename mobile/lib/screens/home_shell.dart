@@ -176,6 +176,14 @@ class ConsentDialog extends StatelessWidget {
                         onPressed: () => open('terms'),
                         child: const Text('Terms & Conditions'),
                       ),
+                      TextButton(
+                        onPressed: () => open('refund'),
+                        child: const Text('Refund Policy'),
+                      ),
+                      TextButton(
+                        onPressed: () => open('community'),
+                        child: const Text('Community Guidelines'),
+                      ),
                     ],
                   ),
                 ],

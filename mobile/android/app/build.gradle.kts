@@ -37,6 +37,15 @@ android {
         create("normal") { dimension = "store" }
         create("ads") { dimension = "store" }
     }
+
+    // GitHub Actions creates test APKs with Android's standard debug key so
+    // they can be installed on a phone. A future public release must instead
+    // use one stable private upload key stored in GitHub Actions secrets.
+    buildTypes {
+        release {
+            signingConfig = signingConfigs.getByName("debug")
+        }
+    }
 }
 
 kotlin {
